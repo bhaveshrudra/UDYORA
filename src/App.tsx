@@ -33,29 +33,49 @@ import { ResultDashboard } from './components/ResultDashboard';
 import { PrintableReport } from './components/PrintableReport';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { runFinancialUnitTests } from './tests/financialCalculator.test';
+import { getTranslations } from './utils/translations';
+
+function getRouteFromLocation(): 'landing' | 'app' {
+  if (typeof window === 'undefined') return 'landing';
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+  const searchParams = new URLSearchParams(window.location.search);
+  
+  if (
+    path.startsWith('/app') ||
+    hash.startsWith('#/app') ||
+    hash === '#app' ||
+    searchParams.get('route') === 'app' ||
+    searchParams.get('view') === 'app'
+  ) {
+    return 'app';
+  }
+  return 'landing';
+}
 
 export default function App() {
-  // Determine initial route from window.location.pathname
-  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(() => {
-    const path = window.location.pathname;
-    return path.startsWith('/app') ? 'app' : 'landing';
-  });
-
+  // Robust initial route detection across pathname, hash, and search query
+  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(getRouteFromLocation);
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
   const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([]);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
 
-  // Handle browser URL synchronization (pushState / popstate)
+  const t = getTranslations(currentLanguage);
+
+  // Handle browser URL synchronization (pushState / popstate / hashchange)
   useEffect(() => {
-    const handlePopState = () => {
-      const path = window.location.pathname;
-      setCurrentRoute(path.startsWith('/app') ? 'app' : 'landing');
+    const handleNavigationEvent = () => {
+      setCurrentRoute(getRouteFromLocation());
     };
 
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('popstate', handleNavigationEvent);
+    window.addEventListener('hashchange', handleNavigationEvent);
+    return () => {
+      window.removeEventListener('popstate', handleNavigationEvent);
+      window.removeEventListener('hashchange', handleNavigationEvent);
+    };
   }, []);
 
   // Run automated unit tests on mount to ensure deterministic math accuracy
@@ -71,15 +91,19 @@ export default function App() {
 
   const navigateToRoute = (route: 'landing' | 'app', urlPath: string = route === 'app' ? '/app' : '/') => {
     setCurrentRoute(route);
-    if (window.location.pathname !== urlPath) {
-      window.history.pushState({}, '', urlPath);
+    try {
+      if (window.location.pathname !== urlPath) {
+        window.history.pushState({ route }, '', urlPath);
+      }
+    } catch {
+      // Fallback to hash navigation if pushState is restricted
+      window.location.hash = route === 'app' ? '/app' : '/';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleNavigateToApp = (scenario?: 'dairy' | 'tailoring' | 'retail') => {
     navigateToRoute('app', '/app');
-    // If dairy scenario chosen, reset result state so form is shown ready with preset
     setCurrentScreen('form');
   };
 
@@ -118,6 +142,8 @@ export default function App() {
     return (
       <LandingPage
         onNavigateToApp={handleNavigateToApp}
+        currentLanguage={currentLanguage}
+        onLanguageChange={setCurrentLanguage}
       />
     );
   }
@@ -153,13 +179,13 @@ export default function App() {
               <div className="text-center max-w-3xl mx-auto pt-2 pb-4">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/70 text-blue-900 border border-blue-200 mb-3.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                  <span>Evidence-Aware Multi-Agent Business Advisory</span>
+                  <span>{t.evidenceAwareBadge}</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
-                  UDYORA Business Intelligence
+                  {t.appTitle}
                 </h1>
                 <p className="text-sm sm:text-base text-slate-600 mt-2.5 max-w-2xl mx-auto leading-relaxed">
-                  Evaluate village-level enterprise viability, deterministic loan financing, government scheme subsidies, and practical rural risk mitigations using coordinated specialized agents.
+                  {t.appSubtitle}
                 </p>
               </div>
 
@@ -167,6 +193,7 @@ export default function App() {
               <BusinessInputForm
                 onSubmit={handleFormSubmit}
                 isLoading={false}
+                currentLanguage={currentLanguage}
               />
             </div>
           )}
@@ -188,6 +215,7 @@ export default function App() {
                 report={analysisReport}
                 onReset={handleReset}
                 onPrint={handlePrint}
+                currentLanguage={currentLanguage}
               />
             </div>
           )}
@@ -201,14 +229,14 @@ export default function App() {
                 U
               </div>
               <span className="font-bold text-slate-800">UDYORA</span>
-              <span>— Hyper-Local Business Intelligence for Rural Entrepreneurs</span>
+              <span>— {t.tagline}</span>
             </div>
             <div className="flex items-center gap-4 text-slate-500">
               <span>Deterministic Financial Engine</span>
               <span>•</span>
               <span>Rule-based Schemes</span>
               <span>•</span>
-              <span>Developed by Beyond Zero</span>
+              <span>{t.developedBy}</span>
             </div>
           </div>
         </footer>

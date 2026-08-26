@@ -21,19 +21,23 @@ import { SchemeGuidanceCard } from './SchemeGuidanceCard';
 import { MarketIntelligenceCard } from './MarketIntelligenceCard';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
 import { EvidenceAuditCard } from './EvidenceAuditCard';
+import { getTranslations } from '../utils/translations';
 
 interface ResultDashboardProps {
   report: CompleteAnalysisReport;
   onReset: () => void;
   onPrint: () => void;
+  currentLanguage?: string;
 }
 
 export const ResultDashboard: React.FC<ResultDashboardProps> = ({
   report,
   onReset,
-  onPrint
+  onPrint,
+  currentLanguage = 'en'
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'finance' | 'schemes' | 'market' | 'risks' | 'evidence'>('all');
+  const t = getTranslations(currentLanguage);
 
   const {
     reportId,
@@ -57,9 +61,9 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-800 text-blue-100 tracking-wider">
-                UDYORA ADVISORY DOSSIER
+                UDYORA ADVISORY REPORT
               </span>
-              <span className="text-xs text-slate-400 font-mono">ID: {reportId}</span>
+              <span className="text-xs text-slate-400 font-mono">{t.reportId}: {reportId}</span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
               {input.businessIdea}
@@ -78,14 +82,14 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-white text-slate-900 hover:bg-blue-50 transition-colors shadow-xs cursor-pointer"
             >
               <Printer className="w-4 h-4 text-blue-700" />
-              <span>Print Official Dossier</span>
+              <span>{t.printReport}</span>
             </button>
             <button
               onClick={onReset}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-slate-700 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>New Search</span>
+              <span>{t.newSearch}</span>
             </button>
           </div>
         </div>
@@ -94,12 +98,12 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
       {/* Section Navigation Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
         {[
-          { id: 'all', label: 'Full Advisory Report', icon: <FileText className="w-3.5 h-3.5" /> },
-          { id: 'finance', label: 'Financial Plan', icon: <Calculator className="w-3.5 h-3.5" /> },
-          { id: 'schemes', label: 'Government Schemes', icon: <Award className="w-3.5 h-3.5" /> },
-          { id: 'market', label: 'Market & Infra', icon: <Store className="w-3.5 h-3.5" /> },
-          { id: 'risks', label: 'Risk Analysis', icon: <ShieldAlert className="w-3.5 h-3.5" /> },
-          { id: 'evidence', label: 'Evidence Audit Trail', icon: <Database className="w-3.5 h-3.5" /> }
+          { id: 'all', label: t.fullReportTab, icon: <FileText className="w-3.5 h-3.5" /> },
+          { id: 'finance', label: t.financeTab, icon: <Calculator className="w-3.5 h-3.5" /> },
+          { id: 'schemes', label: t.schemesTab, icon: <Award className="w-3.5 h-3.5" /> },
+          { id: 'market', label: t.marketTab, icon: <Store className="w-3.5 h-3.5" /> },
+          { id: 'risks', label: t.risksTab, icon: <ShieldAlert className="w-3.5 h-3.5" /> },
+          { id: 'evidence', label: t.evidenceTab, icon: <Database className="w-3.5 h-3.5" /> }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -152,7 +156,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
           {feasibilityVerdict.disclaimer}
         </p>
         <p className="font-semibold text-slate-700">
-          UDYORA Â© 2026 â€¢ Hyper-Local Business Intelligence for Rural Entrepreneurs
+          UDYORA © 2026 • {t.tagline}
         </p>
       </div>
     </div>

@@ -96,7 +96,7 @@ export async function executeMultiAgentWorkflow(
       role: 'Explainable Feasibility Synthesis & Report Generation',
       status: 'PENDING',
       progressPct: 0,
-      message: 'Synthesizing verified multi-agent findings into comprehensive advisory dossier...'
+      message: 'Synthesizing verified multi-agent findings into comprehensive advisory report...'
     }
   ];
 
@@ -205,7 +205,7 @@ export async function executeMultiAgentWorkflow(
   );
 
   // Step 8: Final Advisor / Report Agent
-  updateStep('final', 'RUNNING', 70, 'Compiling executive feasibility score and public-service dossier...');
+  updateStep('final', 'RUNNING', 70, 'Compiling executive feasibility score and public-service report...');
   await delay(400);
   const t7 = Date.now();
   const feasibilityVerdict = runFinalAdvisorAgent(

@@ -14,16 +14,21 @@ import {
 } from 'lucide-react';
 import { UserBusinessInput } from '../types';
 import { DEMO_LOCATIONS } from '../data/locations';
+import { getTranslations } from '../utils/translations';
 
 interface BusinessInputFormProps {
   onSubmit: (input: UserBusinessInput) => void;
   isLoading: boolean;
+  currentLanguage?: string;
 }
 
 export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
   onSubmit,
-  isLoading
+  isLoading,
+  currentLanguage = 'en'
 }) => {
+  const t = getTranslations(currentLanguage);
+
   const [selectedLocationId, setSelectedLocationId] = useState<string>(DEMO_LOCATIONS[0].id);
   const [isCustomLocation, setIsCustomLocation] = useState<boolean>(false);
   const [customLocationText, setCustomLocationText] = useState<string>('');
@@ -76,10 +81,10 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-blue-700" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Select Demo Scenario / Quick Presets
+              {t.quickPresetsTitle}
             </h3>
           </div>
-          <span className="text-[11px] font-medium text-slate-500">Click to pre-fill standard parameters</span>
+          <span className="text-[11px] font-medium text-slate-500">{t.quickPresetsSubtitle}</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -107,11 +112,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   ? 'bg-blue-800 text-blue-100'
                   : 'bg-amber-100 text-amber-900 font-semibold'
               }`}>
-                PRIMARY DEMO
+                {t.primaryDemoBadge}
               </span>
               <span className="text-xs font-bold">₹1,00,000</span>
             </div>
-            <p className="font-bold text-sm mt-1.5 line-clamp-1">Dairy Unit (8-10 Cows)</p>
+            <p className="font-bold text-sm mt-1.5 line-clamp-1">{t.catDairy}</p>
             <p className={`text-xs mt-0.5 ${
               selectedLocationId === 'loc_khed_shivapur_pune' && businessCategory === 'dairy'
                 ? 'text-blue-200'
@@ -145,11 +150,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   ? 'bg-blue-800 text-blue-100'
                   : 'bg-slate-100 text-slate-700'
               }`}>
-                SECONDARY
+                {t.secondaryBadge}
               </span>
               <span className="text-xs font-bold">₹50,000</span>
             </div>
-            <p className="font-bold text-sm mt-1.5 line-clamp-1">Tailoring Workshop</p>
+            <p className="font-bold text-sm mt-1.5 line-clamp-1">{t.catTailoring}</p>
             <p className={`text-xs mt-0.5 ${
               selectedLocationId === 'loc_madhurawada_vizag' && businessCategory === 'tailoring'
                 ? 'text-blue-200'
@@ -183,11 +188,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   ? 'bg-blue-800 text-blue-100'
                   : 'bg-slate-100 text-slate-700'
               }`}>
-                SECONDARY
+                {t.secondaryBadge}
               </span>
               <span className="text-xs font-bold">₹75,000</span>
             </div>
-            <p className="font-bold text-sm mt-1.5 line-clamp-1">Daily Essentials Store</p>
+            <p className="font-bold text-sm mt-1.5 line-clamp-1">{t.catRetail}</p>
             <p className={`text-xs mt-0.5 ${
               selectedLocationId === 'loc_mandya_karnataka' && businessCategory === 'retail'
                 ? 'text-blue-200'
@@ -203,10 +208,10 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
       <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
         <div className="border-b border-slate-100 pb-5 mb-6">
           <h2 className="text-xl font-bold tracking-tight text-slate-900">
-            Enterprise Feasibility & Advisory Assessment
+            {t.appTitle}
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Provide your target village location, proposed micro-business idea, and available own capital.
+            {t.appSubtitle}
           </p>
         </div>
 
@@ -215,7 +220,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-blue-700" />
-              1. Location (Village / Block / District)
+              {t.locationLabel}
             </label>
 
             {!isCustomLocation ? (
@@ -242,7 +247,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                     onClick={() => setIsCustomLocation(true)}
                     className="text-blue-700 hover:underline cursor-pointer font-medium"
                   >
-                    Enter custom village...
+                    {t.enterCustomLocation}
                   </button>
                 </div>
               </div>
@@ -265,7 +270,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                     onClick={() => setIsCustomLocation(false)}
                     className="text-blue-700 hover:underline cursor-pointer font-medium"
                   >
-                    Use verified demo location
+                    {t.useVerifiedLocation}
                   </button>
                 </div>
               </div>
@@ -277,7 +282,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center gap-1.5">
                 <Briefcase className="w-3.5 h-3.5 text-blue-700" />
-                2. Business Sector / Category
+                {t.businessSectorLabel}
               </label>
               <select
                 value={businessCategory}
@@ -292,17 +297,17 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 }}
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:border-blue-600 cursor-pointer"
               >
-                <option value="dairy">Dairy Farming & Milk Supply</option>
-                <option value="tailoring">Custom Tailoring & Apparel</option>
-                <option value="retail">Rural Kirana / Retail Goods</option>
-                <option value="poultry">Micro Poultry Farming</option>
-                <option value="custom">Other Micro Enterprise</option>
+                <option value="dairy">{t.catDairy}</option>
+                <option value="tailoring">{t.catTailoring}</option>
+                <option value="retail">{t.catRetail}</option>
+                <option value="poultry">{t.catPoultry}</option>
+                <option value="custom">{t.catCustom}</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                Proposed Business Description / Title
+                {t.businessTitleLabel}
               </label>
               <input
                 type="text"
@@ -319,7 +324,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <IndianRupee className="w-3.5 h-3.5 text-blue-700" />
-                3. Available Own Capital (Promoter Margin)
+                {t.availableCapitalLabel}
               </label>
               <span className="text-xs font-bold text-blue-900 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
                 ₹{availableCapital.toLocaleString('en-IN')}
@@ -362,12 +367,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
 
             <div className="mt-2 flex items-start gap-1.5 text-xs text-slate-500">
               <Info className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-              <span>
-                Standard 10% promoter contribution rule derives an indicative project cost of{' '}
-                <strong className="text-slate-800">₹{(availableCapital * 10).toLocaleString('en-IN')}</strong> and
-                financing requirement of{' '}
-                <strong className="text-slate-800">₹{(availableCapital * 9).toLocaleString('en-IN')}</strong>.
-              </span>
+              <span>{t.standardMarginFormula}</span>
             </div>
           </div>
 
@@ -379,14 +379,14 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               className="text-xs font-semibold text-slate-600 hover:text-blue-900 flex items-center gap-1 cursor-pointer"
             >
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-              <span>{showAdvanced ? 'Hide Optional Business Profile Details' : 'Show Optional Details (Beneficiary Category, Experience)'}</span>
+              <span>{showAdvanced ? t.hideOptionalDetails : t.showOptionalDetails}</span>
             </button>
 
             {showAdvanced && (
               <div className="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Beneficiary Category
+                    {t.beneficiaryCategory}
                   </label>
                   <select
                     value={beneficiaryCategory}
@@ -402,7 +402,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Prior Experience
+                    {t.priorExperience}
                   </label>
                   <select
                     value={experienceYears}
@@ -417,7 +417,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Location Area Classification
+                    {t.areaClassification}
                   </label>
                   <select
                     value={locationAreaType}
@@ -442,11 +442,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Executing Multi-Agent Analysis...</span>
+                  <span>{t.analyzingBtn}</span>
                 </>
               ) : (
                 <>
-                  <span>Analyze Business</span>
+                  <span>{t.analyzeBusinessBtn}</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}

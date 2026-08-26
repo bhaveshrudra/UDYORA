@@ -19,11 +19,11 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
           <div>
             <h1 className="text-2xl font-black tracking-tight text-slate-950">UDYORA</h1>
             <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Hyper-Local Business Intelligence Dossier for Rural Entrepreneurs
+              Hyper-Local Business Intelligence Report for Rural Entrepreneurs
             </p>
           </div>
           <div className="text-right text-xs text-slate-500">
-            <p><strong className="text-slate-800">Dossier ID:</strong> {report.reportId}</p>
+            <p><strong className="text-slate-800">Report ID:</strong> {report.reportId}</p>
             <p><strong className="text-slate-800">Date:</strong> {new Date(report.generatedAt).toLocaleDateString('en-IN')}</p>
           </div>
         </div>

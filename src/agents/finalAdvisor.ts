@@ -126,7 +126,7 @@ export function runFinalAdvisorAgent(
 
   const criticalCaveat = `Feasibility is conditioned upon obtaining formal credit sanction from a participating commercial/rural bank, completing veterinary tagging/insurance, and securing assured off-take with the local cooperative collection center.`;
 
-  const disclaimer = `UDYORA provides advisory intelligence based on deterministic financial formulas, structured government scheme guidelines, and verified public datasets. This dossier does not constitute a guaranteed commercial outcome or formal banking sanction. Field verification by a certified banking correspondent or veterinary extension officer is advised prior to capital disbursement.`;
+  const disclaimer = `UDYORA provides advisory intelligence based on deterministic financial formulas, structured government scheme guidelines, and verified public datasets. This advisory report does not constitute a guaranteed commercial outcome or formal banking sanction. Field verification by a certified banking correspondent or veterinary extension officer is advised prior to capital disbursement.`;
 
   return {
     score: weightedScore,

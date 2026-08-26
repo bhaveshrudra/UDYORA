@@ -1,5 +1,6 @@
 import React from 'react';
 import { Compass, RotateCcw, Printer, ArrowLeft, Globe } from 'lucide-react';
+import { getTranslations } from '../utils/translations';
 
 interface HeaderProps {
   onReset?: () => void;
@@ -20,6 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   hasResult = false,
   isAppRoute = true
 }) => {
+  const t = getTranslations(currentLanguage);
+
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
       {/* Subtle Indian Accent Band */}
@@ -32,10 +35,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onNavigateHome}
               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer mr-1"
-              title="Return to Landing Page"
+              title={t.home}
             >
               <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Home</span>
+              <span className="hidden sm:inline">{t.home}</span>
             </button>
           )}
 
@@ -51,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="text-xl font-bold tracking-tight text-slate-950">UDYORA</span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium hidden sm:block leading-tight">
-                Hyper-Local Business Intelligence for Rural Entrepreneurs
+                {t.tagline}
               </p>
             </div>
           </div>
@@ -81,10 +84,10 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={onPrint}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-blue-900 transition-colors shadow-2xs cursor-pointer"
-              title="Print Advisory Dossier"
+              title={t.printReport}
             >
               <Printer className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Print Dossier</span>
+              <span className="hidden sm:inline">{t.printReport}</span>
             </button>
           )}
 
@@ -94,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-blue-900 rounded-lg transition-colors shadow-xs cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>New Analysis</span>
+              <span>{t.newAnalysis}</span>
             </button>
           )}
         </div>
