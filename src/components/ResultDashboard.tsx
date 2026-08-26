@@ -47,6 +47,33 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
     { id: 'evidence', label: t('dash.tab.evidence'), icon: <Database className="w-4 h-4" /> }
   ];
 
+  // Defensive field unwrapping to prevent any undefined crashes
+  const input = report.userInput || report.input || { businessIdea: 'Business Proposal' };
+  const location = report.location || { village: '', block: '', district: '', state: '' };
+  const feasibilityVerdict = report.finalFeasibility || report.feasibilityVerdict;
+  const financialPlan = report.financialPlan?.data || (report.financialPlan as any);
+  const schemeMatches = report.schemeMatches || report.schemeGuidance?.data || [];
+  const marketAnalysis = report.marketAnalysis || report.marketIntelligence?.data || {
+    demandSummary: '',
+    catchmentDemographics: { targetVillagePopulation: 0, households: 0 },
+    competitionLevel: 'LOW',
+    competitionDensity: 'LOW',
+    competitionSummary: '',
+    demandDrivers: [],
+    infrastructureProximity: [],
+    potentialDemandIndicators: [],
+    nearbyFacilities: [],
+    dataLimitations: []
+  };
+  const riskProfile = report.riskProfile || report.riskAnalysis?.data || {
+    overallRiskLevel: 'MEDIUM',
+    riskFactors: [],
+    dataConfidenceScore: 0.8,
+    insufficientDataFields: []
+  };
+  const evidenceRecords = report.evidenceRecords || report.evidenceAuditLog || [];
+  const reportId = report.id || report.reportId || 'UDY-REPORT';
+
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
       {/* Top Advisory Report Header Bar */}
@@ -57,16 +84,16 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
               {t('dash.reportHeader')}
             </span>
             <span className="text-xs text-slate-400 font-mono">
-              {t('dash.reportId')}: {report.id}
+              {t('dash.reportId')}: {reportId}
             </span>
           </div>
 
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white mt-1.5">
-            {report.userInput.businessIdea}
+            {input.businessIdea}
           </h1>
 
           <p className="text-xs text-slate-300 mt-1">
-            {report.location.village}, Block {report.location.block}, District {report.location.district}, {report.location.state}
+            {location.village}, Block {location.block}, District {location.district}, {location.state}
           </p>
         </div>
 
@@ -109,68 +136,70 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
 
       {/* Dynamic Content Views */}
       <div className="space-y-6">
-        {/* TAB: ALL / FULL DOSSIER */}
+        {/* TAB: ALL / FULL REPORT */}
         {activeTab === 'all' && (
           <>
             {/* 1. Feasibility Gauge */}
-            <FeasibilityGauge verdict={report.finalFeasibility} />
+            {feasibilityVerdict && <FeasibilityGauge verdict={feasibilityVerdict} />}
 
             {/* 2. Deterministic Financial Plan */}
-            <FinancialPlanCard initialPlan={report.financialPlan} />
+            {financialPlan && <FinancialPlanCard initialPlan={financialPlan} />}
 
             {/* 3. Rule-Based Government Scheme Guidance */}
-            <SchemeGuidanceCard schemes={report.schemeMatches} />
+            <SchemeGuidanceCard schemes={schemeMatches} />
 
             {/* 4. Hyper-Local Market & Infrastructure */}
-            <MarketIntelligenceCard marketData={report.marketAnalysis} />
+            <MarketIntelligenceCard marketData={marketAnalysis} />
 
             {/* 5. Multidimensional Risk Matrix */}
-            <RiskAnalysisCard riskProfile={report.riskProfile} />
+            <RiskAnalysisCard riskProfile={riskProfile} />
 
             {/* 6. Evidence & Ground Truth Audit Trail */}
-            <EvidenceAuditCard evidenceRecords={report.evidenceRecords} />
+            <EvidenceAuditCard evidenceRecords={evidenceRecords} />
           </>
         )}
 
         {/* TAB: FINANCIAL ONLY */}
         {activeTab === 'financial' && (
           <>
-            <FinancialPlanCard initialPlan={report.financialPlan} />
-            <FeasibilityGauge verdict={report.finalFeasibility} />
+            {financialPlan && <FinancialPlanCard initialPlan={financialPlan} />}
+            {feasibilityVerdict && <FeasibilityGauge verdict={feasibilityVerdict} />}
           </>
         )}
 
         {/* TAB: SCHEMES ONLY */}
         {activeTab === 'schemes' && (
-          <SchemeGuidanceCard schemes={report.schemeMatches} />
+          <SchemeGuidanceCard schemes={schemeMatches} />
         )}
 
         {/* TAB: MARKET ONLY */}
         {activeTab === 'market' && (
-          <MarketIntelligenceCard marketData={report.marketAnalysis} />
+          <MarketIntelligenceCard marketData={marketAnalysis} />
         )}
 
         {/* TAB: RISKS ONLY */}
         {activeTab === 'risks' && (
-          <RiskAnalysisCard riskProfile={report.riskProfile} />
+          <RiskAnalysisCard riskProfile={riskProfile} />
         )}
 
         {/* TAB: EVIDENCE ONLY */}
         {activeTab === 'evidence' && (
-          <EvidenceAuditCard evidenceRecords={report.evidenceRecords} />
+          <EvidenceAuditCard evidenceRecords={evidenceRecords} />
         )}
       </div>
 
       {/* Official Bottom Disclaimer */}
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 space-y-1">
-        <div className="flex items-center gap-1.5 text-slate-700 font-bold">
-          <Info className="w-3.5 h-3.5 text-slate-500" />
-          <span>{t('print.disclaimerTitle')}</span>
+      {feasibilityVerdict?.disclaimer && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs text-slate-500 space-y-1">
+          <div className="flex items-center gap-1.5 text-slate-700 font-bold">
+            <Info className="w-3.5 h-3.5 text-slate-500" />
+            <span>{t('print.disclaimerTitle')}</span>
+          </div>
+          <p className="leading-relaxed">
+            {feasibilityVerdict.disclaimer}
+          </p>
         </div>
-        <p className="leading-relaxed">
-          {report.finalFeasibility.disclaimer}
-        </p>
-      </div>
+      )}
     </div>
   );
 };

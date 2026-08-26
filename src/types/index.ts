@@ -1,14 +1,13 @@
 export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'INSUFFICIENT DATA';
 
-export type GeographicLevel = 'Village' | 'Block' | 'District' | 'State' | 'National';
+export type GeographicLevel = string;
 
 export type FeasibilityCategory = 'HIGH' | 'MODERATE' | 'CONDITIONAL' | 'LOW';
 
 export interface EvidenceRecord {
   id: string;
   metricName: string;
-  value: string | number | boolean;
-  unit?: string;
+  value: string | number;
   source: string;
   sourceUrl?: string;
   geographicLevel: GeographicLevel;
@@ -16,6 +15,7 @@ export interface EvidenceRecord {
   status: DataQualityStatus;
   confidence: number; // 0.0 to 1.0
   dataLimitationNote?: string;
+  unit?: string;
 }
 
 export interface UserBusinessInput {
@@ -27,9 +27,9 @@ export interface UserBusinessInput {
   experienceYears?: number;
   existingBusiness?: boolean;
   expectedScale?: 'Micro' | 'Small' | 'Medium';
-  beneficiaryCategory?: 'General' | 'SC/ST' | 'OBC' | 'Women' | 'Minority' | 'Ex-Servicemen';
-  locationAreaType?: 'Rural' | 'Semi-Urban' | 'Urban';
-  language?: 'en' | 'hi' | 'mr' | 'te' | 'ta' | 'kn' | 'bn' | 'gu';
+  beneficiaryCategory?: 'General' | 'SC/ST' | 'OBC' | 'Women' | 'Minority' | 'Ex-Servicemen' | string;
+  locationAreaType?: 'Rural' | 'Semi-Urban' | 'Urban' | string;
+  language?: 'en' | 'hi' | 'mr' | 'te' | 'ta' | 'kn' | 'bn' | 'gu' | string;
 }
 
 export interface LocationData {
@@ -39,172 +39,228 @@ export interface LocationData {
   district: string;
   state: string;
   pincode: string;
-  areaType: 'Rural' | 'Semi-Urban' | 'Urban';
+  areaType: 'Rural' | 'Semi-Urban' | 'Urban' | string;
   population: EvidenceRecord;
   householdCount: EvidenceRecord;
   nearestTownDistanceKm: EvidenceRecord;
-  nearestMandiDistanceKm: EvidenceRecord;
-  nearestDairyCooperativeKm: EvidenceRecord;
-  weeklyHaatFrequency: EvidenceRecord;
-  powerAvailabilityHours: EvidenceRecord;
-  groundwaterStatus: EvidenceRecord;
-  transportConnectivity: EvidenceRecord;
-  localCompetitorsCount: EvidenceRecord;
-  averageHouseholdIncomeBand: EvidenceRecord;
+  nearestDairyCooperativeKm?: EvidenceRecord;
+  nearestApmcMandiKm?: EvidenceRecord;
+  nearestWeeklyHaatKm?: EvidenceRecord;
+  groundwaterDepthMeters?: EvidenceRecord;
+  powerReliabilityHoursPerDay?: EvidenceRecord;
+  transportConnectivity?: EvidenceRecord;
+  veterinaryCenterDistanceKm?: EvidenceRecord;
+  majorCompetitorsCountEstimate?: EvidenceRecord;
+  groundwaterStatus?: EvidenceRecord;
+  powerAvailabilityHours?: EvidenceRecord;
+  nearestMandiDistanceKm?: EvidenceRecord;
+  weeklyHaatFrequency?: EvidenceRecord;
+  localCompetitorsCount?: EvidenceRecord;
+  averageHouseholdIncomeBand?: EvidenceRecord;
 }
 
 export interface CostComponent {
+  id?: string;
   name: string;
-  category: 'CAPEX' | 'WORKING_CAPITAL';
+  category: 'CAPEX' | 'OPEX' | 'WORKING_CAPITAL';
   estimatedCost: number;
   unitCount?: number;
   unitPrice?: number;
-  description: string;
   isEssential: boolean;
+  description: string;
+  evidenceRefId?: string;
 }
 
-export interface BusinessTemplate {
-  categoryId: string;
-  categoryName: string;
-  typicalName: string;
-  standardMarginRatio: number; // e.g. 0.10 for 10%
-  baseCapExRatio: number; // e.g. 0.75
-  baseWorkingCapitalRatio: number; // e.g. 0.25
-  defaultCostComponents: CostComponent[];
-  annualRevenuePerLakhCost: number; // Benchmark gross annual revenue
-  operatingMarginPct: number; // Benchmark operating profit margin %
-  gestationPeriodMonths: number;
-  standardTenureMonths: number;
-  benchmarkInterestRate: number; // e.g. 9.5%
-  standardMoratoriumMonths: number;
-}
+export type CostItem = CostComponent;
 
 export interface RepaymentInstallment {
   month: number;
   openingPrincipal: number;
-  principalPaid: number;
-  interestPaid: number;
   emi: number;
+  interestPaid: number;
+  principalPaid: number;
   closingPrincipal: number;
-  isMoratorium: boolean;
+  isMoratorium?: boolean;
 }
 
 export interface FinancialPlan {
   availableOwnCapital: number;
-  marginPercentage: number;
+  marginPercentage: number; // e.g. 10%
   indicativeProjectCost: number;
-  capitalExpenditureTotal: number;
-  workingCapitalTotal: number;
+  capitalExpenditureTotal?: number;
+  workingCapitalTotal?: number;
   costBreakdown: CostComponent[];
   indicativeFinancingRequirement: number;
-  eligibleSubsidyEstimate: number;
-  netLoanRequirement: number;
-  annualInterestRate: number;
+  eligibleSubsidyEstimate?: number;
+  netLoanRequirement?: number;
+  annualInterestRate: number; // in %
   tenureMonths: number;
   moratoriumMonths: number;
   monthlyEMI: number;
   totalInterestPayable: number;
-  totalRepaymentAmount: number;
+  totalRepaymentAmount?: number;
   estimatedMonthlyRevenue: number;
   estimatedMonthlyOperatingExpenses: number;
   estimatedMonthlyNetProfit: number;
-  debtServiceCoverageRatio: number; // DSCR
-  estimatedBreakEvenMonths: number;
-  repaymentSchedulePreview: RepaymentInstallment[]; // First 12 months preview
+  debtServiceCoverageRatio: number;
+  breakEvenPeriodMonths?: number;
+  estimatedBreakEvenMonths?: number;
+  repaymentSchedulePreview?: RepaymentInstallment[];
 }
 
-export interface SchemeRule {
+export interface GovernmentScheme {
   id: string;
-  code: string;
+  code?: string;
   name: string;
   shortName: string;
   nodalAgency: string;
-  category: 'Central' | 'State' | 'Institutional';
-  targetBeneficiaries: string[];
+  category?: string;
+  targetSectors?: string[];
+  targetBeneficiaries?: string[];
   eligibleActivities: string[];
   ineligibleActivities?: string[];
   minMarginContributionPct: number;
   maxProjectCost: number;
   interestRateRange: string;
-  subsidyGeneralRuralPct: number;
-  subsidySpecialRuralPct: number;
+  subsidyPercentageGeneral?: number;
+  subsidyPercentageSpecialCategory?: number;
+  subsidyPercentageRural?: number;
+  subsidyGeneralRuralPct?: number;
+  subsidySpecialRuralPct?: number;
   maxSubsidyAmount?: number;
-  maxTenureMonths: number;
-  moratoriumMonths: number;
-  requiredDocuments: string[];
+  maxTenureMonths?: number;
+  moratoriumMonthsMax?: number;
+  moratoriumMonths?: number;
+  tenureYearsMax?: number;
+  collateralRequirement?: string;
+  requiredDocuments: any[];
   officialSourceUrl: string;
   lastVerifiedDate: string;
-  verificationStatus: DataQualityStatus;
-  notes: string;
+  notes?: string;
+  status?: DataQualityStatus;
+  verificationStatus?: DataQualityStatus;
 }
 
+export type SchemeRule = GovernmentScheme;
+
 export interface SchemeMatchResult {
-  scheme: SchemeRule;
+  scheme: GovernmentScheme;
   matchScore: number; // 0 to 100
   qualificationStatus: 'ELIGIBLE' | 'CONDITIONALLY_ELIGIBLE' | 'REQUIRES_VERIFICATION' | 'INELIGIBLE';
   whyItMatches: string[];
-  potentialSubsidyAmount: number;
   potentialSubsidyPct: number;
-  minimumOwnCapitalRequired: number;
-  missingInformation: string[];
-  requiredDocuments: { name: string; isMandatory: boolean }[];
+  potentialSubsidyAmount: number;
+  minimumOwnCapitalRequired?: number;
+  missingInformation?: string[];
+  requiredDocuments: { name: string; mandatory?: boolean; isMandatory?: boolean; ready?: boolean; description?: string }[];
   verificationNote: string;
 }
 
+export interface BusinessTemplate {
+  id?: string;
+  sector?: string;
+  name?: string;
+  categoryId: string;
+  categoryName: string;
+  typicalName: string;
+  description?: string;
+  typicalUnitSize?: string;
+  standardMarginRatio: number;
+  baseCapExRatio: number;
+  baseWorkingCapitalRatio: number;
+  benchmarkCapexMultiplier?: number;
+  defaultCostComponents: any[];
+  annualRevenuePerLakhCost: number;
+  operatingMarginPct: number;
+  gestationPeriodMonths: number;
+  standardTenureMonths: number;
+  benchmarkInterestRate: number;
+  standardMoratoriumMonths: number;
+  costItems?: any[];
+  riskFactors?: any[];
+}
+
 export interface RiskFactor {
-  id: string;
-  title: string;
-  category: 'BUSINESS' | 'FINANCIAL' | 'MARKET' | 'COMPETITION' | 'LOCATION_INFRA' | 'SEASONAL' | 'DATA_QUALITY';
-  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  id?: string;
+  title?: string;
+  dimension?: 'OPERATIONAL' | 'FINANCIAL' | 'SEASONAL' | 'MARKET' | 'BIOLOGICAL' | 'DATA_QUALITY' | string;
+  category: string;
   description: string;
-  potentialImpact: string;
-  mitigationSuggestion: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+  mitigation?: string;
+  mitigationSuggestion?: string;
+  potentialImpact?: string;
+  confidence?: number;
   evidenceRefId?: string;
-  confidence: number;
 }
 
 export interface RiskProfile {
   overallRiskLevel: 'HIGH' | 'MEDIUM' | 'LOW';
-  highRiskCount: number;
-  mediumRiskCount: number;
-  lowRiskCount: number;
   riskFactors: RiskFactor[];
-  summary: string;
-  dataConfidenceLimitation: string;
+  dataConfidenceScore?: number; // 0.0 to 1.0
+  insufficientDataFields?: string[];
+  highRiskCount?: number;
+  mediumRiskCount?: number;
+  lowRiskCount?: number;
+  summary?: string;
+  dataConfidenceLimitation?: string;
 }
 
 export interface AgentPayload<T> {
   agentName: string;
-  status: 'SUCCESS' | 'WARNING' | 'ERROR' | 'INSUFFICIENT_DATA';
-  executionTimeMs: number;
-  dataQuality: DataQualityStatus;
-  overallConfidence: number;
-  summary: string;
+  version?: string;
+  timestamp?: string;
+  confidenceScore?: number;
+  status?: string;
+  summary?: string;
+  dataQuality?: string;
+  overallConfidence?: number;
+  executionTimeMs?: number;
+  evidenceGenerated?: EvidenceRecord[];
   data: T;
-  evidenceGenerated: EvidenceRecord[];
+  auditTrail?: string[];
 }
 
 export interface BusinessAgentData {
   businessSummary: string;
-  businessModelType: string;
-  operatingConsiderations: string[];
-  keyOpportunities: string[];
-  possibleConstraints: string[];
-  suggestedScale: string;
+  operationalScale?: string;
+  assumedCapacityUnits?: number;
+  unitMeasurement?: string;
+  keyAssumptions?: string[];
+  requiredEquipment?: string[];
+  laborRequirement?: string;
+  businessModelType?: string;
+  operatingConsiderations?: string[];
+  keyOpportunities?: string[];
+  possibleConstraints?: string[];
+  suggestedScale?: string;
 }
 
 export interface MarketAgentData {
-  marketOpportunitySummary: string;
-  estimatedMarketReach: string;
-  competitionLevel: 'LOW' | 'MODERATE' | 'HIGH' | 'UNVERIFIED';
-  potentialDemandIndicators: {
+  demandSummary?: string;
+  catchmentDemographics?: {
+    targetVillagePopulation: number;
+    households: number;
+  };
+  competitionLevel?: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN' | string;
+  competitionDensity?: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN' | string;
+  competitionSummary?: string;
+  demandDrivers?: string[];
+  infrastructureProximity?: {
+    facilityName: string;
+    distanceKm: number;
+    facilityType: string;
+  }[];
+  potentialDemandIndicators?: {
     indicator: string;
-    level: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN';
+    level: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN' | string;
     details: string;
     evidenceId: string;
   }[];
-  nearbyFacilities: { name: string; distanceKm: number; type: string }[];
-  dataLimitations: string[];
+  nearbyFacilities?: { name: string; distanceKm: number; type: string }[];
+  dataLimitations?: string[];
+  marketOpportunitySummary?: string;
+  estimatedMarketReach?: string;
 }
 
 export interface FinalFeasibilityVerdict {
@@ -225,16 +281,23 @@ export interface FinalFeasibilityVerdict {
 
 export interface CompleteAnalysisReport {
   reportId: string;
+  id?: string;
   generatedAt: string;
   input: UserBusinessInput;
+  userInput?: UserBusinessInput;
   location: LocationData;
   feasibilityVerdict: FinalFeasibilityVerdict;
+  finalFeasibility?: FinalFeasibilityVerdict;
   businessAnalysis: AgentPayload<BusinessAgentData>;
   marketIntelligence: AgentPayload<MarketAgentData>;
+  marketAnalysis?: MarketAgentData;
   financialPlan: AgentPayload<FinancialPlan>;
   schemeGuidance: AgentPayload<SchemeMatchResult[]>;
+  schemeMatches?: SchemeMatchResult[];
   riskAnalysis: AgentPayload<RiskProfile>;
+  riskProfile?: RiskProfile;
   evidenceAuditLog: EvidenceRecord[];
+  evidenceRecords?: EvidenceRecord[];
   aggregatorValidation: {
     isValid: boolean;
     inconsistenciesResolved: string[];

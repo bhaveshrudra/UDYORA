@@ -226,18 +226,26 @@ export async function executeMultiAgentWorkflow(
     Date.now() - t7
   );
 
+  const repId = `UDY-${Date.now().toString(36).toUpperCase()}`;
   const report: CompleteAnalysisReport = {
-    reportId: `UDY-${Date.now().toString(36).toUpperCase()}`,
+    reportId: repId,
+    id: repId,
     generatedAt: new Date().toISOString(),
     input,
+    userInput: input,
     location,
     feasibilityVerdict,
+    finalFeasibility: feasibilityVerdict,
     businessAnalysis: businessPayload,
     marketIntelligence: marketPayload,
+    marketAnalysis: marketPayload.data,
     financialPlan: financePayload,
     schemeGuidance: schemePayload,
+    schemeMatches: schemePayload.data,
     riskAnalysis: riskPayload,
+    riskProfile: riskPayload.data,
     evidenceAuditLog,
+    evidenceRecords: evidenceAuditLog,
     aggregatorValidation
   };
 

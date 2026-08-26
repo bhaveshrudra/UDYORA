@@ -15,25 +15,45 @@ import { calculateEMI, calculateTotalInterest, generateRepaymentSchedule } from 
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface FinancialPlanCardProps {
-  initialPlan: FinancialPlan;
+  initialPlan: FinancialPlan | { data: FinancialPlan };
 }
 
 export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPlan }) => {
   const { t } = useLanguage();
 
-  const [tenureMonths, setTenureMonths] = useState<number>(initialPlan.tenureMonths || 60);
-  const [interestRate, setInterestRate] = useState<number>(initialPlan.annualInterestRate || 9.50);
-  const [moratoriumMonths, setMoratoriumMonths] = useState<number>(initialPlan.moratoriumMonths || 3);
+  // Safely extract plan data whether passed as raw plan or AgentPayload
+  const plan: FinancialPlan = (initialPlan as any)?.data || initialPlan || {
+    availableOwnCapital: 100000,
+    marginPercentage: 10,
+    indicativeProjectCost: 1000000,
+    indicativeFinancingRequirement: 900000,
+    annualInterestRate: 9.50,
+    tenureMonths: 60,
+    moratoriumMonths: 3,
+    monthlyEMI: 19688,
+    totalInterestPayable: 221760,
+    estimatedMonthlyRevenue: 75000,
+    estimatedMonthlyOperatingExpenses: 30000,
+    estimatedMonthlyNetProfit: 25312,
+    debtServiceCoverageRatio: 2.29,
+    breakEvenPeriodMonths: 18,
+    costBreakdown: []
+  };
+
+  const [tenureMonths, setTenureMonths] = useState<number>(plan.tenureMonths || 60);
+  const [interestRate, setInterestRate] = useState<number>(plan.annualInterestRate || 9.50);
+  const [moratoriumMonths, setMoratoriumMonths] = useState<number>(plan.moratoriumMonths || 3);
   const [showFullBreakdown, setShowFullBreakdown] = useState<boolean>(false);
   const [showSchedule, setShowSchedule] = useState<boolean>(false);
 
   // Dynamic live deterministic calculation on slider changes
-  const loanAmount = initialPlan.indicativeFinancingRequirement;
+  const loanAmount = plan.indicativeFinancingRequirement || (plan.indicativeProjectCost - plan.availableOwnCapital) || 900000;
   const amortizationMonths = Math.max(1, tenureMonths - moratoriumMonths);
   const dynamicEMI = calculateEMI(loanAmount, interestRate, amortizationMonths);
   const dynamicTotalInterest = calculateTotalInterest(dynamicEMI, amortizationMonths, loanAmount);
   const dynamicTotalRepayment = loanAmount + dynamicTotalInterest;
   const dynamicSchedule = generateRepaymentSchedule(loanAmount, interestRate, tenureMonths, moratoriumMonths);
+  const costBreakdown = plan.costBreakdown || [];
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
@@ -64,10 +84,10 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
             {t('fin.ownCapital')}
           </span>
           <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-            ₹{initialPlan.availableOwnCapital.toLocaleString('en-IN')}
+            ₹{plan.availableOwnCapital.toLocaleString('en-IN')}
           </p>
           <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
-            {initialPlan.marginPercentage}% {t('fin.promoterMargin')}
+            {plan.marginPercentage}% {t('fin.promoterMargin')}
           </span>
         </div>
 
@@ -76,7 +96,7 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
             {t('fin.projectCost')}
           </span>
           <p className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
-            ₹{initialPlan.indicativeProjectCost.toLocaleString('en-IN')}
+            ₹{plan.indicativeProjectCost.toLocaleString('en-IN')}
           </p>
           <span className="text-[11px] text-blue-700 font-medium mt-0.5 block">
             {t('fin.capexWorkingCap')}
@@ -88,7 +108,7 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
             {t('fin.financing')}
           </span>
           <p className="text-xl sm:text-2xl font-black text-blue-950 mt-1">
-            ₹{initialPlan.indicativeFinancingRequirement.toLocaleString('en-IN')}
+            ₹{plan.indicativeFinancingRequirement.toLocaleString('en-IN')}
           </p>
           <span className="text-[11px] text-blue-700 font-medium mt-0.5 block">
             {t('fin.loanNeed')}
@@ -112,19 +132,19 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50/70 border border-slate-200/80 rounded-xl p-3.5">
         <div>
           <span className="text-slate-500 font-medium">{t('fin.estRevenue')}</span>
-          <p className="font-bold text-slate-900 mt-0.5">₹{initialPlan.estimatedMonthlyRevenue.toLocaleString('en-IN')}</p>
+          <p className="font-bold text-slate-900 mt-0.5">₹{plan.estimatedMonthlyRevenue.toLocaleString('en-IN')}</p>
         </div>
         <div>
           <span className="text-slate-500 font-medium">{t('fin.estOpEx')}</span>
-          <p className="font-bold text-slate-900 mt-0.5">₹{initialPlan.estimatedMonthlyOperatingExpenses.toLocaleString('en-IN')}</p>
+          <p className="font-bold text-slate-900 mt-0.5">₹{plan.estimatedMonthlyOperatingExpenses.toLocaleString('en-IN')}</p>
         </div>
         <div>
           <span className="text-slate-500 font-medium">{t('fin.estNetProfit')}</span>
-          <p className="font-bold text-emerald-700 mt-0.5">₹{(initialPlan.estimatedMonthlyRevenue - initialPlan.estimatedMonthlyOperatingExpenses - dynamicEMI).toLocaleString('en-IN')}</p>
+          <p className="font-bold text-emerald-700 mt-0.5">₹{(plan.estimatedMonthlyRevenue - plan.estimatedMonthlyOperatingExpenses - dynamicEMI).toLocaleString('en-IN')}</p>
         </div>
         <div>
           <span className="text-slate-500 font-medium">{t('fin.dscr')}</span>
-          <p className="font-bold text-blue-900 mt-0.5">{initialPlan.debtServiceCoverageRatio}x</p>
+          <p className="font-bold text-blue-900 mt-0.5">{plan.debtServiceCoverageRatio}x</p>
         </div>
       </div>
 
@@ -243,7 +263,7 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {initialPlan.costBreakdown.map((item, idx) => (
+                {costBreakdown.map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50">
                     <td className="px-4 py-2.5">
                       <p className="font-bold text-slate-900">{item.name}</p>
@@ -271,7 +291,7 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
                     {t('fin.table.totalCost')}
                   </td>
                   <td className="px-4 py-2.5 text-right text-sm">
-                    ₹{initialPlan.indicativeProjectCost.toLocaleString('en-IN')}
+                    ₹{plan.indicativeProjectCost.toLocaleString('en-IN')}
                   </td>
                 </tr>
               </tbody>
