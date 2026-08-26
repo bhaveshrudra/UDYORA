@@ -1,6 +1,9 @@
 /**
  * UDYORA - Hyper-Local Business Intelligence for Rural Entrepreneurs
- * Orchestrated Multi-Agent System Prototype
+ * 
+ * Routes:
+ * /    -> UDYORA Public Landing Page
+ * /app -> UDYORA Functional Business Intelligence Application
  */
 
 import React, { useState, useEffect } from 'react';
@@ -23,6 +26,7 @@ import {
 } from 'lucide-react';
 import { UserBusinessInput, CompleteAnalysisReport, AgentStepStatus } from './types';
 import { Header } from './components/Header';
+import { LandingPage } from './components/LandingPage';
 import { BusinessInputForm } from './components/BusinessInputForm';
 import { AgentExecutionProgress } from './components/AgentExecutionProgress';
 import { ResultDashboard } from './components/ResultDashboard';
@@ -31,23 +35,57 @@ import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { runFinancialUnitTests } from './tests/financialCalculator.test';
 
 export default function App() {
+  // Determine initial route from window.location.pathname
+  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(() => {
+    const path = window.location.pathname;
+    return path.startsWith('/app') ? 'app' : 'landing';
+  });
+
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
   const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([]);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState<string>('en');
-  const [isPrinting, setIsPrinting] = useState<boolean>(false);
 
-  // Run automated unit test suite on mount to verify mathematical rigor
+  // Handle browser URL synchronization (pushState / popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      setCurrentRoute(path.startsWith('/app') ? 'app' : 'landing');
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Run automated unit tests on mount to ensure deterministic math accuracy
   useEffect(() => {
     const testResult = runFinancialUnitTests();
     if (testResult.passed) {
-      console.log('âœ… [UDYORA Unit Tests] All 9 Deterministic Financial Calculations Passed:');
+      console.log('✅ [UDYORA Unit Tests] All 9 Deterministic Financial Calculations Passed:');
       testResult.logs.forEach((log) => console.log(log));
     } else {
-      console.error('âŒ [UDYORA Unit Tests] Test Failures Detected:', testResult.logs);
+      console.error('❌ [UDYORA Unit Tests] Test Failures Detected:', testResult.logs);
     }
   }, []);
+
+  const navigateToRoute = (route: 'landing' | 'app', urlPath: string = route === 'app' ? '/app' : '/') => {
+    setCurrentRoute(route);
+    if (window.location.pathname !== urlPath) {
+      window.history.pushState({}, '', urlPath);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNavigateToApp = (scenario?: 'dairy' | 'tailoring' | 'retail') => {
+    navigateToRoute('app', '/app');
+    // If dairy scenario chosen, reset result state so form is shown ready with preset
+    setCurrentScreen('form');
+  };
+
+  const handleNavigateHome = () => {
+    navigateToRoute('landing', '/');
+  };
 
   const handleFormSubmit = async (input: UserBusinessInput) => {
     setCurrentScreen('executing');
@@ -75,6 +113,16 @@ export default function App() {
     window.print();
   };
 
+  // ROUTE 1: PUBLIC LANDING PAGE (/)
+  if (currentRoute === 'landing') {
+    return (
+      <LandingPage
+        onNavigateToApp={handleNavigateToApp}
+      />
+    );
+  }
+
+  // ROUTE 2: FUNCTIONAL UDYORA APPLICATION (/app)
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex flex-col selection:bg-blue-100 selection:text-blue-950">
       {/* Printable View (Rendered only during browser print) */}
@@ -86,24 +134,26 @@ export default function App() {
 
       {/* Screen View (Hidden during print) */}
       <div className="print:hidden flex flex-col flex-1">
-        {/* Main Public-Service Header */}
+        {/* Main Application Header with Home navigation */}
         <Header
+          onNavigateHome={handleNavigateHome}
           onReset={analysisReport ? handleReset : undefined}
           onPrint={analysisReport ? handlePrint : undefined}
           currentLanguage={currentLanguage}
           onLanguageChange={setCurrentLanguage}
           hasResult={!!analysisReport}
+          isAppRoute={true}
         />
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* SCREEN 1: GUIDED INPUT & HERO */}
           {currentScreen === 'form' && (
             <div className="space-y-8 animate-fadeIn">
-              {/* Hero Banner */}
+              {/* App Top Intro Banner */}
               <div className="text-center max-w-3xl mx-auto pt-2 pb-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-blue-100/70 text-blue-900 border border-blue-200 mb-3.5">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/70 text-blue-900 border border-blue-200 mb-3.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                  <span>Verified Multi-Agent Business Advisory for Rural Micro-Enterprises</span>
+                  <span>Evidence-Aware Multi-Agent Business Advisory</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
                   UDYORA Business Intelligence
@@ -151,14 +201,14 @@ export default function App() {
                 U
               </div>
               <span className="font-bold text-slate-800">UDYORA</span>
-              <span>â€” Hyper-Local Business Intelligence for Rural Entrepreneurs</span>
+              <span>— Hyper-Local Business Intelligence for Rural Entrepreneurs</span>
             </div>
             <div className="flex items-center gap-4 text-slate-500">
               <span>Deterministic Financial Engine</span>
-              <span>â€¢</span>
+              <span>•</span>
               <span>Rule-based Schemes</span>
-              <span>â€¢</span>
-              <span>Census & Ground Truth Audit</span>
+              <span>•</span>
+              <span>Developed by Beyond Zero</span>
             </div>
           </div>
         </footer>
