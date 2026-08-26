@@ -2,14 +2,11 @@ import React, { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
-  Sparkles,
   Store,
   TrendingUp,
   Calculator,
   Award,
   CheckCircle2,
-  AlertCircle,
-  HelpCircle,
   ShieldCheck,
   Building2,
   Users,
@@ -18,12 +15,16 @@ import {
   MapPin,
   ChevronRight,
   ExternalLink,
-  Globe
+  Globe,
+  Sparkles
 } from 'lucide-react';
 import { AnimatedBusinessBackground } from './AnimatedBusinessBackground';
+import { HeroAnalyticsComposition } from './HeroAnalyticsComposition';
 import { ProductIntroSplash } from './ProductIntroSplash';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
+
+import { BrandLogo } from './BrandLogo';
 
 interface LandingPageProps {
   onNavigateToApp: (scenario?: 'dairy' | 'tailoring' | 'retail') => void;
@@ -110,25 +111,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <AnimatedBusinessBackground containerRef={landingRef} />
 
       {/* Top Header Accent Band */}
-      <div className="relative z-50 w-full h-1 bg-gradient-to-r from-amber-500 via-slate-200 to-emerald-600" />
+      <div className="relative z-50 w-full h-1 bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600" />
 
       {/* LANDING HEADER */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-2xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           {/* Brand Logo & Name */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center text-white font-bold text-xl shadow-xs border border-slate-700 tracking-wider">
-              U
-            </div>
-            <div>
-              <span className="text-xl font-bold tracking-tight text-slate-950 block">
-                {t('brand.name')}
-              </span>
-              <p className="text-[11px] text-slate-500 font-medium tracking-normal leading-tight hidden sm:block">
-                {t('brand.tagline')}
-              </p>
-            </div>
-          </div>
+          <BrandLogo size="md" />
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-slate-600">
@@ -189,67 +178,82 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </header>
 
-      {/* MAIN HERO SECTION */}
-      <section className="relative pt-20 pb-24 sm:pt-28 sm:pb-32 px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[580px] sm:min-h-[640px]">
-        {/* Foreground Hero Content */}
-        <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
-          {/* Subtle Tagline Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50/90 backdrop-blur-xs text-blue-900 border border-blue-200/80 shadow-2xs"
-          >
-            <ShieldCheck className="w-4 h-4 text-blue-700" />
-            <span>{t('brand.tagline')}</span>
-          </motion.div>
-
-          {/* Main Title */}
-          <motion.h1
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-950"
-          >
-            {t('hero.title')}
-          </motion.h1>
-
-          {/* Supporting Statement */}
-          <motion.p
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed"
-          >
-            {t('hero.supporting')}
-          </motion.p>
-
-          {/* Single Interactive Call-To-Action Button with Left-to-Right Sweep Fill */}
-          <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center justify-center pt-4"
-          >
-            <button
-              onClick={() => onNavigateToApp()}
-              className="group relative inline-flex items-center justify-center gap-3 px-9 py-4 rounded-xl text-sm sm:text-base font-bold text-slate-900 bg-white/95 backdrop-blur-xs border border-slate-300 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:border-slate-900 active:scale-[0.98] cursor-pointer"
+      {/* =========================================================================
+          TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION
+          ========================================================================= */}
+      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 px-4 sm:px-6 lg:px-8 flex items-center min-h-[640px]">
+        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+          {/* LEFT COLUMN: HIGH-IMPACT HEADLINE & PRIMARY CTA */}
+          <div className="lg:col-span-6 xl:col-span-6 space-y-6 text-left">
+            {/* Subtle Tagline Badge */}
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-900 border border-blue-200/90 shadow-2xs"
             >
-              {/* Muted Blue Left-to-Right Sweep Fill Overlay */}
-              <span
-                className="absolute inset-0 w-full h-full bg-slate-900 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
-                aria-hidden="true"
-              />
+              <ShieldCheck className="w-4 h-4 text-blue-700" />
+              <span>Hyper-Local Business Intelligence Platform</span>
+            </motion.div>
 
-              {/* Foreground Label with smooth color inversion */}
-              <span className="relative z-10 text-slate-900 group-hover:text-white transition-colors duration-300">
-                {t('nav.getStarted')}
+            {/* Large Bold Hero Headline */}
+            <motion.h1
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-950 leading-[1.08]"
+            >
+              Understand Your Local Business.{' '}
+              <span className="text-blue-700 block mt-1">
+                Plan Smarter. Grow Confidently.
               </span>
+            </motion.h1>
 
-              {/* Interactive Arrow Indicator with 4px Right Shift */}
-              <ArrowRight className="relative z-10 w-4 h-4 text-slate-900 group-hover:text-white group-hover:translate-x-1.5 transition-all duration-300" />
-            </button>
-          </motion.div>
+            {/* Supporting Paragraph */}
+            <motion.p
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xl"
+            >
+              UDYORA combines local business intelligence, financial planning, risk analysis and evidence-backed guidance to help rural and semi-urban entrepreneurs make better-informed decisions.
+            </motion.p>
+
+            {/* Primary Action Button with Left-to-Right Fill Sweep */}
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+            >
+              <button
+                onClick={() => onNavigateToApp()}
+                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white bg-slate-900 overflow-hidden transition-all duration-300 shadow-md hover:shadow-xl active:scale-[0.98] cursor-pointer"
+              >
+                {/* Muted Blue Fill Sweep Overlay */}
+                <span
+                  className="absolute inset-0 w-full h-full bg-blue-800 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
+                  aria-hidden="true"
+                />
+
+                <span className="relative z-10 text-white">
+                  START ANALYSIS
+                </span>
+
+                <ArrowRight className="relative z-10 w-4 h-4 text-white group-hover:translate-x-1.5 transition-all duration-300" />
+              </button>
+
+              <span className="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Zero guesswork • Instant feasibility check</span>
+              </span>
+            </motion.div>
+          </div>
+
+          {/* RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
+          <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center">
+            <HeroAnalyticsComposition />
+          </div>
         </div>
       </section>
 
@@ -276,7 +280,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.55, delay: idx * 0.1 }}
-                className="bg-white/90 backdrop-blur-xs border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-white/95 backdrop-blur-xs border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-md transition-all flex flex-col justify-between"
               >
                 <div>
                   <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-4">
@@ -409,7 +413,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 aria-hidden="true"
               />
               <span className="relative z-10 text-white">
-                {t('cta.button')}
+                START ANALYSIS
               </span>
               <ArrowRight className="relative z-10 w-4 h-4 text-white group-hover:translate-x-1.5 transition-transform duration-300" />
             </button>
@@ -424,7 +428,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
               U
             </div>
-            <span className="font-bold text-slate-800">{t('brand.name')}</span>
+            <span className="font-bold text-slate-800">UDYORA</span>
             <span>— {t('brand.tagline')}</span>
           </div>
           <div className="flex items-center gap-4 text-slate-500">

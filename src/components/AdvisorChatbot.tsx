@@ -13,10 +13,11 @@ import {
   User,
   ShieldCheck,
   AlertCircle,
-  HelpCircle,
   Pause,
   Play,
-  Square
+  Square,
+  Check,
+  Ban
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import {
@@ -25,29 +26,43 @@ import {
   generateAdvisorResponse
 } from '../services/advisorBotService';
 import {
-  isSpeechRecognitionSupported,
-  isSpeechSynthesisSupported,
-  startSpeechRecognition,
-  stopSpeechRecognition,
-  speakText,
-  stopSpeechSynthesis,
-  pauseSpeechSynthesis,
-  resumeSpeechSynthesis
-} from '../services/speechService';
+  isSpeechRecognitionAvailable,
+  startVoiceRecognition,
+  stopVoiceRecognition
+} from '../services/speechRecognition';
+import {
+  isSpeechSynthesisAvailable,
+  playVoiceOutput,
+  stopVoiceOutput,
+  pauseVoiceOutput,
+  resumeVoiceOutput
+} from '../services/speechSynthesis';
 import { CompleteAnalysisReport, UserBusinessInput, LocationData } from '../types';
+
+interface PendingConfirmationAction {
+  type: 'CAPITAL_CHANGE' | 'LOCATION_CHANGE' | 'RESET_ANALYSIS' | 'TRIGGER_ANALYSIS';
+  description: string;
+  payload?: any;
+}
 
 interface AdvisorChatbotProps {
   currentInput?: UserBusinessInput;
   currentLocation?: LocationData;
   analysisReport?: CompleteAnalysisReport | null;
+  onUpdateInput?: (updated: Partial<UserBusinessInput>) => void;
+  onTriggerAnalysis?: () => void;
+  onResetAnalysis?: () => void;
 }
 
 export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   currentInput,
   currentLocation,
-  analysisReport
+  analysisReport,
+  onUpdateInput,
+  onTriggerAnalysis,
+  onResetAnalysis
 }) => {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
@@ -57,18 +72,19 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeechPaused, setIsSpeechPaused] = useState<boolean>(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingConfirmationAction | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom of conversation
+  // Auto-scroll conversation
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isThinking, isOpen]);
+  }, [messages, isThinking, isOpen, pendingAction]);
 
-  // Initial welcome greeting on first open or language change
+  // Initial welcome greeting on first open
   useEffect(() => {
     if (messages.length === 0) {
       const welcomeMap: Record<string, string> = {
@@ -91,22 +107,91 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     }
   }, [language, messages.length]);
 
-  // Clean up speech synthesis and recognition on unmount or close
+  // Cleanup audio listeners on unmount
   useEffect(() => {
     return () => {
-      stopSpeechRecognition();
-      stopSpeechSynthesis();
+      stopVoiceRecognition();
+      stopVoiceOutput();
     };
   }, []);
+
+  // Voice Command Intent Checker (Safe Confirmation Protocol)
+  const checkForActionCommands = (queryText: string): boolean => {
+    const q = queryText.toLowerCase().trim();
+
+    // 1. Capital Change Intent
+    if (q.includes('change capital') || q.includes('update capital') || q.includes('set capital')) {
+      const numMatch = q.match(/(\d+)/);
+      let targetCapital = 500000;
+      if (numMatch) {
+        const val = parseInt(numMatch[0], 10);
+        targetCapital = val < 1000 ? val * 100000 : val;
+      }
+      setPendingAction({
+        type: 'CAPITAL_CHANGE',
+        description: `Update available promoter own capital to ₹${targetCapital.toLocaleString('en-IN')}`,
+        payload: { availableCapital: targetCapital }
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `confirm_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ **Action Confirmation Required:**\n\nI can update your available promoter equity capital to **₹${targetCapital.toLocaleString('en-IN')}**. This will scale your indicative project cost to ₹${(targetCapital * 10).toLocaleString('en-IN')}.\n\nPlease confirm below to apply this update.`,
+          timestamp: new Date().toISOString(),
+          topic: 'finance'
+        }
+      ]);
+      return true;
+    }
+
+    // 2. Start / Reset Analysis Intent
+    if (q === 'start new analysis' || q === 'reset analysis' || q === 'clear analysis') {
+      setPendingAction({
+        type: 'RESET_ANALYSIS',
+        description: 'Reset current business analysis and return to input form'
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `confirm_${Date.now()}`,
+          sender: 'assistant',
+          text: `⚠️ **Action Confirmation Required:**\n\nWould you like to clear the current analysis and start a new business assessment?`,
+          timestamp: new Date().toISOString(),
+          topic: 'general'
+        }
+      ]);
+      return true;
+    }
+
+    // 3. Trigger Analysis Intent
+    if (q === 'analyze my business' || q === 'run analysis' || q === 'execute analysis') {
+      if (onTriggerAnalysis) {
+        onTriggerAnalysis();
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `act_${Date.now()}`,
+            sender: 'assistant',
+            text: 'Starting multi-agent execution pipeline...',
+            timestamp: new Date().toISOString()
+          }
+        ]);
+        return true;
+      }
+    }
+
+    return false;
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputText).trim();
     if (!query || isThinking) return;
 
-    // Stop active speech recognition or synthesis
-    stopSpeechRecognition();
+    // Reset voice & speech states
+    stopVoiceRecognition();
     setIsListening(false);
-    stopSpeechSynthesis();
+    stopVoiceOutput();
     setSpeakingMessageId(null);
     setVoiceNotice(null);
 
@@ -120,6 +205,13 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     setMessages((prev) => [...prev, userMsg]);
     setInputText('');
     setInterimTranscript('');
+
+    // Check for voice action commands requiring confirmation
+    const handledAsCommand = checkForActionCommands(query);
+    if (handledAsCommand) {
+      return;
+    }
+
     setIsThinking(true);
 
     const context: AdvisorContext = {
@@ -133,7 +225,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
       const response = await generateAdvisorResponse(query, context, messages);
       setMessages((prev) => [...prev, response]);
     } catch (err) {
-      console.error('Advisor response error:', err);
+      console.error('Advisor response generation error:', err);
       setMessages((prev) => [
         ...prev,
         {
@@ -149,23 +241,68 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     }
   };
 
-  // Toggle Voice Input (Microphone)
+  // Confirm Pending Action
+  const handleConfirmAction = () => {
+    if (!pendingAction) return;
+
+    if (pendingAction.type === 'CAPITAL_CHANGE' && onUpdateInput) {
+      onUpdateInput(pendingAction.payload);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `act_done_${Date.now()}`,
+          sender: 'assistant',
+          text: `✅ **Action Confirmed:** ${pendingAction.description} successfully.`,
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    } else if (pendingAction.type === 'RESET_ANALYSIS' && onResetAnalysis) {
+      onResetAnalysis();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `act_done_${Date.now()}`,
+          sender: 'assistant',
+          text: '✅ **Analysis Reset:** Returned to input form.',
+          timestamp: new Date().toISOString()
+        }
+      ]);
+    }
+
+    setPendingAction(null);
+  };
+
+  // Cancel Pending Action
+  const handleCancelAction = () => {
+    setPendingAction(null);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `act_cancel_${Date.now()}`,
+        sender: 'assistant',
+        text: 'Action cancelled. Your previous configuration remains unchanged.',
+        timestamp: new Date().toISOString()
+      }
+    ]);
+  };
+
+  // Real Voice Input (Microphone)
   const toggleVoiceInput = () => {
     if (isListening) {
-      stopSpeechRecognition();
+      stopVoiceRecognition();
       setIsListening(false);
       setInterimTranscript('');
       return;
     }
 
-    if (!isSpeechRecognitionSupported()) {
+    if (!isSpeechRecognitionAvailable()) {
       setVoiceNotice('Voice input is not supported in this browser. Please use text input.');
       setTimeout(() => setVoiceNotice(null), 4000);
       return;
     }
 
     setVoiceNotice(null);
-    const started = startSpeechRecognition({
+    const started = startVoiceRecognition({
       language,
       onStart: () => {
         setIsListening(true);
@@ -195,24 +332,24 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     }
   };
 
-  // Toggle Voice Output (Speech Synthesis) for an Assistant message
+  // Real Voice Output (Speech Synthesis)
   const handleToggleSpeech = (msg: ChatMessage) => {
     if (speakingMessageId === msg.id) {
       if (isSpeechPaused) {
-        resumeSpeechSynthesis();
+        resumeVoiceOutput();
         setIsSpeechPaused(false);
       } else {
-        pauseSpeechSynthesis();
+        pauseVoiceOutput();
         setIsSpeechPaused(true);
       }
       return;
     }
 
-    stopSpeechSynthesis();
+    stopVoiceOutput();
     setSpeakingMessageId(msg.id);
     setIsSpeechPaused(false);
 
-    speakText({
+    playVoiceOutput({
       text: msg.text,
       language,
       onStart: () => {
@@ -233,16 +370,17 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   };
 
   const handleStopSpeech = () => {
-    stopSpeechSynthesis();
+    stopVoiceOutput();
     setSpeakingMessageId(null);
     setIsSpeechPaused(false);
   };
 
   const handleResetChat = () => {
-    stopSpeechSynthesis();
-    stopSpeechRecognition();
+    stopVoiceOutput();
+    stopVoiceRecognition();
     setSpeakingMessageId(null);
     setIsListening(false);
+    setPendingAction(null);
     setMessages([]);
   };
 
@@ -277,7 +415,6 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
           >
             <div className="relative">
               <Bot className="w-5 h-5 text-blue-300" />
-              {/* Subtle Pulsing Active Indicator */}
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
             </div>
@@ -303,7 +440,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                     UDYORA Business Advisor
                   </h2>
                   <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-950 text-blue-300 px-1.5 py-0.2 rounded border border-blue-800">
-                    AI Agent
+                    Voice Active
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-300">
@@ -323,8 +460,8 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
               </button>
               <button
                 onClick={() => {
-                  stopSpeechSynthesis();
-                  stopSpeechRecognition();
+                  stopVoiceOutput();
+                  stopVoiceRecognition();
                   setIsOpen(false);
                 }}
                 title="Close Advisor"
@@ -422,6 +559,35 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                 )}
               </div>
             ))}
+
+            {/* Pending Action Confirmation Bar */}
+            {pendingAction && (
+              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-2.5 text-xs">
+                <div className="flex items-center gap-2 text-amber-900 font-bold">
+                  <ShieldCheck className="w-4 h-4 text-amber-700" />
+                  <span>Confirmation Required</span>
+                </div>
+                <p className="text-amber-800 text-[11px]">
+                  {pendingAction.description}
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={handleConfirmAction}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-colors cursor-pointer"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    <span>Confirm</span>
+                  </button>
+                  <button
+                    onClick={handleCancelAction}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300 transition-colors cursor-pointer"
+                  >
+                    <Ban className="w-3.5 h-3.5" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Thinking / Agent Processing Indicator */}
             {isThinking && (

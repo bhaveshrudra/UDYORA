@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
+import { BrandLogo } from './BrandLogo';
 
 interface ProductIntroSplashProps {
   onComplete: () => void;
+  logoSrc?: string;
 }
 
-export function ProductIntroSplash({ onComplete }: ProductIntroSplashProps) {
+export function ProductIntroSplash({ onComplete, logoSrc }: ProductIntroSplashProps) {
   const shouldReduceMotion = useReducedMotion();
   const letters = ['U', 'D', 'Y', 'O', 'R', 'A'];
   const [activeStep, setActiveStep] = useState<number>(0);
+  const [showLogo, setShowLogo] = useState<boolean>(false);
   const [showTagline, setShowTagline] = useState<boolean>(false);
   const [isExiting, setIsExiting] = useState<boolean>(false);
 
   useEffect(() => {
     // If reduced motion is requested, complete rapidly
     if (shouldReduceMotion) {
+      setShowLogo(true);
       setActiveStep(letters.length);
       setShowTagline(true);
       const fastTimer = setTimeout(() => {
@@ -26,26 +30,31 @@ export function ProductIntroSplash({ onComplete }: ProductIntroSplashProps) {
 
     let timeout: NodeJS.Timeout;
 
-    if (activeStep < letters.length) {
-      // Reveal letters sequentially
+    if (!showLogo) {
+      // Step 1: Reveal logo image/symbol
+      timeout = setTimeout(() => {
+        setShowLogo(true);
+      }, 150);
+    } else if (activeStep < letters.length) {
+      // Step 2: Reveal letters sequentially
       timeout = setTimeout(() => {
         setActiveStep((prev) => prev + 1);
-      }, 210);
+      }, 190);
     } else if (!showTagline) {
-      // When UDYORA completes, reveal tagline
+      // Step 3: Reveal tagline
       timeout = setTimeout(() => {
         setShowTagline(true);
       }, 180);
     } else if (!isExiting) {
-      // Hold for 750ms after tagline is visible, then start exit fade
+      // Step 4: Hold and smoothly fade out
       timeout = setTimeout(() => {
         setIsExiting(true);
         setTimeout(onComplete, 550);
-      }, 800);
+      }, 750);
     }
 
     return () => clearTimeout(timeout);
-  }, [activeStep, showTagline, isExiting, shouldReduceMotion, onComplete, letters.length]);
+  }, [showLogo, activeStep, showTagline, isExiting, shouldReduceMotion, onComplete, letters.length]);
 
   return (
     <AnimatePresence>
@@ -58,20 +67,24 @@ export function ProductIntroSplash({ onComplete }: ProductIntroSplashProps) {
           className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white select-none pointer-events-none px-4"
         >
           {/* Subtle Ambient Radial Light */}
-          <div className="absolute inset-0 bg-radial from-blue-50/50 via-transparent to-transparent opacity-70 pointer-events-none" />
+          <div className="absolute inset-0 bg-radial from-blue-50/60 via-transparent to-transparent opacity-80 pointer-events-none" />
 
           <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-4 max-w-xl">
-            {/* Small Brand Icon Accent */}
+            {/* Step 1: Official Brand Logo Visual Slot */}
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, ease: 'easeOut' }}
-              className="w-11 h-11 rounded-xl bg-slate-900 flex items-center justify-center text-white font-bold text-xl shadow-xs border border-slate-700 tracking-wider mb-1"
+              animate={showLogo ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              className="mb-1"
             >
-              U
+              <BrandLogo
+                size="lg"
+                compact={true}
+                logoSrc={logoSrc}
+              />
             </motion.div>
 
-            {/* Letter-by-Letter Central Logo Title */}
+            {/* Step 2: Letter-by-Letter Central Logo Title */}
             <div className="flex items-center justify-center space-x-1 sm:space-x-2">
               {letters.map((char, index) => {
                 const isVisible = index < activeStep;
@@ -85,7 +98,7 @@ export function ProductIntroSplash({ onComplete }: ProductIntroSplashProps) {
                         : { opacity: 0, y: 10, scale: 0.94 }
                     }
                     transition={{
-                      duration: 0.4,
+                      duration: 0.38,
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     className="font-mono font-black text-4xl sm:text-6xl md:text-7xl text-slate-950 tracking-[0.06em] inline-block"
@@ -96,7 +109,7 @@ export function ProductIntroSplash({ onComplete }: ProductIntroSplashProps) {
               })}
             </div>
 
-            {/* Tagline Subtitle */}
+            {/* Step 3: Tagline Subtitle */}
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={showTagline ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}

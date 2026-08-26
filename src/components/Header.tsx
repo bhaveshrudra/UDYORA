@@ -2,6 +2,7 @@ import React from 'react';
 import { Compass, RotateCcw, Printer, ArrowLeft, Globe } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
+import { BrandLogo } from './BrandLogo';
 
 interface HeaderProps {
   onReset?: () => void;
@@ -21,17 +22,17 @@ export const Header: React.FC<HeaderProps> = ({
   const { language, setLanguage, t, supportedLanguages } = useLanguage();
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
-      {/* Subtle Indian Accent Band */}
-      <div className="w-full h-1 bg-gradient-to-r from-amber-500 via-slate-200 to-emerald-600" />
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+      {/* Subtle Top Accent Band */}
+      <div className="w-full h-1 bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
         {/* Left Side: Home link & Brand Logo */}
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3">
           {isAppRoute && onNavigateHome && (
             <button
               onClick={onNavigateHome}
-              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer mr-1"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer mr-1"
               title={t('nav.home')}
             >
               <ArrowLeft className="w-4 h-4" />
@@ -39,47 +40,37 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           )}
 
-          <div
-            className="flex items-center gap-3 cursor-pointer"
+          <BrandLogo
+            size="md"
             onClick={onNavigateHome || onReset}
-          >
-            <div className="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white font-bold text-lg shadow-xs border border-slate-700 tracking-wider">
-              U
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold tracking-tight text-slate-950">{t('brand.name')}</span>
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium hidden sm:block leading-tight">
-                {t('brand.tagline')}
-              </p>
-            </div>
-          </div>
+            showTagline={true}
+          />
         </div>
 
         {/* Right Action Controls */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Unicode Language Selector */}
-          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700">
-            <Globe className="w-3.5 h-3.5 text-slate-500" />
+        <div className="flex items-center gap-3">
+          {/* Global Language Selector */}
+          <div className="relative inline-flex items-center">
+            <Globe className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 pointer-events-none" />
             <select
+              aria-label="Select Application Language"
               value={language}
               onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-              className="bg-transparent border-none text-xs font-medium text-slate-800 focus:outline-hidden cursor-pointer"
+              className="pl-7 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer transition-colors appearance-none shadow-2xs"
             >
               {supportedLanguages.map((lang) => (
-                <option key={lang.code} value={lang.code}>
+                <option key={lang.code} value={lang.code} className="py-1">
                   {lang.nativeName}
                 </option>
               ))}
             </select>
           </div>
 
+          {/* Action Buttons */}
           {hasResult && onPrint && (
             <button
               onClick={onPrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-blue-900 transition-colors shadow-2xs cursor-pointer"
-              title={t('nav.printReport')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{t('nav.printReport')}</span>
@@ -89,10 +80,10 @@ export const Header: React.FC<HeaderProps> = ({
           {hasResult && onReset && (
             <button
               onClick={onReset}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-slate-900 hover:bg-blue-900 rounded-lg transition-colors shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors cursor-pointer shadow-xs"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>{t('nav.newAnalysis')}</span>
+              <span>{t('nav.newSearch')}</span>
             </button>
           )}
         </div>

@@ -229,6 +229,17 @@ function AppContent() {
           currentInput={currentInput}
           currentLocation={analysisReport?.location}
           analysisReport={analysisReport}
+          onUpdateInput={(updated) => {
+            if (currentInput) {
+              setCurrentInput({ ...currentInput, ...updated });
+            }
+          }}
+          onTriggerAnalysis={() => {
+            if (currentInput) {
+              handleFormSubmit(currentInput);
+            }
+          }}
+          onResetAnalysis={handleReset}
         />
 
         {/* Global Public Service Footer */}
