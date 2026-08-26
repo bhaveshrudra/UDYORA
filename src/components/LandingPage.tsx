@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion, useReducedMotion, Variants } from 'motion/react';
+import { motion, useReducedMotion, Variants, AnimatePresence } from 'motion/react';
 import {
   ArrowRight,
   Store,
@@ -22,7 +22,9 @@ import {
   IndianRupee,
   Check,
   AlertTriangle,
-  Info
+  Info,
+  Menu,
+  X
 } from 'lucide-react';
 import { AnimatedBusinessBackground } from './AnimatedBusinessBackground';
 import { HeroAnalyticsComposition } from './HeroAnalyticsComposition';
@@ -31,6 +33,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
 import { BrandLogo } from './BrandLogo';
 import { PublicFooter } from './PublicFooter';
+import { HeaderLanguageSelector } from './HeaderLanguageSelector';
 
 interface LandingPageProps {
   onNavigateToApp: (scenario?: 'dairy' | 'tailoring' | 'retail') => void;
@@ -44,26 +47,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const landingRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const { language, setLanguage, t, supportedLanguages } = useLanguage();
-
-  // Intro Splash state (only played on initial visit per session)
-  const [showSplash, setShowSplash] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      return !sessionStorage.getItem('udyora_intro_seen');
-    } catch {
-      return false;
-    }
-  });
-
-  const handleSplashComplete = () => {
-    setShowSplash(false);
-    try {
-      sessionStorage.setItem('udyora_intro_seen', 'true');
-    } catch {}
-  };
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Smooth scroll helper for landing nav links
   const scrollToSection = (id: string) => {
+    setMobileMenuOpen(false);
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -135,12 +123,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <div
       ref={landingRef}
-      className="relative min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-950 overflow-x-hidden"
+      className="relative min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-950 overflow-x-hidden w-full"
     >
-      {/* 1. First-time Visitor Product Intro Splash */}
-      {showSplash && <ProductIntroSplash onComplete={handleSplashComplete} />}
-
-      {/* 2. Full-Page Continuous Business Intelligence Background Animation Layer */}
+      {/* 1. Full-Page Continuous Business Intelligence Background Animation Layer */}
       <AnimatedBusinessBackground containerRef={landingRef} />
 
       {/* Top Header Accent Band */}
@@ -150,55 +135,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           LANDING HEADER
           ========================================================================= */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           {/* Brand Logo & Name */}
           <BrandLogo size="md" />
 
-          {/* Desktop Navigation */}
+          {/* Desktop Navigation (Hidden on Mobile) */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-slate-600">
             <button
               onClick={() => scrollToSection('capabilities')}
-              className="hover:text-blue-900 transition-colors cursor-pointer"
+              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
             >
               {t('nav.capabilities')}
             </button>
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="hover:text-blue-900 transition-colors cursor-pointer"
+              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
             >
               {t('nav.howItWorks')}
             </button>
             <button
               onClick={() => scrollToSection('evidence')}
-              className="hover:text-blue-900 transition-colors cursor-pointer"
+              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
             >
               {t('nav.evidence')}
             </button>
           </nav>
 
-          {/* Right Header Controls: Language Selector & Launch App Button */}
-          <div className="flex items-center gap-3">
-            {/* Global Language Selector Dropdown */}
-            <div className="relative inline-flex items-center">
-              <Globe className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 pointer-events-none" />
-              <select
-                aria-label="Select Application Language"
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                className="pl-7 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer transition-colors appearance-none shadow-2xs"
-              >
-                {supportedLanguages.map((lang) => (
-                  <option key={lang.code} value={lang.code} className="py-1">
-                    {lang.nativeName}
-                  </option>
-                ))}
-              </select>
-            </div>
+          {/* Right Header Controls: Desktop */}
+          <div className="hidden md:flex items-center gap-3">
+            {/* Global Language Selector Dropdown with hover/click */}
+            <HeaderLanguageSelector align="right" showCodeOnlyOnMobile={false} />
 
-            {/* Interactive Header LAUNCH APP button with Left-to-Right Fill Sweep */}
+            {/* Interactive Header LAUNCH APP button */}
             <button
               onClick={() => onNavigateToApp()}
-              className="group relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md active:scale-[0.98] cursor-pointer"
+              className="group relative inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 overflow-hidden transition-all duration-300 shadow-xs hover:shadow-md active:scale-[0.98] cursor-pointer min-h-[40px]"
             >
               <span
                 className="absolute inset-0 w-full h-full bg-blue-900 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
@@ -210,16 +181,102 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <ArrowRight className="relative z-10 w-3.5 h-3.5 text-white group-hover:translate-x-1.5 transition-transform duration-300" />
             </button>
           </div>
+
+          {/* Mobile Right Controls: Directly Visible Language Selector [ EN ▼ ] + Hamburger Trigger */}
+          <div className="flex md:hidden items-center gap-2">
+            <HeaderLanguageSelector align="right" showCodeOnlyOnMobile={true} />
+
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+              className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-800 active:bg-slate-200 transition-colors cursor-pointer shrink-0"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Navigation Slide-Down Drawer */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="md:hidden border-t border-slate-200 bg-white/98 backdrop-blur-xl px-5 py-6 space-y-5 overflow-hidden shadow-lg"
+            >
+              <nav className="flex flex-col space-y-3 text-sm font-bold text-slate-800">
+                <button
+                  onClick={() => scrollToSection('capabilities')}
+                  className="text-left py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between"
+                >
+                  <span>{t('nav.capabilities')}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+                <button
+                  onClick={() => scrollToSection('how-it-works')}
+                  className="text-left py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between"
+                >
+                  <span>{t('nav.howItWorks')}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+                <button
+                  onClick={() => scrollToSection('evidence')}
+                  className="text-left py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors flex items-center justify-between"
+                >
+                  <span>{t('nav.evidence')}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                </button>
+              </nav>
+
+              {/* Language Selection Chips on Mobile */}
+              <div className="pt-3 border-t border-slate-100 space-y-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                  Language Preference
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  {supportedLanguages.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => setLanguage(lang.code)}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold text-center border transition-all ${
+                        language === lang.code
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {lang.nativeName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Launch App Full-Width CTA on Mobile */}
+              <div className="pt-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onNavigateToApp();
+                  }}
+                  className="w-full min-h-[48px] py-3 px-4 rounded-xl text-sm font-bold text-white bg-slate-900 flex items-center justify-center gap-2 shadow-md active:scale-[0.99] cursor-pointer"
+                >
+                  <span>{t('nav.launchApp')}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
       {/* =========================================================================
           TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION
           ========================================================================= */}
-      <section className="relative pt-12 pb-20 sm:pt-20 sm:pb-28 px-4 sm:px-6 lg:px-8 flex items-center min-h-[640px]">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+      <section className="relative pt-8 pb-14 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 flex items-center min-h-[560px]">
+        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
           {/* LEFT COLUMN: HIGH-IMPACT HEADLINE & PRIMARY CTA */}
-          <div className="lg:col-span-6 xl:col-span-6 space-y-6 text-left">
+          <div className="lg:col-span-6 xl:col-span-6 space-y-5 sm:space-y-6 text-left">
             {/* Subtle Tagline Badge */}
             <motion.div
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
@@ -231,12 +288,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>Hyper-Local Business Intelligence Platform</span>
             </motion.div>
 
-            {/* Large Bold Hero Headline */}
+            {/* Large Bold Hero Headline with Fluid Typography */}
             <motion.h1
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight text-slate-950 leading-[1.08]"
+              className="fluid-hero-heading font-black tracking-tight text-slate-950"
             >
               Understand Your Local Business.{' '}
               <span className="text-blue-700 block mt-1">
@@ -249,7 +306,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="text-base sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xl"
+              className="text-sm sm:text-base lg:text-lg text-slate-600 font-medium leading-relaxed max-w-xl"
             >
               UDYORA combines local business intelligence, financial planning, risk analysis and evidence-backed guidance to help rural and semi-urban entrepreneurs make better-informed decisions.
             </motion.p>
@@ -259,11 +316,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-4"
+              className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5"
             >
               <button
                 onClick={() => onNavigateToApp()}
-                className="group relative inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white bg-slate-900 overflow-hidden transition-all duration-300 shadow-md hover:shadow-xl active:scale-[0.98] cursor-pointer"
+                className="group relative w-full sm:w-auto min-h-[48px] inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-xl text-base font-bold text-white bg-slate-900 overflow-hidden transition-all duration-300 shadow-md hover:shadow-xl active:scale-[0.98] cursor-pointer"
               >
                 <span
                   className="absolute inset-0 w-full h-full bg-blue-800 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
@@ -275,15 +332,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <ArrowRight className="relative z-10 w-4 h-4 text-white group-hover:translate-x-1.5 transition-all duration-300" />
               </button>
 
-              <span className="text-xs text-slate-500 font-semibold flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs text-slate-500 font-semibold flex items-center justify-center sm:justify-start gap-1.5 py-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 <span>Zero guesswork • Instant feasibility check</span>
               </span>
             </motion.div>
           </div>
 
           {/* RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
-          <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center">
+          <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center w-full overflow-hidden">
             <HeroAnalyticsComposition />
           </div>
         </div>
@@ -481,7 +538,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Mobile Vertical Timeline Layout (below md) */}
+          <div className="md:hidden relative pl-6 border-l-2 border-blue-600/30 space-y-4">
+            {workflowSteps.map((s, idx) => (
+              <motion.div
+                key={`mob-step-${idx}`}
+                initial={{ opacity: 0, x: -10 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-20px' }}
+                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                className="relative bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs"
+              >
+                <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-blue-100 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                </div>
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-mono font-black text-blue-700">STEP {s.step}</span>
+                </div>
+                <h3 className="text-sm font-bold text-slate-950">{s.title}</h3>
+                <p className="text-xs text-slate-600 mt-1 leading-relaxed">{s.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Desktop Multi-column Grid (hidden on mobile) */}
+          <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {workflowSteps.map((s, idx) => (
               <motion.div
                 key={idx}

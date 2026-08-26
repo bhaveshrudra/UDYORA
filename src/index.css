@@ -1,9 +1,52 @@
 @import "tailwindcss";
 
 @layer base {
+  html,
   body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
   }
+  
+  /* Prevent any element from creating accidental horizontal scroll */
+  * {
+    box-sizing: border-box;
+  }
+}
+
+/* Fluid Typography Utilities */
+.fluid-hero-heading {
+  font-size: clamp(2rem, 5.5vw + 0.5rem, 3.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.fluid-section-heading {
+  font-size: clamp(1.5rem, 3.5vw + 0.2rem, 2.25rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.fluid-card-heading {
+  font-size: clamp(1.125rem, 2vw + 0.1rem, 1.375rem);
+  line-height: 1.25;
+}
+
+/* Hide scrollbar for clean horizontal chip strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Minimum 44px touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 @keyframes fadeIn {
@@ -21,13 +64,101 @@
   animation: fadeIn 0.35s ease-out forwards;
 }
 
+/* =========================================================================
+   DEDICATED PRINT STYLESHEET
+   ========================================================================= */
 @media print {
   @page {
-    margin: 1.5cm;
+    margin: 12mm 15mm;
     size: A4 portrait;
   }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html,
   body {
-    background: white !important;
-    color: black !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.4 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide web-only elements */
+  .no-print,
+  .print-hidden,
+  header:not(.print-header),
+  nav,
+  footer:not(.print-footer),
+  aside,
+  button:not(.print-keep),
+  input,
+  textarea,
+  select,
+  [role="dialog"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Print Page-Break Helpers */
+  .print-avoid-break,
+  .print-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-break-after {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .print-break-before {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Static Print Watermark Overlay */
+  .static-print-watermark {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+    opacity: 0.035 !important;
+  }
+
+  /* Prevent table row clipping */
+  table {
+    page-break-inside: auto;
+  }
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tfoot {
+    display: table-footer-group;
   }
 }

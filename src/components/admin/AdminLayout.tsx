@@ -16,11 +16,12 @@ import {
   X,
   ExternalLink,
   Shield,
+  ShieldAlert,
   Search,
   ChevronRight,
   Bell
 } from 'lucide-react';
-import { AdminUser, logoutAdmin } from '../../services/adminAuthService';
+import { AdminUser, isRouteAllowedForRole } from '../../services/adminAuthService';
 
 export type AdminSubRoute =
   | 'dashboard'
@@ -54,7 +55,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
 
-  const navSections = [
+  const rawNavSections = [
     {
       title: 'Overview',
       items: [
@@ -64,7 +65,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     {
       title: 'Data Management',
       items: [
-        { id: 'locations' as AdminSubRoute, label: 'Locations', icon: <MapPin className="w-4 h-4" /> },
+        { id: 'locations' as AdminSubRoute, label: 'Locations (LGD)', icon: <MapPin className="w-4 h-4" /> },
         { id: 'businesses' as AdminSubRoute, label: 'Business Templates', icon: <Briefcase className="w-4 h-4" /> },
         { id: 'schemes' as AdminSubRoute, label: 'Government Schemes', icon: <Award className="w-4 h-4" /> },
         { id: 'evidence' as AdminSubRoute, label: 'Evidence Sources', icon: <Database className="w-4 h-4" /> },
@@ -88,10 +89,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     }
   ];
 
+  // Filter sections and items based on active role permissions
+  const navSections = rawNavSections
+    .map((sec) => ({
+      ...sec,
+      items: sec.items.filter((item) => isRouteAllowedForRole(currentAdmin.role, item.id))
+    }))
+    .filter((sec) => sec.items.length > 0);
+
   const handleItemClick = (routeId: AdminSubRoute) => {
     onNavigate(routeId);
     setMobileDrawerOpen(false);
   };
+
+  const isCurrentRouteAllowed = isRouteAllowedForRole(currentAdmin.role, activeRoute);
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col antialiased selection:bg-blue-100 selection:text-blue-950">
@@ -107,16 +118,22 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Admin Brand Badge */}
+          {/* Admin Brand Badge & Role Pill */}
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-blue-700 text-white flex items-center justify-center font-black text-xs shadow-xs">
               U
             </div>
             <div>
-              <span className="font-bold text-sm text-white tracking-tight flex items-center gap-1.5">
-                <span>UDYORA Admin</span>
-                <span className="text-[10px] font-mono uppercase bg-blue-900/80 text-blue-200 px-1.5 py-0.2 rounded border border-blue-700">
-                  Control Plane
+              <span className="font-bold text-sm text-white tracking-tight flex items-center gap-2">
+                <span>UDYORA Administration Center</span>
+                <span
+                  className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
+                    currentAdmin.role === 'ADMIN'
+                      ? 'bg-blue-900/90 text-blue-200 border-blue-700'
+                      : 'bg-amber-900/90 text-amber-200 border-amber-700'
+                  }`}
+                >
+                  {currentAdmin.role}
                 </span>
               </span>
             </div>
@@ -139,11 +156,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               {currentAdmin.name.charAt(0)}
             </div>
             <div className="hidden md:block text-left leading-tight">
-              <span className="font-bold text-slate-100 block text-[11px] truncate max-w-[120px]">
+              <span className="font-bold text-slate-100 block text-[11px] truncate max-w-[140px]">
                 {currentAdmin.name}
               </span>
               <span className="text-[9px] text-slate-400 font-mono">
-                {currentAdmin.role}
+                {currentAdmin.email}
               </span>
             </div>
           </div>
@@ -194,8 +211,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {/* Sidebar Bottom Metadata */}
           <div className="p-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-            <p className="font-semibold text-slate-600">UDYORA Core v2.4</p>
-            <p className="font-mono text-[10px]">PostgreSQL Engine Ready</p>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-slate-600">UDYORA Core v2.4</span>
+              <span className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.2 rounded font-bold">
+                {currentAdmin.role}
+              </span>
+            </div>
+            <p className="font-mono text-[10px]">Session Active</p>
           </div>
         </aside>
 
@@ -245,12 +267,49 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         )}
 
-        {/* Main Content Workspace */}
+        {/* Main Content Workspace (or Permission Denied Guard) */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50/70">
           <div className="max-w-6xl mx-auto space-y-6">
-            {children}
+            {isCurrentRouteAllowed ? (
+              children
+            ) : (
+              <PermissionDeniedView
+                role={currentAdmin.role}
+                route={activeRoute}
+                onReturnToDashboard={() => onNavigate('dashboard')}
+              />
+            )}
           </div>
         </main>
+      </div>
+    </div>
+  );
+};
+
+export const PermissionDeniedView: React.FC<{
+  role: string;
+  route: string;
+  onReturnToDashboard: () => void;
+}> = ({ role, route, onReturnToDashboard }) => {
+  return (
+    <div className="bg-white border border-rose-200 rounded-3xl p-8 sm:p-12 shadow-sm text-center max-w-lg mx-auto space-y-4">
+      <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+        <ShieldAlert className="w-6 h-6" />
+      </div>
+      <div className="space-y-1">
+        <h3 className="text-lg font-black text-slate-950">Permission Denied</h3>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          The <strong className="text-slate-900 font-mono uppercase">{role}</strong> role does not have administrative permission to view or manage the <strong className="text-slate-900 font-mono">/{route}</strong> section.
+        </p>
+      </div>
+      <div className="pt-2">
+        <button
+          onClick={onReturnToDashboard}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors cursor-pointer shadow-xs"
+        >
+          <span>Return to Dashboard</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );

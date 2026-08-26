@@ -17,9 +17,14 @@ import {
   Play,
   Square,
   Check,
-  Ban
+  ChevronDown,
+  ChevronUp,
+  Cpu,
+  Database,
+  ArrowRight
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { SupportedLanguage } from '../i18n/types';
 import {
   ChatMessage,
   AdvisorContext,
@@ -28,7 +33,8 @@ import {
 import {
   isSpeechRecognitionAvailable,
   startVoiceRecognition,
-  stopVoiceRecognition
+  stopVoiceRecognition,
+  SPEECH_LANG_MAP
 } from '../services/speechRecognition';
 import {
   isSpeechSynthesisAvailable,
@@ -38,12 +44,6 @@ import {
   resumeVoiceOutput
 } from '../services/speechSynthesis';
 import { CompleteAnalysisReport, UserBusinessInput, LocationData } from '../types';
-
-interface PendingConfirmationAction {
-  type: 'CAPITAL_CHANGE' | 'LOCATION_CHANGE' | 'RESET_ANALYSIS' | 'TRIGGER_ANALYSIS';
-  description: string;
-  payload?: any;
-}
 
 interface AdvisorChatbotProps {
   currentInput?: UserBusinessInput;
@@ -72,7 +72,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeechPaused, setIsSpeechPaused] = useState<boolean>(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingConfirmationAction | null>(null);
+  const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,17 +82,17 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isThinking, isOpen, pendingAction]);
+  }, [messages, isThinking, isOpen, interimTranscript]);
 
-  // Initial welcome greeting on first open
+  // Initial welcome greeting on first open or language change
   useEffect(() => {
     if (messages.length === 0) {
-      const welcomeMap: Record<string, string> = {
-        hi: 'नमस्ते! मैं आपका UDYORA बिजनेस एडवाइजर हूँ। आप अपने व्यवसाय, ऋण ईएमआई, सरकारी योजनाओं या जोखिमों के बारे में पूछ सकते हैं।',
-        mr: 'नमस्कार! मी आपला UDYORA बिझनेस सल्लागार आहे. आपण प्रकल्प खर्च, कर्ज हप्ता किंवा योजनांबद्दल प्रश्न विचारू शकता.',
-        te: 'నమస్కారం! నేను మీ UDYORA బిజినెస్ అడ్వైజర్‌ని. మీ వ్యాపార ప్రాజెక్ట్ ఖర్చు, బ్యాంక్ రుణం, ఈఎమ్‌ఐ లేదా ప్రభుత్వ పథకాల గురించి నన్ను అడగవచ్చు.',
-        kn: 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ UDYORA ವ್ಯಾಪಾರ ಸಲಹೆಗಾರ. ನಿಮ್ಮ ಯೋಜನೆ, ಬ್ಯಾಂಕ್ ಸಾಲ ಅಥವಾ ಸಬ್ಸಿಡಿ ಯೋಜನೆಗಳ ಬಗ್ಗೆ ಕೇಳಬಹುದು.',
-        en: 'Namaste! I am your UDYORA Business Advisor. Ask me about your business feasibility, monthly EMI, matched government schemes, or risk mitigations.'
+      const welcomeMap: Record<SupportedLanguage, string> = {
+        en: 'Hello! I am your **UDYORA AI Business Advisor**. I can give you exact answers on your **monthly EMI**, **loan calculations**, **government schemes (PMEGP/Mudra)**, **business risks**, or **market evidence** in your selected village. What would you like to explore?',
+        hi: 'नमस्ते! मैं आपका **UDYORA AI व्यवसाय सलाहकार** हूँ। मैं आपको आपकी **मासिक EMI**, **सरकारी योजनाओं (PMEGP/Mudra)**, **व्यवसाय के जोखिमों** या **बाज़ार आंकड़ों** के सटीक उत्तर दे सकता हूँ। आप क्या जानना चाहते हैं?',
+        te: 'నమస్కారం! నేను మీ **UDYORA AI వ్యాపార సలహాదారుని**. మీ **నెలవారీ EMI**, **ప్రభుత్వ పథకాలు (PMEGP/ముద్ర)**, **వ్యాపార రిస్కులు**, మరియు **మార్కెట్ డేటా** పై ఖచ్చితమైన సమాచారం ఇవ్వగలను. మీరు ఏమి తెలుసుకోవాలనుకుంటున్నారు?',
+        mr: 'नमस्कार! मी तुमचा **UDYORA AI व्यवसाय सल्लागार** आहे. मी तुम्हाला तुमचा **मासिक EMI**, **शासकीय योजना (PMEGP/Mudra)**, **व्यवसायातील जोखीम** किंवा **बाजार माहिती** याबद्दल अचूक माहिती देऊ शकतो.',
+        kn: 'ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ **UDYORA AI ಉದ್ಯಮ ಸಲಹೆಗಾರ**. ನಿಮ್ಮ **ಮಾಸಿಕ EMI**, **ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು (PMEGP/ಮುದ್ರ)**, **ವ್ಯವಹಾರದ ಅಪಾಯಗಳು** ಮತ್ತು **ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ** ಬಗ್ಗೆ ನಿಖರವಾದ ಉತ್ತರಗಳನ್ನು ನೀಡಬಲ್ಲೆ.'
       };
 
       setMessages([
@@ -101,117 +101,82 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
           sender: 'assistant',
           text: welcomeMap[language] || welcomeMap.en,
           timestamp: new Date().toISOString(),
-          topic: 'general'
+          topic: 'general',
+          dataQuality: 'VERIFIED'
         }
       ]);
     }
   }, [language, messages.length]);
 
-  // Cleanup audio listeners on unmount
-  useEffect(() => {
-    return () => {
-      stopVoiceRecognition();
-      stopVoiceOutput();
-    };
-  }, []);
-
-  // Voice Command Intent Checker (Safe Confirmation Protocol)
-  const checkForActionCommands = (queryText: string): boolean => {
-    const q = queryText.toLowerCase().trim();
-
-    // 1. Capital Change Intent
-    if (q.includes('change capital') || q.includes('update capital') || q.includes('set capital')) {
-      const numMatch = q.match(/(\d+)/);
-      let targetCapital = 500000;
-      if (numMatch) {
-        const val = parseInt(numMatch[0], 10);
-        targetCapital = val < 1000 ? val * 100000 : val;
-      }
-      setPendingAction({
-        type: 'CAPITAL_CHANGE',
-        description: `Update available promoter own capital to ₹${targetCapital.toLocaleString('en-IN')}`,
-        payload: { availableCapital: targetCapital }
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `confirm_${Date.now()}`,
-          sender: 'assistant',
-          text: `⚠️ **Action Confirmation Required:**\n\nI can update your available promoter equity capital to **₹${targetCapital.toLocaleString('en-IN')}**. This will scale your indicative project cost to ₹${(targetCapital * 10).toLocaleString('en-IN')}.\n\nPlease confirm below to apply this update.`,
-          timestamp: new Date().toISOString(),
-          topic: 'finance'
-        }
-      ]);
-      return true;
-    }
-
-    // 2. Start / Reset Analysis Intent
-    if (q === 'start new analysis' || q === 'reset analysis' || q === 'clear analysis') {
-      setPendingAction({
-        type: 'RESET_ANALYSIS',
-        description: 'Reset current business analysis and return to input form'
-      });
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `confirm_${Date.now()}`,
-          sender: 'assistant',
-          text: `⚠️ **Action Confirmation Required:**\n\nWould you like to clear the current analysis and start a new business assessment?`,
-          timestamp: new Date().toISOString(),
-          topic: 'general'
-        }
-      ]);
-      return true;
-    }
-
-    // 3. Trigger Analysis Intent
-    if (q === 'analyze my business' || q === 'run analysis' || q === 'execute analysis') {
-      if (onTriggerAnalysis) {
-        onTriggerAnalysis();
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `act_${Date.now()}`,
-            sender: 'assistant',
-            text: 'Starting multi-agent execution pipeline...',
-            timestamp: new Date().toISOString()
-          }
-        ]);
-        return true;
-      }
-    }
-
-    return false;
+  // Quick Suggestion Prompts
+  const quickPromptsMap: Record<SupportedLanguage, string[]> = {
+    en: [
+      'What is my EMI?',
+      'Which scheme matches me?',
+      'What are my biggest risks?',
+      'Where did this data come from?',
+      'Summarize my report'
+    ],
+    hi: [
+      'मेरी EMI कितनी है?',
+      'कौन सी योजना सही है?',
+      'मुख्य जोखिम क्या हैं?',
+      'डेटा कहाँ से आया?',
+      'रिपोर्ट का सारांश बताएं'
+    ],
+    te: [
+      'నా EMI ఎంత?',
+      'నాకు ఏ పథకం సరిపోతుంది?',
+      'ప్రధాన రిస్కులు ఏంటి?',
+      'ఈ డేటా ఎక్కడి నుండి వచ్చింది?',
+      'నా రిపోర్ట్ సారాంశం చెప్పండి'
+    ],
+    mr: [
+      'माझी EMI किती आहे?',
+      'कोणती शासकीय योजना मिळेल?',
+      'मुख्य धोके कोणते?',
+      'डेटा कुठून आला?',
+      'अहवालाचा सारांश द्या'
+    ],
+    kn: [
+      'ನನ್ನ EMI ಎಷ್ಟು?',
+      'ಯಾವ ಯೋಜನೆ ಸೂಕ್ತ?',
+      'ಮುಖ್ಯ ಅಪಾಯಗಳು ಯಾವುವು?',
+      'ಮಾಹಿತಿಯ ಮೂಲ ಯಾವುದು?',
+      'ವರದಿಯ ಸಾರಾಂಶ ತಿಳಿಸಿ'
+    ]
   };
 
-  const handleSendMessage = async (textToSend?: string) => {
-    const query = (textToSend || inputText).trim();
-    if (!query || isThinking) return;
+  const quickPrompts = quickPromptsMap[language] || quickPromptsMap.en;
 
-    // Reset voice & speech states
-    stopVoiceRecognition();
-    setIsListening(false);
+  // Multilingual listening label
+  const listeningLabels: Record<SupportedLanguage, string> = {
+    en: 'Listening in English...',
+    hi: 'हिन्दी में सुन रहा हूँ...',
+    te: 'తెలుగులో వింటున్నాను...',
+    mr: 'मराठीत ऐकत आहे...',
+    kn: 'ಕನ್ನಡದಲ್ಲಿ ಆಲಿಸಲಾಗುತ್ತಿದೆ...'
+  };
+
+  const handleSend = async (textToSend?: string) => {
+    const text = (textToSend || inputText).trim();
+    if (!text || isThinking) return;
+
+    // Stop speaking if new query arrives
     stopVoiceOutput();
     setSpeakingMessageId(null);
-    setVoiceNotice(null);
 
     const userMsg: ChatMessage = {
-      id: `usr_${Date.now()}`,
+      id: `user_${Date.now()}`,
       sender: 'user',
-      text: query,
+      text,
       timestamp: new Date().toISOString()
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    const newHistory = [...messages, userMsg];
+    setMessages(newHistory);
     setInputText('');
     setInterimTranscript('');
-
-    // Check for voice action commands requiring confirmation
-    const handledAsCommand = checkForActionCommands(query);
-    if (handledAsCommand) {
-      return;
-    }
-
     setIsThinking(true);
 
     const context: AdvisorContext = {
@@ -222,118 +187,68 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     };
 
     try {
-      const response = await generateAdvisorResponse(query, context, messages);
-      setMessages((prev) => [...prev, response]);
+      const assistantMsg = await generateAdvisorResponse(text, context, newHistory);
+      setMessages([...newHistory, assistantMsg]);
     } catch (err) {
-      console.error('Advisor response generation error:', err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `err_${Date.now()}`,
-          sender: 'assistant',
-          text: 'I am unable to connect to the advisory service right now. You can continue using the structured UDYORA tools.',
-          timestamp: new Date().toISOString(),
-          topic: 'general'
-        }
-      ]);
+      console.error('Advisor response error:', err);
+      const fallbackMsg: ChatMessage = {
+        id: `assistant_err_${Date.now()}`,
+        sender: 'assistant',
+        text: 'I apologize, but an error occurred while processing your request. Please try again.',
+        timestamp: new Date().toISOString(),
+        topic: 'general'
+      };
+      setMessages([...newHistory, fallbackMsg]);
     } finally {
       setIsThinking(false);
     }
   };
 
-  // Confirm Pending Action
-  const handleConfirmAction = () => {
-    if (!pendingAction) return;
-
-    if (pendingAction.type === 'CAPITAL_CHANGE' && onUpdateInput) {
-      onUpdateInput(pendingAction.payload);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `act_done_${Date.now()}`,
-          sender: 'assistant',
-          text: `✅ **Action Confirmed:** ${pendingAction.description} successfully.`,
-          timestamp: new Date().toISOString()
-        }
-      ]);
-    } else if (pendingAction.type === 'RESET_ANALYSIS' && onResetAnalysis) {
-      onResetAnalysis();
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `act_done_${Date.now()}`,
-          sender: 'assistant',
-          text: '✅ **Analysis Reset:** Returned to input form.',
-          timestamp: new Date().toISOString()
-        }
-      ]);
-    }
-
-    setPendingAction(null);
-  };
-
-  // Cancel Pending Action
-  const handleCancelAction = () => {
-    setPendingAction(null);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `act_cancel_${Date.now()}`,
-        sender: 'assistant',
-        text: 'Action cancelled. Your previous configuration remains unchanged.',
-        timestamp: new Date().toISOString()
-      }
-    ]);
-  };
-
-  // Real Voice Input (Microphone)
-  const toggleVoiceInput = () => {
-    if (isListening) {
-      stopVoiceRecognition();
-      setIsListening(false);
-      setInterimTranscript('');
-      return;
-    }
-
+  // Voice Input Recognition Handler
+  const handleToggleVoiceInput = () => {
     if (!isSpeechRecognitionAvailable()) {
-      setVoiceNotice('Voice input is not supported in this browser. Please use text input.');
+      setVoiceNotice('Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.');
       setTimeout(() => setVoiceNotice(null), 4000);
       return;
     }
 
-    setVoiceNotice(null);
-    const started = startVoiceRecognition({
-      language,
-      onStart: () => {
-        setIsListening(true);
-      },
-      onResult: (transcript, isFinal) => {
-        if (isFinal) {
-          setInputText((prev) => (prev ? `${prev} ${transcript}` : transcript));
-          setInterimTranscript('');
-        } else {
-          setInterimTranscript(transcript);
-        }
-      },
-      onError: (errMsg) => {
-        setIsListening(false);
-        setInterimTranscript('');
-        setVoiceNotice(errMsg);
-        setTimeout(() => setVoiceNotice(null), 4000);
-      },
-      onEnd: () => {
-        setIsListening(false);
-        setInterimTranscript('');
-      }
-    });
-
-    if (!started) {
+    if (isListening) {
+      stopVoiceRecognition();
       setIsListening(false);
+      setInterimTranscript('');
+    } else {
+      setIsListening(true);
+      setVoiceNotice(null);
+
+      startVoiceRecognition({
+        language,
+        onStart: () => {
+          setIsListening(true);
+        },
+        onResult: (transcript, isFinal) => {
+          if (isFinal) {
+            setInputText(transcript);
+            setInterimTranscript('');
+            setIsListening(false);
+          } else {
+            setInterimTranscript(transcript);
+          }
+        },
+        onError: (err) => {
+          console.warn('[Chatbot Voice Input Error]:', err);
+          setIsListening(false);
+          setInterimTranscript('');
+        },
+        onEnd: () => {
+          setIsListening(false);
+          setInterimTranscript('');
+        }
+      });
     }
   };
 
-  // Real Voice Output (Speech Synthesis)
-  const handleToggleSpeech = (msg: ChatMessage) => {
+  // Voice Output Speech Synthesis Handler
+  const handleSpeakMessage = (msg: ChatMessage) => {
     if (speakingMessageId === msg.id) {
       if (isSpeechPaused) {
         resumeVoiceOutput();
@@ -349,7 +264,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     setSpeakingMessageId(msg.id);
     setIsSpeechPaused(false);
 
-    playVoiceOutput({
+    const success = playVoiceOutput({
       text: msg.text,
       language,
       onStart: () => {
@@ -363,13 +278,17 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
       onError: () => {
         setSpeakingMessageId(null);
         setIsSpeechPaused(false);
-        setVoiceNotice('Voice output is unavailable. You can read the response instead.');
-        setTimeout(() => setVoiceNotice(null), 4000);
+        setVoiceNotice('Voice playback is unavailable for this language on this browser.');
+        setTimeout(() => setVoiceNotice(null), 3000);
       }
     });
+
+    if (!success) {
+      setSpeakingMessageId(null);
+    }
   };
 
-  const handleStopSpeech = () => {
+  const handleStopSpeaking = () => {
     stopVoiceOutput();
     setSpeakingMessageId(null);
     setIsSpeechPaused(false);
@@ -377,94 +296,93 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
 
   const handleResetChat = () => {
     stopVoiceOutput();
-    stopVoiceRecognition();
     setSpeakingMessageId(null);
-    setIsListening(false);
-    setPendingAction(null);
     setMessages([]);
   };
 
-  const quickPrompts: { label: string; query: string }[] = [
-    {
-      label: language === 'te' ? 'ఈఎమ్‌ఐ ఎంత అవుతుంది?' : language === 'hi' ? 'मेरी मासिक ईएमआई कितनी है?' : 'What is my monthly EMI?',
-      query: 'What is my monthly EMI and total project cost?'
-    },
-    {
-      label: language === 'te' ? 'ఏ పథకం సరిపోతుంది?' : language === 'hi' ? 'कौन सी सरकारी योजना मिलेगी?' : 'Which scheme matches?',
-      query: 'Which government scheme matches my business?'
-    },
-    {
-      label: language === 'te' ? 'ముఖ్యమైన రిస్క్‌లు ఏమిటి?' : language === 'hi' ? 'मुख्य जोखिम क्या हैं?' : 'What are my main risks?',
-      query: 'What are the main business risks and mitigations?'
-    },
-    {
-      label: language === 'te' ? 'మార్కెట్ డిమాండ్ ఎలా ఉంది?' : language === 'hi' ? 'बाजार मांग कैसी है?' : 'How is market demand?',
-      query: 'How is the local catchment market demand in this village?'
-    }
-  ];
+  // Get most recent intent from last assistant message for debug display
+  const latestAssistantMsg = [...messages].reverse().find((m) => m.sender === 'assistant');
+  const latestIntent = latestAssistantMsg?.intentResult;
 
   return (
-    <>
-      {/* 1. Floating Chatbot Trigger Button (Bottom-Right) */}
+    <div className="fixed bottom-6 right-6 z-50 print:hidden">
+      {/* Floating Chat Trigger Button (Fixed Bottom-Right) */}
       {!isOpen && (
-        <div className="fixed bottom-6 right-6 z-40">
-          <button
-            onClick={() => setIsOpen(true)}
-            aria-label="Open UDYORA Business Advisor"
-            className="group relative flex items-center gap-2.5 px-4 py-3.5 rounded-full bg-slate-900 text-white font-bold text-xs shadow-xl hover:bg-blue-900 transition-all duration-300 hover:shadow-2xl hover:scale-105 active:scale-95 border border-slate-700 cursor-pointer"
-          >
-            <div className="relative">
-              <Bot className="w-5 h-5 text-blue-300" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500" />
+        <button
+          onClick={() => setIsOpen(true)}
+          aria-label="Open UDYORA AI Advisor Chatbot"
+        >
+          {/* Subtle Ambient Pulse Ring */}
+          <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-30 group-hover:opacity-60 blur-xs transition-opacity" />
+
+          <div className="relative z-10 flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs">
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <span className="hidden sm:inline tracking-wide font-bold">
-              UDYORA Advisor
-            </span>
-          </button>
-        </div>
+            <div className="text-left hidden sm:block">
+              <span className="text-xs font-black tracking-tight block text-white leading-tight">
+                UDYORA Advisor
+              </span>
+              <span className="text-[10px] text-blue-200 block font-medium">
+                Ask EMI, Schemes & Risks
+              </span>
+            </div>
+          </div>
+        </button>
       )}
 
-      {/* 2. Floating Chatbot Panel / Modal */}
+      {/* Main Chat Drawer Modal */}
       {isOpen && (
-        <div className="fixed inset-x-3 bottom-3 sm:inset-auto sm:bottom-6 sm:right-6 z-50 w-auto sm:w-[420px] md:w-[450px] h-[600px] max-h-[90vh] bg-white rounded-2xl shadow-2xl border border-slate-300 flex flex-col overflow-hidden animate-fadeIn">
-          {/* Header */}
-          <div className="bg-slate-900 text-white p-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-800 text-blue-100 flex items-center justify-center font-bold text-sm">
+        <div className="fixed inset-x-0 bottom-0 sm:bottom-4 sm:right-4 sm:inset-auto w-full sm:w-[420px] md:w-[460px] h-[92vh] sm:h-[620px] max-h-[100vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200/90 flex flex-col overflow-hidden animate-fadeIn backdrop-blur-md z-50">
+          {/* Drawer Top Header */}
+          <div className="bg-slate-900 text-white px-4 py-3.5 flex items-center justify-between border-b border-slate-800 shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-700 flex items-center justify-center text-white font-bold shadow-xs">
                 <Bot className="w-4 h-4" />
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm font-bold tracking-tight text-white">
-                    UDYORA Business Advisor
-                  </h2>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-950 text-blue-300 px-1.5 py-0.2 rounded border border-blue-800">
-                    Voice Active
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black tracking-tight text-white">
+                    UDYORA AI Business Advisor
+                  </span>
+                  <span className="text-[9px] font-mono uppercase bg-blue-900 text-blue-200 px-1.5 py-0.2 rounded border border-blue-700">
+                    Live
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-300">
-                  {currentLocation?.village ? `${currentLocation.village} • ` : ''}
-                  {currentInput?.businessIdea || 'Rural Business Advisory'}
-                </p>
+                <span className="text-[10px] text-slate-400 block font-mono">
+                  Contextual • Deterministic Engine
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
+              {/* Development Debug Toggle */}
+              {process.env.NODE_ENV !== 'production' && (
+                <button
+                  onClick={() => setShowDebugPanel(!showDebugPanel)}
+                  title="Toggle Intelligence Debug Inspector"
+                  className={`p-1.5 rounded-lg text-xs transition-colors cursor-pointer ${
+                    showDebugPanel ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                  }`}
+                >
+                  <Cpu className="w-4 h-4" />
+                </button>
+              )}
+
               <button
                 onClick={handleResetChat}
-                title="Clear Chat"
+                title="Clear conversation history"
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
               </button>
+
               <button
                 onClick={() => {
                   stopVoiceOutput();
                   stopVoiceRecognition();
                   setIsOpen(false);
                 }}
-                title="Close Advisor"
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
@@ -472,221 +390,245 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
             </div>
           </div>
 
-          {/* Voice Notification Alert */}
-          {voiceNotice && (
-            <div className="bg-amber-50 border-b border-amber-200 px-3.5 py-2 text-[11px] text-amber-900 font-medium flex items-center gap-2 shrink-0">
-              <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
-              <span>{voiceNotice}</span>
+          {/* Development Debug Inspector Strip */}
+          {showDebugPanel && latestIntent && (
+            <div className="bg-slate-950 text-slate-300 px-3 py-2 text-[10px] font-mono border-b border-slate-800 shrink-0 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-amber-400 font-bold">Intent: {latestIntent.intent}</span>
+                <span className="text-emerald-400">Confidence: {(latestIntent.confidence * 100).toFixed(0)}%</span>
+                <span className="text-blue-300">Locale: {SPEECH_LANG_MAP[language]}</span>
+              </div>
+              <div className="text-slate-400 truncate">
+                Service: <span className="text-slate-200">{latestIntent.serviceCalled}</span>
+              </div>
             </div>
           )}
 
-          {/* Conversation Area */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex gap-2.5 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.sender === 'assistant' && (
-                  <div className="w-6 h-6 rounded-md bg-slate-900 text-blue-300 flex items-center justify-center shrink-0 mt-0.5 text-[10px]">
-                    <Bot className="w-3.5 h-3.5" />
-                  </div>
-                )}
+          {/* Notice Feedback Banner */}
+          {voiceNotice && (
+            <div className="p-2 bg-blue-50 border-b border-blue-200 text-xs text-blue-900 font-medium flex items-center justify-between">
+              <span>{voiceNotice}</span>
+              <button onClick={() => setVoiceNotice(null)} className="text-blue-600 font-bold ml-2">
+                ✕
+              </button>
+            </div>
+          )}
 
+          {/* Chat Messages Scroll Container */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-slate-50/60">
+            {messages.map((msg) => {
+              const isUser = msg.sender === 'user';
+              const isSpeakingThis = speakingMessageId === msg.id;
+
+              return (
                 <div
-                  className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
-                    msg.sender === 'user'
-                      ? 'bg-blue-900 text-white rounded-tr-xs shadow-xs font-medium'
-                      : 'bg-white text-slate-900 rounded-tl-xs border border-slate-200 shadow-xs'
-                  }`}
+                  key={msg.id}
+                  className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="whitespace-pre-line">{msg.text}</p>
+                  {!isUser && (
+                    <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center shrink-0 mt-1 shadow-2xs">
+                      <Bot className="w-3.5 h-3.5" />
+                    </div>
+                  )}
 
-                  {/* Audio Speaker Controls beside Assistant Responses */}
-                  {msg.sender === 'assistant' && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
-                      <div className="flex items-center gap-1.5">
+                  <div className="max-w-[85%] space-y-1">
+                    <div
+                      className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-2xs ${
+                        isUser
+                          ? 'bg-blue-600 text-white rounded-tr-xs'
+                          : 'bg-white text-slate-900 border border-slate-200/90 rounded-tl-xs'
+                      }`}
+                    >
+                      {/* Formatted Message Body with Markdown formatting */}
+                      <div className="whitespace-pre-line">
+                        {msg.text.split('\n').map((line, idx) => {
+                          const isBold = line.startsWith('**') && line.endsWith('**');
+                          const isBullet = line.startsWith('• ') || line.startsWith('1. ') || line.startsWith('2. ') || line.startsWith('3. ');
+
+                          if (isBold) {
+                            return (
+                              <p key={idx} className="font-bold text-slate-950 mt-1">
+                                {line.replace(/\*\*/g, '')}
+                              </p>
+                            );
+                          }
+
+                          return (
+                            <p key={idx} className={isBullet ? 'pl-2 text-slate-800' : ''}>
+                              {line.split('**').map((chunk, cIdx) => (
+                                cIdx % 2 === 1 ? <strong key={cIdx} className="font-extrabold text-slate-950">{chunk}</strong> : chunk
+                              ))}
+                            </p>
+                          );
+                        })}
+                      </div>
+
+                      {/* Action trigger button if suggested by agent */}
+                      {msg.suggestedAction === 'TRIGGER_ANALYSIS' && onTriggerAnalysis && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100">
+                          <button
+                            onClick={() => {
+                              onTriggerAnalysis();
+                              setIsOpen(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <span>▶ Run Multi-Agent Analysis</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      {msg.suggestedAction === 'RESET_ANALYSIS' && onResetAnalysis && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100">
+                          <button
+                            onClick={() => {
+                              onResetAnalysis();
+                              setIsOpen(false);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer shadow-xs"
+                          >
+                            <span>↺ Reset Session</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Meta Bar (Timestamp, Provenance Badge & TTS speaker) */}
+                    {!isUser && (
+                      <div className="flex items-center gap-2 text-[10px] text-slate-400 pl-1">
+                        {msg.dataQuality && (
+                          <span
+                            className={`font-mono uppercase px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                              msg.dataQuality === 'VERIFIED'
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}
+                          >
+                            {msg.dataQuality}
+                          </span>
+                        )}
+
                         <button
-                          onClick={() => handleToggleSpeech(msg)}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold transition-colors cursor-pointer ${
-                            speakingMessageId === msg.id
-                              ? 'bg-blue-100 text-blue-900 border border-blue-300'
-                              : 'hover:bg-slate-100 text-slate-600'
+                          onClick={() => handleSpeakMessage(msg)}
+                          title={isSpeakingThis ? 'Pause / Resume Speech' : 'Read aloud in selected language'}
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                            isSpeakingThis
+                              ? 'bg-blue-100 text-blue-900 border-blue-300 font-bold animate-pulse'
+                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                           }`}
                         >
-                          {speakingMessageId === msg.id ? (
-                            isSpeechPaused ? (
-                              <>
-                                <Play className="w-3 h-3 text-blue-700" />
-                                <span>Resume</span>
-                              </>
-                            ) : (
-                              <>
-                                <Pause className="w-3 h-3 text-blue-700" />
-                                <span className="animate-pulse">Speaking...</span>
-                              </>
-                            )
+                          {isSpeakingThis ? (
+                            isSpeechPaused ? <Play className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5 text-blue-700" />
                           ) : (
-                            <>
-                              <Volume2 className="w-3 h-3 text-slate-600" />
-                              <span>Listen</span>
-                            </>
+                            <Volume2 className="w-2.5 h-2.5" />
                           )}
+                          <span>{isSpeakingThis ? (isSpeechPaused ? 'Paused' : 'Speaking...') : 'Listen'}</span>
                         </button>
 
-                        {speakingMessageId === msg.id && (
+                        {isSpeakingThis && (
                           <button
-                            onClick={handleStopSpeech}
-                            title="Stop Audio"
-                            className="p-1 rounded text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            onClick={handleStopSpeaking}
+                            title="Stop speech"
+                            className="p-1 rounded text-slate-400 hover:text-rose-600"
                           >
                             <Square className="w-2.5 h-2.5 fill-current" />
                           </button>
                         )}
                       </div>
+                    )}
+                  </div>
 
-                      <span className="text-[9px] font-mono text-slate-400">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
+                  {isUser && (
+                    <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center shrink-0 mt-1 shadow-2xs">
+                      <User className="w-3.5 h-3.5" />
                     </div>
                   )}
                 </div>
+              );
+            })}
 
-                {msg.sender === 'user' && (
-                  <div className="w-6 h-6 rounded-md bg-blue-100 text-blue-900 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold">
-                    <User className="w-3.5 h-3.5" />
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {/* Pending Action Confirmation Bar */}
-            {pendingAction && (
-              <div className="bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-2.5 text-xs">
-                <div className="flex items-center gap-2 text-amber-900 font-bold">
-                  <ShieldCheck className="w-4 h-4 text-amber-700" />
-                  <span>Confirmation Required</span>
-                </div>
-                <p className="text-amber-800 text-[11px]">
-                  {pendingAction.description}
-                </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    onClick={handleConfirmAction}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-colors cursor-pointer"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    <span>Confirm</span>
-                  </button>
-                  <button
-                    onClick={handleCancelAction}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300 transition-colors cursor-pointer"
-                  >
-                    <Ban className="w-3.5 h-3.5" />
-                    <span>Cancel</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Thinking / Agent Processing Indicator */}
+            {/* Thinking / Calculating Spinner */}
             {isThinking && (
-              <div className="flex gap-2.5 justify-start">
-                <div className="w-6 h-6 rounded-md bg-slate-900 text-blue-300 flex items-center justify-center shrink-0 text-[10px]">
-                  <Bot className="w-3.5 h-3.5" />
-                </div>
-                <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-xs p-3 shadow-xs">
-                  <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.2s]" />
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-bounce [animation-delay:0.4s]" />
-                    <span className="ml-1 text-[11px]">Auditing agent evidence...</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 text-xs text-slate-500 bg-white border border-slate-200 p-3 rounded-2xl shadow-2xs max-w-[200px]">
+                <div className="w-3.5 h-3.5 rounded-full border-2 border-blue-600 border-t-transparent animate-spin" />
+                <span>Computing localized data...</span>
               </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Suggestion Pills */}
-          <div className="p-2.5 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto shrink-0">
-            {quickPrompts.map((p, idx) => (
+          {/* Quick Prompts Carousel */}
+          <div className="p-2.5 bg-white border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
+            {quickPrompts.map((prompt, idx) => (
               <button
                 key={idx}
-                onClick={() => handleSendMessage(p.query)}
-                className="px-2.5 py-1 rounded-full text-[11px] font-bold text-slate-700 bg-slate-100 hover:bg-blue-50 hover:text-blue-900 border border-slate-200 whitespace-nowrap transition-colors cursor-pointer"
+                onClick={() => handleSend(prompt)}
+                disabled={isThinking}
+                className="whitespace-nowrap px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 hover:bg-blue-50 hover:text-blue-900 hover:border-blue-300 border border-slate-200 text-slate-700 transition-colors shrink-0 cursor-pointer shadow-2xs"
               >
-                {p.label}
+                {prompt}
               </button>
             ))}
           </div>
 
-          {/* Voice Listening Waveform Status */}
+          {/* Live Listening Status Banner */}
           {isListening && (
-            <div className="bg-blue-50 border-t border-blue-200 px-3.5 py-2 flex items-center justify-between text-xs text-blue-900 shrink-0">
+            <div className="px-4 py-2 bg-blue-50 border-t border-blue-200 flex items-center justify-between text-xs text-blue-900 font-bold shrink-0 animate-pulse">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-                <span className="font-bold">Listening in {language.toUpperCase()}...</span>
-                {interimTranscript && (
-                  <span className="italic text-slate-600 truncate max-w-[180px]">
-                    "{interimTranscript}"
-                  </span>
-                )}
+                <span>{listeningLabels[language] || listeningLabels.en}</span>
               </div>
-              <button
-                onClick={toggleVoiceInput}
-                className="px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px] hover:bg-rose-700 cursor-pointer"
-              >
-                Done
-              </button>
+              <span className="text-[10px] font-mono text-slate-500 truncate max-w-[180px]">
+                {interimTranscript || 'Speak now...'}
+              </span>
             </div>
           )}
 
-          {/* Chat Input Bar */}
-          <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0">
-            {/* Voice Input Microphone Button */}
+          {/* Bottom Chat Input Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="p-3 bg-white border-t border-slate-200 flex items-center gap-2 shrink-0"
+          >
+            {/* Voice Input Mic Toggle */}
             <button
               type="button"
-              onClick={toggleVoiceInput}
-              title={isListening ? 'Stop Recording' : 'Speak to UDYORA Advisor'}
+              onClick={handleToggleVoiceInput}
+              title={isListening ? 'Stop Listening' : `Voice Dictation in ${language.toUpperCase()}`}
               className={`p-2.5 rounded-xl border transition-all cursor-pointer ${
                 isListening
-                  ? 'bg-rose-600 text-white border-rose-700 animate-pulse'
-                  : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
+                  ? 'bg-rose-50 border-rose-300 text-rose-600 ring-2 ring-rose-400 animate-pulse'
+                  : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600'
               }`}
             >
               {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
 
-            {/* Text Input */}
+            {/* Query Input Field */}
             <input
               ref={inputRef}
               type="text"
-              placeholder={isListening ? 'Speak now...' : 'Ask about loan, schemes, or risks...'}
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSendMessage();
-                }
-              }}
-              className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white"
+              placeholder={isListening ? (interimTranscript || 'Listening...') : 'Ask about EMI, schemes, risks, or market...'}
+              className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-colors"
             />
 
-            {/* Send Button */}
+            {/* Send CTA */}
             <button
-              type="button"
-              onClick={() => handleSendMessage()}
+              type="submit"
               disabled={!inputText.trim() || isThinking}
-              aria-label="Send query"
-              className="p-2.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-blue-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs cursor-pointer"
+              className="p-2.5 rounded-xl bg-slate-900 hover:bg-blue-900 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs"
             >
               <Send className="w-4 h-4" />
             </button>
-          </div>
+          </form>
         </div>
       )}
-    </>
+    </div>
   );
 };

@@ -61,7 +61,7 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0"
+      className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none select-none z-0 print:hidden"
       aria-hidden="true"
     >
       {/* LAYER 1: Deep Ambient Radial Gradient & Subtle Artwork Blend */}
@@ -369,10 +369,10 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
         </svg>
       </motion.div>
 
-      {/* LAYER 4: Floating Micro Financial Signals & Subtle Business Geometry */}
+      {/* LAYER 4: Floating Micro Financial Signals & Subtle Business Geometry (Hidden on Mobile) */}
       <motion.div
         style={{ y: shouldReduceMotion ? 0 : floatIconsY }}
-        className="absolute inset-0 w-full h-full pointer-events-none"
+        className="hidden md:block absolute inset-0 w-full h-full pointer-events-none"
       >
         {/* Floating Financial Signals */}
         {[

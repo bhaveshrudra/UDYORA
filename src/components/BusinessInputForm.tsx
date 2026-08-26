@@ -323,13 +323,13 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           </div>
 
           {/* Quick Capital Preset Chips */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 w-full sm:w-auto">
             {capitalPresets.map((amt) => (
               <button
                 key={amt}
                 type="button"
                 onClick={() => handlePresetCapital(amt)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shrink-0 min-h-[40px] ${
                   availableCapital === amt
                     ? 'bg-slate-900 text-white shadow-xs'
                     : 'bg-white text-slate-700 border border-slate-200 hover:border-blue-400 hover:bg-blue-50'
@@ -346,7 +346,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer"
+            className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 cursor-pointer min-h-[44px]"
           >
             <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showAdvanced ? 'rotate-180' : ''}`} />
             <span>+ Add Beneficiary & Experience Details (Optional)</span>
@@ -359,7 +359,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 <select
                   value={beneficiaryCategory}
                   onChange={(e) => setBeneficiaryCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900 cursor-pointer min-h-[44px]"
                 >
                   <option value="General">General Category</option>
                   <option value="SC/ST">SC / ST (Special Subsidy 35%)</option>
@@ -374,7 +374,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 <select
                   value={experienceYears}
                   onChange={(e) => setExperienceYears(Number(e.target.value))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900 cursor-pointer min-h-[44px]"
                 >
                   <option value={0}>0 Years (First-Time Entrepreneur)</option>
                   <option value={2}>1 - 2 Years Experience</option>
@@ -387,7 +387,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 <select
                   value={existingBusiness ? 'existing' : 'new'}
                   onChange={(e) => setExistingBusiness(e.target.value === 'existing')}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900 cursor-pointer min-h-[44px]"
                 >
                   <option value="new">New Greenfield Enterprise</option>
                   <option value="existing">Existing Business Expansion</option>
@@ -399,31 +399,31 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
       </div>
 
       {/* SECTION 4: PRE-ANALYSIS SUMMARY STRIP & SUBMIT CTA */}
-      <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="bg-slate-900 text-white rounded-3xl p-5 sm:p-8 shadow-xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 border-b border-slate-800 pb-4">
           <div className="space-y-1">
             <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-bold flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Ready for Multi-Agent Synthesis</span>
             </span>
-            <h3 className="text-lg font-black tracking-tight text-white">
+            <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
               Advisory Assessment Summary
             </h3>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
-            <div className="bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className="text-[10px] text-slate-400 block uppercase">Location</span>
-              <span className="font-bold text-slate-100">{selectedVillage.name}, {selectedVillage.districtName}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs w-full sm:w-auto">
+            <div className="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700">
+              <span className="text-[10px] text-slate-400 block uppercase font-mono">Confirmed Location</span>
+              <span className="font-bold text-slate-100 truncate block">{selectedVillage.name}, {selectedVillage.districtName}</span>
             </div>
-            <div className="bg-slate-800/90 px-3 py-1.5 rounded-xl border border-slate-700">
-              <span className="text-[10px] text-slate-400 block uppercase">Own Equity</span>
+            <div className="bg-slate-800/90 px-3 py-2 rounded-xl border border-slate-700">
+              <span className="text-[10px] text-slate-400 block uppercase font-mono">Promoter Equity</span>
               <span className="font-bold text-emerald-400 font-mono">₹{availableCapital.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="text-xs text-slate-400 space-y-0.5">
             <p>Runs 7 specialized agents: Evidence, Sizing, Market, Finance, Schemes, Risk & Validation.</p>
             <p className="text-[11px] text-slate-500 font-mono">Deterministic math • Zero hallucinated eligibility rules</p>
@@ -432,7 +432,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="group relative w-full sm:w-auto inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl text-sm font-bold text-white bg-blue-700 overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 cursor-pointer shrink-0"
+            className="group relative w-full sm:w-auto min-h-[48px] inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-2xl text-sm font-bold text-white bg-blue-700 overflow-hidden transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98] disabled:opacity-50 cursor-pointer shrink-0"
           >
             <span
               className="absolute inset-0 w-full h-full bg-blue-900 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"

@@ -279,6 +279,49 @@ export interface FinalFeasibilityVerdict {
   disclaimer: string;
 }
 
+export interface DomainComparisonFactor {
+  score: number;
+  status: DataQualityStatus;
+  explanation?: string;
+}
+
+export interface DomainComparisonItem {
+  domainId: string;
+  domain: string;
+  overallScore: number;
+  rank: number;
+  isProposedBusiness: boolean;
+  factors: {
+    marketOpportunity: DomainComparisonFactor;
+    capitalFit: DomainComparisonFactor;
+    revenuePotential: DomainComparisonFactor;
+    competition: DomainComparisonFactor;
+    operationalRisk: DomainComparisonFactor;
+    infrastructure: DomainComparisonFactor;
+    schemeFit: DomainComparisonFactor;
+  };
+  whyRecommended: string[];
+  riskHighlights: string[];
+}
+
+export interface ComparisonWeightsConfig {
+  marketOpportunity: number;
+  capitalFit: number;
+  revenuePotential: number;
+  competition: number;
+  operationalRisk: number;
+  infrastructure: number;
+  schemeFit: number;
+}
+
+export interface DomainComparisonReport {
+  timestamp: string;
+  weights: ComparisonWeightsConfig;
+  rankedDomains: DomainComparisonItem[];
+  bestFitDomain: DomainComparisonItem;
+  alternativeDomains: DomainComparisonItem[];
+}
+
 export interface CompleteAnalysisReport {
   reportId: string;
   id?: string;
@@ -296,6 +339,7 @@ export interface CompleteAnalysisReport {
   schemeMatches?: SchemeMatchResult[];
   riskAnalysis: AgentPayload<RiskProfile>;
   riskProfile?: RiskProfile;
+  domainComparison?: DomainComparisonReport;
   evidenceAuditLog: EvidenceRecord[];
   evidenceRecords?: EvidenceRecord[];
   aggregatorValidation: {
@@ -315,3 +359,4 @@ export interface AgentStepStatus {
   message: string;
   durationMs?: number;
 }
+

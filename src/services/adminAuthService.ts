@@ -1,18 +1,42 @@
 /**
  * UDYORA Admin Authentication & Session Service
- * Provides secure session token management, authentication checks, and route protection.
- * Configured for seamless migration to JWT / OAuth backend endpoints.
+ * Provides centralized session management, role validation, and route guards.
+ *
+ * AUTHENTICATION CONFIGURATION:
+ * - Admin Role: Full platform administration
+ * - Editorial Role: Content, location, scheme & translation management
+ * Default Email: admin@udyora.gov.in
+ * Default Password: 123456
  */
+
+export type AdminRole = 'ADMIN' | 'EDITORIAL';
 
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
-  role: 'SUPER_ADMIN' | 'DATA_ADMIN' | 'SCHEME_REVIEWER';
+  role: AdminRole;
   lastLogin: string;
 }
 
 const ADMIN_SESSION_KEY = 'udyora_admin_session';
+
+export const ADMIN_AUTH_CONFIG = {
+  defaultEmail: 'admin@udyora.gov.in',
+  defaultPassword: '123456',
+  portalName: 'UDYORA Administration Center'
+};
+
+// Backward-compatible alias
+export const PROTOTYPE_AUTH_CONFIG = ADMIN_AUTH_CONFIG;
+
+// Restricted subroutes for EDITORIAL role
+export const EDITORIAL_RESTRICTED_ROUTES = [
+  'financial-rules',
+  'users',
+  'audit-logs',
+  'settings'
+];
 
 export function getAdminSession(): AdminUser | null {
   if (typeof window === 'undefined') return null;
@@ -29,19 +53,31 @@ export function isAuthenticatedAdmin(): boolean {
   return getAdminSession() !== null;
 }
 
-export function loginAdmin(email: string, pass: string, remember: boolean = false): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
+export function isRouteAllowedForRole(role: AdminRole, route: string): boolean {
+  if (role === 'ADMIN') return true;
+  return !EDITORIAL_RESTRICTED_ROUTES.includes(route);
+}
+
+export function loginAdmin(
+  email: string,
+  pass: string,
+  selectedRole: AdminRole = 'ADMIN',
+  remember: boolean = false
+): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Prototype auth check: Supports standard admin email/pass or dev environment defaults
       const cleanEmail = email.trim().toLowerCase();
-      const isValid = (cleanEmail === 'admin@udyora.gov.in' || cleanEmail === 'admin' || cleanEmail === 'editor@udyora.in') && pass.length >= 4;
+      const cleanPass = pass.trim();
 
-      if (isValid) {
+      const isEmailValid = cleanEmail === ADMIN_AUTH_CONFIG.defaultEmail || cleanEmail === 'admin';
+      const isPassValid = cleanPass === ADMIN_AUTH_CONFIG.defaultPassword;
+
+      if (isEmailValid && isPassValid) {
         const user: AdminUser = {
-          id: 'adm_001',
-          email: cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@udyora.gov.in`,
-          name: cleanEmail.startsWith('editor') ? 'Editorial Officer' : 'Chief Policy Officer',
-          role: cleanEmail.startsWith('editor') ? 'DATA_ADMIN' : 'SUPER_ADMIN',
+          id: selectedRole === 'ADMIN' ? 'adm_super_01' : 'adm_edit_02',
+          email: ADMIN_AUTH_CONFIG.defaultEmail,
+          name: selectedRole === 'ADMIN' ? 'Chief Policy Administrator' : 'Editorial Content Officer',
+          role: selectedRole,
           lastLogin: new Date().toISOString()
         };
 
@@ -56,10 +92,10 @@ export function loginAdmin(email: string, pass: string, remember: boolean = fals
       } else {
         resolve({
           success: false,
-          error: 'Invalid administrator credentials. Please check your email and password.'
+          error: 'Invalid administrator credentials. Please verify your email and password.'
         });
       }
-    }, 450);
+    }, 400);
   });
 }
 

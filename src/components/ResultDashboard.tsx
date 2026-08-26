@@ -29,6 +29,7 @@ import { SchemeGuidanceCard } from './SchemeGuidanceCard';
 import { MarketIntelligenceCard } from './MarketIntelligenceCard';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
 import { EvidenceAuditCard } from './EvidenceAuditCard';
+import { DomainComparisonSection } from './DomainComparisonSection';
 
 import {
   prepareOverviewPillarData,
@@ -52,7 +53,7 @@ interface ResultDashboardProps {
   onPrint: () => void;
 }
 
-type TabType = 'overview' | 'financial' | 'schemes' | 'market' | 'risks' | 'evidence';
+type TabType = 'overview' | 'comparison' | 'financial' | 'schemes' | 'market' | 'risks' | 'evidence';
 
 export const ResultDashboard: React.FC<ResultDashboardProps> = ({
   report,
@@ -64,6 +65,7 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <FileText className="w-4 h-4" /> },
+    { id: 'comparison', label: 'Domain Comparison', icon: <Layers className="w-4 h-4" /> },
     { id: 'financial', label: t('dash.tab.finance'), icon: <Calculator className="w-4 h-4" /> },
     { id: 'schemes', label: t('dash.tab.schemes'), icon: <Award className="w-4 h-4" /> },
     { id: 'market', label: 'Market & Infrastructure', icon: <Store className="w-4 h-4" /> },
@@ -289,6 +291,26 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
               </button>
             </div>
           </div>
+
+          {/* Section 4: Integrated Business Domain Comparison */}
+          {report.domainComparison && (
+            <DomainComparisonSection
+              comparisonReport={report.domainComparison}
+              selectedBusinessName={report.businessAnalysis?.data?.businessSummary}
+            />
+          )}
+        </div>
+      )}
+
+      {/* =========================================================================
+          TAB: DEDICATED DOMAIN COMPARISON VIEW
+          ========================================================================= */}
+      {activeTab === 'comparison' && (
+        <div className="space-y-6">
+          <DomainComparisonSection
+            comparisonReport={report.domainComparison}
+            selectedBusinessName={report.businessAnalysis?.data?.businessSummary}
+          />
         </div>
       )}
 

@@ -120,8 +120,62 @@ export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRe
         </div>
       </div>
 
-      {/* Evidence Table */}
-      <div className="border border-slate-200 rounded-xl overflow-x-auto">
+      {/* Mobile View: Stacked Evidence Cards (below md) */}
+      <div className="md:hidden space-y-3">
+        {filteredRecords.map((rec, idx) => (
+          <div
+            key={`mob-ev-${rec.id || idx}`}
+            className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 shadow-2xs"
+          >
+            <div className="flex items-start justify-between gap-2 border-b border-slate-200/80 pb-2">
+              <div>
+                <span className="font-bold text-xs text-slate-900 block">{rec.metricName}</span>
+                <span className="text-[11px] font-mono text-slate-500">{rec.geographicLevel} Level</span>
+              </div>
+              <div className="shrink-0">{getStatusBadge(rec.status)}</div>
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">{t('evidence.table.value')}:</span>
+              <span className="font-mono font-bold text-slate-950">
+                {typeof rec.value === 'number' ? rec.value.toLocaleString('en-IN') : rec.value}{' '}
+                {rec.unit || ''}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500 font-medium">Confidence:</span>
+              <span className="font-mono font-bold text-slate-900">
+                {Math.round((rec.confidence || 0.8) * 100)}%
+              </span>
+            </div>
+
+            <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-200/60 flex items-center justify-between">
+              <span className="truncate max-w-[220px]">{rec.source}</span>
+              {rec.sourceUrl && (
+                <a
+                  href={rec.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 font-bold hover:underline flex items-center gap-1 shrink-0"
+                >
+                  <span>Source</span>
+                  <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+              )}
+            </div>
+
+            {rec.dataLimitationNote && (
+              <p className="text-[10px] text-amber-800 bg-amber-50 p-2 rounded-lg border border-amber-200 leading-snug">
+                ⚠️ {rec.dataLimitationNote}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View (md+) */}
+      <div className="hidden md:block border border-slate-200 rounded-xl overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 text-xs">
           <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider">
             <tr>

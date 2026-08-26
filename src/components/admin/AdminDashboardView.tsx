@@ -24,12 +24,14 @@ import {
 } from '../../services/adminDataService';
 import { HorizontalBarChart, DonutChart } from '../charts/DashboardCharts';
 import { AdminSubRoute } from './AdminLayout';
+import { AdminRole } from '../../services/adminAuthService';
 
 interface AdminDashboardViewProps {
   onNavigate: (route: AdminSubRoute) => void;
+  role?: AdminRole;
 }
 
-export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onNavigate }) => {
+export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onNavigate, role = 'ADMIN' }) => {
   const locations = getLocations();
   const businesses = getBusinessTemplates();
   const schemes = getSchemes();
@@ -95,7 +97,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({ onNaviga
             </span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-950 mt-1.5">
-            UDYORA Administration
+            UDYORA Administration Center
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Manage business intelligence data, schemes, evidence, financial rules and platform configuration.

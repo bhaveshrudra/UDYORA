@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import { UserBusinessInput, CompleteAnalysisReport, AgentStepStatus } from './types';
-import { DEMO_LOCATIONS } from './data/locations';
 import { Header } from './components/Header';
 import { BusinessInputForm } from './components/BusinessInputForm';
 import { AgentExecutionProgress } from './components/AgentExecutionProgress';
@@ -11,7 +10,8 @@ import { LandingPage } from './components/LandingPage';
 import { AdvisorChatbot } from './components/AdvisorChatbot';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AnimatedBusinessBackground } from './components/AnimatedBusinessBackground';
-import { LanguageSelectionModal } from './components/LanguageSelectionModal';
+import { StartupLanguageGate } from './components/StartupLanguageGate';
+import { ProductIntroSplash } from './components/ProductIntroSplash';
 import { PublicFooter } from './components/PublicFooter';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { useLanguage } from './i18n/LanguageContext';
@@ -38,10 +38,18 @@ import { recordAssessment } from './services/adminDataService';
 type AppRoute = 'landing' | 'app' | 'admin_login' | 'admin';
 
 export function App() {
-  const { t, language, hasSelectedLanguage, confirmInitialLanguage } = useLanguage();
+  const {
+    t,
+    language,
+    startupState,
+    selectLanguageAndProceed,
+    completeIntro,
+    resetLanguagePreference
+  } = useLanguage();
+
   const appContainerRef = useRef<HTMLDivElement>(null);
 
-  // Client-side path router
+  // Client-side path router (preserves target path across startup language gate)
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
@@ -204,8 +212,47 @@ export function App() {
   };
 
   // =========================================================================
-  // ROUTE 3: ADMIN LOGIN (/admin/login)
+  // 1. STARTUP STATE: CHECKING SAVED LANGUAGE
   // =========================================================================
+  if (startupState === 'checking') {
+    return (
+      <div className="fixed inset-0 bg-white flex items-center justify-center select-none">
+        <div className="w-8 h-8 rounded-full border-3 border-blue-700 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // 2. STARTUP STATE: FIRST-TIME VISITOR LANGUAGE SELECTION GATE
+  // (NO LANDING / APP / ADMIN FLASH BEFORE SELECTION)
+  // =========================================================================
+  if (startupState === 'select-language') {
+    return (
+      <StartupLanguageGate
+        initialLanguage={language}
+        onConfirmLanguage={(chosen) => {
+          selectLanguageAndProceed(chosen);
+        }}
+      />
+    );
+  }
+
+  // =========================================================================
+  // 3. STARTUP STATE: OPENING LETTER-BY-LETTER INTRO SPLASH IN SELECTED LANGUAGE
+  // =========================================================================
+  if (startupState === 'intro') {
+    return (
+      <ProductIntroSplash
+        onComplete={completeIntro}
+      />
+    );
+  }
+
+  // =========================================================================
+  // 4. STARTUP STATE: READY -> ROUTE TO INTENDED APPLICATION DESTINATION
+  // =========================================================================
+
+  // ROUTE: ADMIN LOGIN (/admin/login)
   if (currentRoute === 'admin_login') {
     return (
       <AdminLoginView
@@ -215,11 +262,8 @@ export function App() {
     );
   }
 
-  // =========================================================================
-  // ROUTE 4: SECURE ADMIN CONTROL PLANE (/admin/*)
-  // =========================================================================
+  // ROUTE: SECURE ADMIN CONTROL PLANE (/admin/*)
   if (currentRoute === 'admin') {
-    // Route protection guard
     if (!currentAdminUser && !getAdminSession()) {
       return (
         <AdminLoginView
@@ -240,7 +284,7 @@ export function App() {
         onNavigateToPublic={handleNavigateHome}
       >
         {adminSubRoute === 'dashboard' && (
-          <AdminDashboardView onNavigate={handleAdminSubNavigate} />
+          <AdminDashboardView onNavigate={handleAdminSubNavigate} role={activeAdmin.role} />
         )}
         {adminSubRoute === 'locations' && <AdminLocationsView />}
         {adminSubRoute === 'businesses' && <AdminBusinessesView />}
@@ -256,21 +300,9 @@ export function App() {
     );
   }
 
-  // =========================================================================
-  // ROUTE 1 & 2: ENTREPRENEUR-FACING PRODUCT (UNTOUCHED & PRESERVED)
-  // =========================================================================
+  // ROUTE: PUBLIC LANDING PAGE (/) OR WORKSPACE (/app)
   return (
     <>
-      {/* First-Visit Language Selection Modal */}
-      {!hasSelectedLanguage && (
-        <LanguageSelectionModal
-          initialLanguage={language}
-          onSelectLanguage={(chosen) => {
-            confirmInitialLanguage(chosen);
-          }}
-        />
-      )}
-
       {/* ROUTE 1: PUBLIC LANDING PAGE (/) */}
       {currentRoute === 'landing' && (
         <LandingPage

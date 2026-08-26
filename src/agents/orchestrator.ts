@@ -19,6 +19,7 @@ import { runSchemeAgent } from './schemeAgent';
 import { runRiskAgent } from './riskAgent';
 import { validateAndReconcileAgentOutputs } from '../services/aggregatorValidator';
 import { runFinalAdvisorAgent } from './finalAdvisor';
+import { compareBusinessDomains } from '../services/domainComparisonService';
 
 /**
  * UDYORA MULTI-AGENT ORCHESTRATOR
@@ -320,6 +321,7 @@ export async function executeMultiAgentWorkflow(
     schemeMatches: schemePayload.data,
     riskAnalysis: riskPayload,
     riskProfile: riskPayload.data,
+    domainComparison: compareBusinessDomains(input, location),
     evidenceAuditLog,
     evidenceRecords: evidenceAuditLog,
     aggregatorValidation

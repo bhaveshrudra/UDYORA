@@ -760,6 +760,179 @@ export const AdminFinancialRulesView: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Domain Comparison Weights Configuration */}
+      <AdminComparisonWeightsManager />
+    </div>
+  );
+};
+
+export const AdminComparisonWeightsManager: React.FC = () => {
+  const [weights, setWeights] = useState({
+    marketOpportunity: 20,
+    capitalFit: 20,
+    revenuePotential: 15,
+    competition: 10,
+    operationalRisk: 15,
+    infrastructure: 10,
+    schemeFit: 10
+  });
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+
+  const total = (Object.values(weights) as number[]).reduce((a: number, b: number) => a + b, 0);
+  const isValid = total === 100;
+
+  const handleSave = () => {
+    if (!isValid) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('udyora_comparison_weights', JSON.stringify({
+        marketOpportunity: weights.marketOpportunity / 100,
+        capitalFit: weights.capitalFit / 100,
+        revenuePotential: weights.revenuePotential / 100,
+        competition: weights.competition / 100,
+        operationalRisk: weights.operationalRisk / 100,
+        infrastructure: weights.infrastructure / 100,
+        schemeFit: weights.schemeFit / 100
+      }));
+    }
+    setSaveMessage('Comparison algorithm weights updated successfully.');
+    setTimeout(() => setSaveMessage(null), 3500);
+  };
+
+  const handleChange = (key: keyof typeof weights, val: string) => {
+    const num = Math.max(0, Math.min(100, parseInt(val) || 0));
+    setWeights((prev) => ({ ...prev, [key]: num }));
+  };
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-800 border border-blue-200 px-2 py-0.5 rounded">
+              Domain Comparison Engine
+            </span>
+            <span className={`text-xs font-bold font-mono ${isValid ? 'text-emerald-700' : 'text-rose-600'}`}>
+              Total Weight: {total}% {isValid ? '(Valid)' : '(Must equal 100%)'}
+            </span>
+          </div>
+          <h3 className="text-base font-bold text-slate-950 mt-1">
+            Business Suitability Scoring Weights
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Configure the 7 multi-factor weights used to calculate localized business opportunity rankings.
+          </p>
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={!isValid}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-xs self-start sm:self-center"
+        >
+          <Save className="w-3.5 h-3.5" />
+          <span>Save Weights</span>
+        </button>
+      </div>
+
+      {saveMessage && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-bold flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+          <span>{saveMessage}</span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Market Opportunity</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.marketOpportunity}
+              onChange={(e) => handleChange('marketOpportunity', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Capital Fit</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.capitalFit}
+              onChange={(e) => handleChange('capitalFit', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Revenue / Margin</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.revenuePotential}
+              onChange={(e) => handleChange('revenuePotential', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Operational Risk</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.operationalRisk}
+              onChange={(e) => handleChange('operationalRisk', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Infrastructure</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.infrastructure}
+              onChange={(e) => handleChange('infrastructure', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Scheme Fit</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.schemeFit}
+              onChange={(e) => handleChange('schemeFit', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 p-3.5 rounded-2xl space-y-1">
+          <label className="text-[11px] font-bold text-slate-700 block">Competition</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              value={weights.competition}
+              onChange={(e) => handleChange('competition', e.target.value)}
+              className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-sm font-bold font-mono"
+            />
+            <span className="font-mono text-slate-500">%</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
