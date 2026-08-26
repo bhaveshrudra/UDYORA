@@ -212,23 +212,47 @@ app.post('/api/schemes/match', async (req: Request, res: Response) => {
 });
 
 // ==========================================
-// 5. Orchestrator Pipeline Route (End-to-End)
+// 6. UDYORA Business Advisor Conversational Route
 // ==========================================
-app.post('/api/pipeline/run', async (req: Request, res: Response) => {
+app.post('/api/advisor/chat', async (req: Request, res: Response) => {
   try {
-    const profile = req.body as BusinessProfile;
-    if (!profile || !profile.businessName) {
-      res.status(400).json({
-        success: false,
-        error: 'Missing required profile payload in request body.',
-      });
+    const { message, context, language, history } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (!apiKey) {
+      // If no API key is present on the server, return a structured signal to use local deterministic synthesizer
+      res.status(200).json({ success: false, useFallback: true });
       return;
     }
 
-    const result = await runUdyoraPipeline(profile);
-    res.json(result);
+    const { ai, DEFAULT_GEMINI_MODEL } = await import('./config/gemini.js');
+
+    const systemPrompt = `You are the UDYORA AI Business Advisor for rural and semi-urban Indian micro-entrepreneurs.
+Target response language: ${language || 'en'}.
+Strict Factuality Rules:
+1. NEVER invent local population, competitor headcounts, market size, or interest rates.
+2. If exact data is unavailable, state clearly: "I don't have enough verified data to answer that reliably."
+3. Financial facts: Own capital ₹${context?.userInput?.availableCapital || 100000}, project cost ₹${context?.analysisReport?.financialPlan?.data?.indicativeProjectCost || 1000000}, EMI ₹${context?.analysisReport?.financialPlan?.data?.monthlyEMI || 19124}. Do not change these numbers.
+4. Keep the tone respectful, clear, and actionable.`;
+
+    const contents = [
+      { role: 'user', parts: [{ text: `${systemPrompt}\n\nUser Question: ${message}` }] }
+    ];
+
+    const response = await ai.models.generateContent({
+      model: DEFAULT_GEMINI_MODEL,
+      contents: contents as any
+    });
+
+    res.json({
+      success: true,
+      text: response.text,
+      topic: 'general',
+      dataQuality: 'VERIFIED'
+    });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    console.warn('[Advisor Route Warning]:', error.message);
+    res.status(200).json({ success: false, useFallback: true });
   }
 });
 

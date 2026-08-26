@@ -32,6 +32,7 @@ import { AgentExecutionProgress } from './components/AgentExecutionProgress';
 import { ResultDashboard } from './components/ResultDashboard';
 import { PrintableReport } from './components/PrintableReport';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AdvisorChatbot } from './components/AdvisorChatbot';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { validateAndNormalizeReport } from './services/reportValidator';
 import { runFinancialUnitTests } from './tests/financialCalculator.test';
@@ -61,6 +62,7 @@ function AppContent() {
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
   const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([]);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
+  const [currentInput, setCurrentInput] = useState<UserBusinessInput | undefined>(undefined);
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
 
   // Handle browser URL synchronization (pushState / popstate / hashchange)
@@ -110,6 +112,7 @@ function AppContent() {
   };
 
   const handleFormSubmit = async (input: UserBusinessInput) => {
+    setCurrentInput(input);
     setCurrentScreen('executing');
     try {
       const inputWithLang = { ...input, language };
@@ -220,6 +223,13 @@ function AppContent() {
             </div>
           )}
         </main>
+
+        {/* Floating UDYORA AI Business Advisor Chatbot with Voice Interaction */}
+        <AdvisorChatbot
+          currentInput={currentInput}
+          currentLocation={analysisReport?.location}
+          analysisReport={analysisReport}
+        />
 
         {/* Global Public Service Footer */}
         <footer className="border-t border-slate-200 bg-white py-6 mt-12">
