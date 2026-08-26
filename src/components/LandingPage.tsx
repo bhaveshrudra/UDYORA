@@ -30,13 +30,16 @@ import { ProductIntroSplash } from './ProductIntroSplash';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
 import { BrandLogo } from './BrandLogo';
+import { PublicFooter } from './PublicFooter';
 
 interface LandingPageProps {
   onNavigateToApp: (scenario?: 'dairy' | 'tailoring' | 'retail') => void;
+  onNavigateToAdmin?: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
-  onNavigateToApp
+  onNavigateToApp,
+  onNavigateToAdmin
 }) => {
   const landingRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
@@ -653,25 +656,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </motion.div>
       </section>
 
-      {/* PUBLIC SERVICE FOOTER */}
-      <footer className="relative z-10 border-t border-slate-200 bg-white/95 backdrop-blur-xs py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
-              U
-            </div>
-            <span className="font-bold text-slate-800">UDYORA</span>
-            <span>— {t('brand.tagline')}</span>
-          </div>
-          <div className="flex items-center gap-4 text-slate-500">
-            <span>Deterministic Financial Engine</span>
-            <span>•</span>
-            <span>Rule-based Schemes</span>
-            <span>•</span>
-            <span>{t('brand.developedBy')}</span>
-          </div>
-        </div>
-      </footer>
+      {/* REDESIGNED PUBLIC PRODUCT FOOTER WITH SUBTLE ADMIN LINK */}
+      <PublicFooter
+        onNavigateHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onNavigateToApp={() => onNavigateToApp()}
+        onNavigateToAdmin={onNavigateToAdmin}
+      />
     </div>
   );
 };

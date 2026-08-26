@@ -12,22 +12,59 @@ import { AdvisorChatbot } from './components/AdvisorChatbot';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AnimatedBusinessBackground } from './components/AnimatedBusinessBackground';
 import { LanguageSelectionModal } from './components/LanguageSelectionModal';
+import { PublicFooter } from './components/PublicFooter';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { useLanguage } from './i18n/LanguageContext';
+
+// Admin Imports
+import { AdminUser, getAdminSession, logoutAdmin } from './services/adminAuthService';
+import { AdminLayout, AdminSubRoute } from './components/admin/AdminLayout';
+import { AdminLoginView } from './components/admin/AdminLoginView';
+import { AdminDashboardView } from './components/admin/AdminDashboardView';
+import {
+  AdminLocationsView,
+  AdminBusinessesView,
+  AdminSchemesView,
+  AdminEvidenceView,
+  AdminFinancialRulesView,
+  AdminUsersView,
+  AdminAssessmentsView,
+  AdminTranslationsView,
+  AdminAuditLogsView,
+  AdminSettingsView
+} from './components/admin/AdminManagementViews';
+import { recordAssessment } from './services/adminDataService';
+
+type AppRoute = 'landing' | 'app' | 'admin_login' | 'admin';
 
 export function App() {
   const { t, language, hasSelectedLanguage, confirmInitialLanguage } = useLanguage();
   const appContainerRef = useRef<HTMLDivElement>(null);
 
-  // Simple client-side path router: 'landing' (/) vs 'app' (/app)
-  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(() => {
+  // Client-side path router
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
+      if (path === '/admin/login') return 'admin_login';
+      if (path.startsWith('/admin')) return 'admin';
       if (path === '/app' || path.startsWith('/app/')) return 'app';
     }
     return 'landing';
   });
 
+  // Admin state
+  const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(() => getAdminSession());
+  const [adminSubRoute, setAdminSubRoute] = useState<AdminSubRoute>(() => {
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname.replace('/admin/', '');
+      if (['locations', 'businesses', 'schemes', 'evidence', 'financial-rules', 'users', 'reports', 'translations', 'audit-logs', 'settings'].includes(p)) {
+        return p as AdminSubRoute;
+      }
+    }
+    return 'dashboard';
+  });
+
+  // Entrepreneur App state
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
   const [currentInput, setCurrentInput] = useState<UserBusinessInput | undefined>(undefined);
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
@@ -44,11 +81,23 @@ export function App() {
   ]);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
 
-  // Handle browser popstate
+  // Sync browser popstate
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (path === '/app' || path.startsWith('/app/')) {
+      if (path === '/admin/login') {
+        setCurrentRoute('admin_login');
+      } else if (path.startsWith('/admin')) {
+        const session = getAdminSession();
+        if (session) {
+          setCurrentAdminUser(session);
+          setCurrentRoute('admin');
+          const sub = path.replace('/admin/', '').replace('/admin', '');
+          if (sub) setAdminSubRoute((sub as AdminSubRoute) || 'dashboard');
+        } else {
+          setCurrentRoute('admin_login');
+        }
+      } else if (path === '/app' || path.startsWith('/app/')) {
         setCurrentRoute('app');
       } else {
         setCurrentRoute('landing');
@@ -58,9 +107,16 @@ export function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigateTo = (route: 'landing' | 'app') => {
+  const navigateTo = (route: AppRoute, subRoute?: AdminSubRoute) => {
     setCurrentRoute(route);
-    const targetPath = route === 'landing' ? '/' : '/app';
+    let targetPath = '/';
+    if (route === 'app') targetPath = '/app';
+    else if (route === 'admin_login') targetPath = '/admin/login';
+    else if (route === 'admin') {
+      targetPath = subRoute && subRoute !== 'dashboard' ? `/admin/${subRoute}` : '/admin';
+      if (subRoute) setAdminSubRoute(subRoute);
+    }
+
     if (window.location.pathname !== targetPath) {
       window.history.pushState({}, '', targetPath);
     }
@@ -74,6 +130,35 @@ export function App() {
   const handleNavigateHome = () => {
     navigateTo('landing');
     setCurrentScreen('form');
+  };
+
+  const handleNavigateToAdmin = () => {
+    const session = getAdminSession();
+    if (session) {
+      setCurrentAdminUser(session);
+      navigateTo('admin', 'dashboard');
+    } else {
+      navigateTo('admin_login');
+    }
+  };
+
+  const handleAdminLoginSuccess = (user: AdminUser) => {
+    setCurrentAdminUser(user);
+    navigateTo('admin', 'dashboard');
+  };
+
+  const handleAdminLogout = () => {
+    logoutAdmin();
+    setCurrentAdminUser(null);
+    navigateTo('admin_login');
+  };
+
+  const handleAdminSubNavigate = (sub: AdminSubRoute) => {
+    setAdminSubRoute(sub);
+    const targetPath = sub === 'dashboard' ? '/admin' : `/admin/${sub}`;
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
   };
 
   const handleFormSubmit = async (input: UserBusinessInput) => {
@@ -99,6 +184,9 @@ export function App() {
 
       setAnalysisReport(report);
       setCurrentScreen('result');
+
+      // Record in Admin Assessments repository
+      recordAssessment(report);
     } catch (err) {
       console.error('Multi-agent analysis execution failed:', err);
       alert('An error occurred during analysis. Please try again.');
@@ -115,9 +203,65 @@ export function App() {
     window.print();
   };
 
+  // =========================================================================
+  // ROUTE 3: ADMIN LOGIN (/admin/login)
+  // =========================================================================
+  if (currentRoute === 'admin_login') {
+    return (
+      <AdminLoginView
+        onLoginSuccess={handleAdminLoginSuccess}
+        onNavigateHome={handleNavigateHome}
+      />
+    );
+  }
+
+  // =========================================================================
+  // ROUTE 4: SECURE ADMIN CONTROL PLANE (/admin/*)
+  // =========================================================================
+  if (currentRoute === 'admin') {
+    // Route protection guard
+    if (!currentAdminUser && !getAdminSession()) {
+      return (
+        <AdminLoginView
+          onLoginSuccess={handleAdminLoginSuccess}
+          onNavigateHome={handleNavigateHome}
+        />
+      );
+    }
+
+    const activeAdmin = currentAdminUser || getAdminSession()!;
+
+    return (
+      <AdminLayout
+        currentAdmin={activeAdmin}
+        activeRoute={adminSubRoute}
+        onNavigate={handleAdminSubNavigate}
+        onLogout={handleAdminLogout}
+        onNavigateToPublic={handleNavigateHome}
+      >
+        {adminSubRoute === 'dashboard' && (
+          <AdminDashboardView onNavigate={handleAdminSubNavigate} />
+        )}
+        {adminSubRoute === 'locations' && <AdminLocationsView />}
+        {adminSubRoute === 'businesses' && <AdminBusinessesView />}
+        {adminSubRoute === 'schemes' && <AdminSchemesView />}
+        {adminSubRoute === 'evidence' && <AdminEvidenceView />}
+        {adminSubRoute === 'financial-rules' && <AdminFinancialRulesView />}
+        {adminSubRoute === 'users' && <AdminUsersView />}
+        {adminSubRoute === 'reports' && <AdminAssessmentsView />}
+        {adminSubRoute === 'translations' && <AdminTranslationsView />}
+        {adminSubRoute === 'audit-logs' && <AdminAuditLogsView />}
+        {adminSubRoute === 'settings' && <AdminSettingsView />}
+      </AdminLayout>
+    );
+  }
+
+  // =========================================================================
+  // ROUTE 1 & 2: ENTREPRENEUR-FACING PRODUCT (UNTOUCHED & PRESERVED)
+  // =========================================================================
   return (
     <>
-      {/* 1. First-Visit Language Selection Modal (Before Main Experience) */}
+      {/* First-Visit Language Selection Modal */}
       {!hasSelectedLanguage && (
         <LanguageSelectionModal
           initialLanguage={language}
@@ -131,6 +275,7 @@ export function App() {
       {currentRoute === 'landing' && (
         <LandingPage
           onNavigateToApp={handleNavigateToApp}
+          onNavigateToAdmin={handleNavigateToAdmin}
         />
       )}
 
@@ -165,7 +310,7 @@ export function App() {
               {/* SCREEN 1: GUIDED INPUT & WORKSPACE */}
               {currentScreen === 'form' && (
                 <div className="space-y-6 animate-fadeIn">
-                  {/* App Single Primary Heading Banner (No duplicate titles) */}
+                  {/* App Single Primary Heading Banner */}
                   <div className="text-center max-w-3xl mx-auto pt-2 pb-2">
                     <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/80 text-blue-900 border border-blue-200 mb-3 shadow-2xs">
                       <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
@@ -233,25 +378,12 @@ export function App() {
               onResetAnalysis={handleReset}
             />
 
-            {/* Global Public Service Footer */}
-            <footer className="border-t border-slate-200/80 bg-white/95 backdrop-blur-xs py-6 mt-12">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
-                    U
-                  </div>
-                  <span className="font-bold text-slate-800">UDYORA</span>
-                  <span>— {t('brand.tagline')}</span>
-                </div>
-                <div className="flex items-center gap-4 text-slate-500">
-                  <span>Deterministic Math</span>
-                  <span>•</span>
-                  <span>Multi-Agent Synthesis</span>
-                  <span>•</span>
-                  <span>{t('brand.developedBy')}</span>
-                </div>
-              </div>
-            </footer>
+            {/* Global Public Product Footer with Subtle Admin Access Entry */}
+            <PublicFooter
+              onNavigateHome={handleNavigateHome}
+              onNavigateToApp={() => setCurrentScreen('form')}
+              onNavigateToAdmin={handleNavigateToAdmin}
+            />
           </div>
         </div>
       )}
