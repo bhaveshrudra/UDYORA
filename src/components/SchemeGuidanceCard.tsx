@@ -13,12 +13,14 @@ import {
   Info
 } from 'lucide-react';
 import { SchemeMatchResult } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface SchemeGuidanceCardProps {
   schemes: SchemeMatchResult[];
 }
 
 export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes }) => {
+  const { t } = useLanguage();
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
   const [selectedSchemeId, setSelectedSchemeId] = useState<string>(schemes[0]?.scheme.id || '');
 
@@ -44,6 +46,15 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
     }
   };
 
+  const getLocalizedStatusText = (status: string) => {
+    switch (status) {
+      case 'ELIGIBLE': return t('scheme.status.eligible');
+      case 'CONDITIONALLY_ELIGIBLE': return t('scheme.status.conditional');
+      case 'REQUIRES_VERIFICATION': return t('scheme.status.verification');
+      default: return t('scheme.status.ineligible');
+    }
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
       {/* Header */}
@@ -52,16 +63,16 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
           <div className="flex items-center gap-2">
             <Award className="w-5 h-5 text-blue-700" />
             <h2 className="text-lg font-bold tracking-tight text-slate-900">
-              Government Credit Schemes & Subsidies
+              {t('scheme.title')}
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Rule-based matching against verified guidelines with official portal references.
+            {t('scheme.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-1 text-xs font-semibold text-slate-700">
-          <span>{schemes.length} Scheme Rules Evaluated</span>
+          <span>{t('scheme.evaluatedCount', { count: schemes.length })}</span>
         </div>
       </div>
 
@@ -97,7 +108,7 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
             <div>
               <div className="flex items-center gap-2">
                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${getStatusBadge(activeSchemeMatch.qualificationStatus)}`}>
-                  {activeSchemeMatch.qualificationStatus.replace('_', ' ')}
+                  {getLocalizedStatusText(activeSchemeMatch.qualificationStatus)}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
                   Nodal: {activeSchemeMatch.scheme.nodalAgency}
@@ -114,7 +125,7 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-800 bg-white border border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs shrink-0 cursor-pointer"
             >
-              <span>Official Portal</span>
+              <span>{t('scheme.portalBtn')}</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -122,11 +133,11 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
           {/* Scheme Financial Parameters Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="bg-white p-3 rounded-lg border border-slate-200">
-              <span className="text-slate-500 font-medium block">Interest Rate:</span>
+              <span className="text-slate-500 font-medium block">{t('scheme.interestRate')}</span>
               <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme.interestRateRange}</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
-              <span className="text-slate-500 font-medium block">Est. Subsidy / Benefit:</span>
+              <span className="text-slate-500 font-medium block">{t('scheme.estSubsidy')}</span>
               <span className="font-bold text-emerald-700 mt-0.5 block">
                 {activeSchemeMatch.potentialSubsidyAmount > 0
                   ? `₹${activeSchemeMatch.potentialSubsidyAmount.toLocaleString('en-IN')} (${activeSchemeMatch.potentialSubsidyPct}%)`
@@ -134,11 +145,11 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
               </span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
-              <span className="text-slate-500 font-medium block">Min Margin Contribution:</span>
+              <span className="text-slate-500 font-medium block">{t('scheme.minMargin')}</span>
               <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme.minMarginContributionPct}%</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
-              <span className="text-slate-500 font-medium block">Max Project Ceiling:</span>
+              <span className="text-slate-500 font-medium block">{t('scheme.maxCeiling')}</span>
               <span className="font-bold text-slate-900 mt-0.5 block">₹{(activeSchemeMatch.scheme.maxProjectCost / 100000).toLocaleString('en-IN')} Lakhs</span>
             </div>
           </div>
@@ -146,7 +157,7 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
           {/* Why it matches */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Eligibility & Matching Justification:
+              {t('scheme.whyMatches')}
             </h4>
             <ul className="space-y-1.5">
               {activeSchemeMatch.whyItMatches.map((reason, idx) => (
@@ -163,10 +174,13 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
             <div className="flex items-center justify-between mb-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-blue-700" />
-                Required Documents Checklist (Ready for Application)
+                {t('scheme.checklistTitle')}
               </h4>
               <span className="text-[11px] text-slate-500 font-medium">
-                {Object.values(checkedDocs).filter(Boolean).length} of {activeSchemeMatch.requiredDocuments.length} Ready
+                {t('scheme.readyCount', {
+                  ready: Object.values(checkedDocs).filter(Boolean).length,
+                  total: activeSchemeMatch.requiredDocuments.length
+                })}
               </span>
             </div>
 
@@ -202,7 +216,7 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>{activeSchemeMatch.verificationNote}</span>
             </span>
-            <span>Verified: {activeSchemeMatch.scheme.lastVerifiedDate}</span>
+            <span>{t('scheme.verifiedOn', { date: activeSchemeMatch.scheme.lastVerifiedDate })}</span>
           </div>
         </div>
       )}

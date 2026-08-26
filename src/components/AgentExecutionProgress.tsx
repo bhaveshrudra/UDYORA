@@ -14,6 +14,7 @@ import {
   FileCheck
 } from 'lucide-react';
 import { AgentStepStatus } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface AgentExecutionProgressProps {
   steps: AgentStepStatus[];
@@ -47,8 +48,37 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
   steps,
   currentActiveId
 }) => {
+  const { t } = useLanguage();
   const completedCount = steps.filter((s) => s.status === 'COMPLETED').length;
   const progressPercent = Math.round((completedCount / Math.max(1, steps.length)) * 100);
+
+  const getLocalizedAgentName = (id: string) => {
+    switch (id) {
+      case 'evidence': return t('progress.agent.evidence');
+      case 'business': return t('progress.agent.business');
+      case 'market': return t('progress.agent.market');
+      case 'finance': return t('progress.agent.finance');
+      case 'scheme': return t('progress.agent.scheme');
+      case 'risk': return t('progress.agent.risk');
+      case 'validator': return t('progress.agent.validator');
+      case 'final': return t('progress.agent.final');
+      default: return id;
+    }
+  };
+
+  const getLocalizedAgentRole = (id: string) => {
+    switch (id) {
+      case 'evidence': return t('progress.agent.evidenceRole');
+      case 'business': return t('progress.agent.businessRole');
+      case 'market': return t('progress.agent.marketRole');
+      case 'finance': return t('progress.agent.financeRole');
+      case 'scheme': return t('progress.agent.schemeRole');
+      case 'risk': return t('progress.agent.riskRole');
+      case 'validator': return t('progress.agent.validatorRole');
+      case 'final': return t('progress.agent.finalRole');
+      default: return '';
+    }
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
@@ -58,18 +88,18 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse" />
             <h2 className="text-lg font-bold tracking-tight text-slate-900">
-              Orchestrated Multi-Agent Execution in Progress
+              {t('progress.title')}
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            Decoupled specialized agents are analyzing feasibility, deterministic finances, schemes, and risks.
+            {t('progress.subtitle')}
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="text-right">
             <span className="text-xs font-bold text-slate-700">
-              {completedCount} of {steps.length} Agents Complete
+              {t('progress.completeRatio', { completed: completedCount, total: steps.length })}
             </span>
             <div className="w-32 bg-slate-100 rounded-full h-2 mt-1 overflow-hidden">
               <div
@@ -83,7 +113,7 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
 
       {/* Agent Progress List */}
       <div className="space-y-3">
-        {steps.map((step, index) => {
+        {steps.map((step) => {
           const isRunning = step.status === 'RUNNING';
           const isCompleted = step.status === 'COMPLETED';
           const isPending = step.status === 'PENDING';
@@ -107,10 +137,10 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">
-                        {step.name}
+                        {getLocalizedAgentName(step.id)}
                       </span>
                       <span className="text-[10px] font-medium text-slate-400">
-                        ({step.role})
+                        ({getLocalizedAgentRole(step.id)})
                       </span>
                     </div>
                     <p className={`text-xs mt-0.5 ${isRunning ? 'text-blue-900 font-medium' : 'text-slate-600'}`}>
@@ -123,20 +153,20 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
                   {isCompleted && (
                     <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>{step.durationMs ? `${step.durationMs}ms` : 'Verified'}</span>
+                      <span>{step.durationMs ? `${step.durationMs}ms` : t('progress.status.completed')}</span>
                     </div>
                   )}
 
                   {isRunning && (
                     <div className="flex items-center gap-1 text-xs font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded animate-pulse">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>Working...</span>
+                      <span>{t('progress.status.running')}</span>
                     </div>
                   )}
 
                   {isPending && (
                     <span className="text-[11px] font-medium text-slate-400 px-2 py-0.5">
-                      Queued
+                      {t('progress.status.waiting')}
                     </span>
                   )}
                 </div>

@@ -10,12 +10,14 @@ import {
   Info
 } from 'lucide-react';
 import { FinalFeasibilityVerdict } from '../types';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface FeasibilityGaugeProps {
   verdict: FinalFeasibilityVerdict;
 }
 
 export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) => {
+  const { t } = useLanguage();
   const { score, category, headline, explanation, readinessFactors, criticalCaveat } = verdict;
 
   const getCategoryColor = (cat: string) => {
@@ -46,6 +48,25 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
     }
   };
 
+  const getLocalizedCategory = (cat: string) => {
+    switch (cat) {
+      case 'HIGH': return t('feasibility.cat.high');
+      case 'MODERATE': return t('feasibility.cat.moderate');
+      case 'CONDITIONAL': return t('feasibility.cat.conditional');
+      case 'LOW': return t('feasibility.cat.low');
+      default: return cat;
+    }
+  };
+
+  const getLocalizedRating = (rating: string) => {
+    switch (rating) {
+      case 'STRONG': return t('feasibility.rating.strong');
+      case 'ADEQUATE': return t('feasibility.rating.adequate');
+      case 'NEEDS_ATTENTION': return t('feasibility.rating.needsAttention');
+      default: return rating;
+    }
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs">
       {/* Top Banner with Score Gauge */}
@@ -53,9 +74,9 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
         <div className="flex-1">
           <div className="flex items-center gap-2.5 mb-2">
             <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${getCategoryColor(category)}`}>
-              FEASIBILITY STATUS: {category}
+              {t('feasibility.statusBadge')}: {getLocalizedCategory(category)}
             </span>
-            <span className="text-xs text-slate-500 font-medium">Explainable Multi-Agent Assessment</span>
+            <span className="text-xs text-slate-500 font-medium">{t('feasibility.explainableLabel')}</span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-snug">
@@ -77,7 +98,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
               <span className="text-lg font-bold text-slate-400">/ 100</span>
             </div>
             <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">
-              Feasibility Index
+              {t('feasibility.index')}
             </p>
             <div className="w-28 h-1.5 bg-slate-200 rounded-full mt-2 mx-auto overflow-hidden">
               <div
@@ -95,7 +116,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
           <BarChart3 className="w-3.5 h-3.5 text-blue-700" />
-          Pillar-by-Pillar Feasibility Breakdown
+          {t('feasibility.breakdownTitle')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
@@ -110,7 +131,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
                     {factor.area}
                   </span>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase shrink-0 ${getRatingBadge(factor.rating)}`}>
-                    {factor.rating.replace('_', ' ')}
+                    {getLocalizedRating(factor.rating)}
                   </span>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed">
@@ -119,7 +140,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
               </div>
 
               <div className="mt-3 pt-2.5 border-t border-slate-200 flex items-center justify-between text-[11px] font-medium text-slate-500">
-                <span>Weight: {factor.weight}%</span>
+                <span>{t('feasibility.weight')}: {factor.weight}%</span>
                 <span className="font-bold text-slate-800">{factor.score} / 100</span>
               </div>
             </div>
@@ -132,7 +153,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict }) =
         <div className="mt-5 p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl flex items-start gap-2.5 text-xs text-amber-900">
           <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
           <div>
-            <strong className="font-bold">Required Pre-Condition: </strong>
+            <strong className="font-bold">{t('feasibility.preconditionTitle')} </strong>
             <span>{criticalCaveat}</span>
           </div>
         </div>

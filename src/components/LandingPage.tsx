@@ -22,22 +22,19 @@ import {
 } from 'lucide-react';
 import { BackgroundWatermark } from './BackgroundWatermark';
 import { HeroWatermark } from './HeroWatermark';
-import { getTranslations } from '../utils/translations';
+import { useLanguage } from '../i18n/LanguageContext';
+import { SupportedLanguage } from '../i18n/types';
 
 interface LandingPageProps {
   onNavigateToApp: (scenario?: 'dairy' | 'tailoring' | 'retail') => void;
-  currentLanguage?: string;
-  onLanguageChange?: (lang: string) => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
-  onNavigateToApp,
-  currentLanguage = 'en',
-  onLanguageChange
+  onNavigateToApp
 }) => {
   const heroRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
-  const t = getTranslations(currentLanguage);
+  const { language, setLanguage, t, supportedLanguages } = useLanguage();
 
   // Smooth scroll helper for landing nav links
   const scrollToSection = (id: string) => {
@@ -49,39 +46,39 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   const capabilities = [
     {
-      title: 'LOCAL BUSINESS INTELLIGENCE',
-      desc: 'Understand local market conditions, competition, opportunities and risks.',
+      title: t('cap.market.title'),
+      desc: t('cap.market.desc'),
       icon: <Store className="w-6 h-6 text-blue-700" />,
-      detail: 'Catchment demographics, weekly haats, cooperative hubs, and competitor density metrics.'
+      detail: t('cap.market.detail')
     },
     {
-      title: 'BUSINESS FEASIBILITY',
-      desc: 'Evaluate a proposed business using available evidence and business context.',
+      title: t('cap.feasibility.title'),
+      desc: t('cap.feasibility.desc'),
       icon: <TrendingUp className="w-6 h-6 text-indigo-700" />,
-      detail: 'Multi-agent evaluation of unit economics, capacity sizing, and local operating constraints.'
+      detail: t('cap.feasibility.detail')
     },
     {
-      title: 'FINANCIAL PLANNING',
-      desc: 'Understand project cost, financing requirements and repayment planning.',
+      title: t('cap.finance.title'),
+      desc: t('cap.finance.desc'),
       icon: <Calculator className="w-6 h-6 text-amber-700" />,
-      detail: 'Pure deterministic math for CapEx/OpEx, reducing-balance EMIs, DSCR, and moratorium periods.'
+      detail: t('cap.finance.detail')
     },
     {
-      title: 'INTELLIGENT GUIDANCE',
-      desc: 'Combine structured rules, evidence and AI-assisted analysis into an understandable advisory report.',
+      title: t('cap.guidance.title'),
+      desc: t('cap.guidance.desc'),
       icon: <Award className="w-6 h-6 text-emerald-700" />,
-      detail: 'Rule-based matching against official schemes (PMEGP, MUDRA, KCC) with actionable checklists.'
+      detail: t('cap.guidance.detail')
     }
   ];
 
   const workflowSteps = [
-    { step: '01', title: 'Tell us about your business', desc: 'Define your enterprise concept, category, and scale.' },
-    { step: '02', title: 'Select your location', desc: 'Identify your target village, block, and district context.' },
-    { step: '03', title: 'Provide available capital', desc: 'Input your available promoter margin (e.g. ₹1,00,000).' },
-    { step: '04', title: 'Analyze local business conditions', desc: 'Agents query Census data, cooperative distances, and demand.' },
-    { step: '05', title: 'Review financial planning', desc: 'Calculate project cost, financing need, EMI, and cash flows.' },
-    { step: '06', title: 'Explore recommendations', desc: 'Evaluate matched government schemes, subsidies, and risks.' },
-    { step: '07', title: 'Make an informed decision', desc: 'Review explainable feasibility and print an advisory report.' }
+    { step: '01', title: t('workflow.step1.title'), desc: t('workflow.step1.desc') },
+    { step: '02', title: t('workflow.step2.title'), desc: t('workflow.step2.desc') },
+    { step: '03', title: t('workflow.step3.title'), desc: t('workflow.step3.desc') },
+    { step: '04', title: t('workflow.step4.title'), desc: t('workflow.step4.desc') },
+    { step: '05', title: t('workflow.step5.title'), desc: t('workflow.step5.desc') },
+    { step: '06', title: t('workflow.step6.title'), desc: t('workflow.step6.desc') },
+    { step: '07', title: t('workflow.step7.title'), desc: t('workflow.step7.desc') }
   ];
 
   return (
@@ -102,10 +99,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-slate-950 block">
-                UDYORA
+                {t('brand.name')}
               </span>
               <p className="text-[11px] text-slate-500 font-medium tracking-normal leading-tight hidden sm:block">
-                {t.tagline}
+                {t('brand.tagline')}
               </p>
             </div>
           </div>
@@ -116,46 +113,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={() => scrollToSection('capabilities')}
               className="hover:text-blue-900 transition-colors cursor-pointer"
             >
-              {t.capabilitiesNav}
+              {t('nav.capabilities')}
             </button>
             <button
               onClick={() => scrollToSection('how-it-works')}
               className="hover:text-blue-900 transition-colors cursor-pointer"
             >
-              {t.howItWorksNav}
+              {t('nav.howItWorks')}
             </button>
             <button
               onClick={() => scrollToSection('evidence')}
               className="hover:text-blue-900 transition-colors cursor-pointer"
             >
-              {t.evidenceNav}
+              {t('nav.evidence')}
             </button>
           </nav>
 
           {/* Language Selector & Launch App Button */}
           <div className="flex items-center gap-3">
-            {onLanguageChange && (
-              <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700">
-                <Globe className="w-3.5 h-3.5 text-slate-500" />
-                <select
-                  value={currentLanguage}
-                  onChange={(e) => onLanguageChange(e.target.value)}
-                  className="bg-transparent border-none text-xs font-medium text-slate-800 focus:outline-hidden cursor-pointer"
-                >
-                  <option value="en">English (EN)</option>
-                  <option value="hi">हिन्दी (HI)</option>
-                  <option value="mr">मराठी (MR)</option>
-                  <option value="te">తెలుగు (TE)</option>
-                  <option value="kn">ಕನ್ನಡ (KN)</option>
-                </select>
-              </div>
-            )}
+            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700">
+              <Globe className="w-3.5 h-3.5 text-slate-500" />
+              <select
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+                className="bg-transparent border-none text-xs font-medium text-slate-800 focus:outline-hidden cursor-pointer"
+              >
+                {supportedLanguages.map((lang) => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.nativeName}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <button
               onClick={() => onNavigateToApp()}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-xs hover:shadow-sm cursor-pointer"
             >
-              <span>{t.launchApp}</span>
+              <span>{t('nav.launchApp')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -180,7 +175,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-900 border border-blue-200/80 shadow-2xs"
           >
             <ShieldCheck className="w-4 h-4 text-blue-700" />
-            <span>{t.tagline}</span>
+            <span>{t('brand.tagline')}</span>
           </motion.div>
 
           {/* Main Title */}
@@ -190,7 +185,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-950"
           >
-            UDYORA
+            {t('hero.title')}
           </motion.h1>
 
           {/* Supporting Statement */}
@@ -200,7 +195,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed"
           >
-            Understand your local business environment, evaluate opportunities, plan your finances, and make better-informed decisions.
+            {t('hero.supporting')}
           </motion.p>
 
           {/* Call-To-Action Buttons */}
@@ -214,7 +209,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               onClick={() => onNavigateToApp()}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
             >
-              <span>{t.getStarted}</span>
+              <span>{t('nav.getStarted')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -223,7 +218,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 transition-all shadow-xs hover:shadow-sm cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-blue-700" />
-              <span>{t.exploreDemo}</span>
+              <span>{t('nav.exploreDemo')}</span>
             </button>
           </motion.div>
         </div>
@@ -234,13 +229,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-              {t.coreCapabilities}
+              {t('cap.sectionBadge')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 mt-3">
-              {t.advisoryEngine}
+              {t('cap.title')}
             </h2>
             <p className="text-sm text-slate-600 mt-2">
-              {t.advisoryEngineDesc}
+              {t('cap.subtitle')}
             </p>
           </div>
 
@@ -279,13 +274,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-              {t.userWorkflow}
+              {t('workflow.badge')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 mt-3">
-              {t.howUdyoraWorks}
+              {t('workflow.title')}
             </h2>
             <p className="text-sm text-slate-600 mt-2">
-              {t.howUdyoraWorksDesc}
+              {t('workflow.subtitle')}
             </p>
           </div>
 
@@ -332,13 +327,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-12">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-950 px-3 py-1 rounded-full border border-blue-800">
-              {t.corePrinciple}
+              {t('evidence.badge')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              {t.evidenceLedGuidance}
+              {t('evidence.title')}
             </h2>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              {t.evidenceLedGuidanceDesc}
+              {t('evidence.desc')}
             </p>
           </div>
 
@@ -349,10 +344,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <CheckCircle2 className="w-5 h-5" />
               </div>
               <h3 className="text-sm font-black uppercase tracking-wider text-emerald-400">
-                {t.verifiedBadge}
+                {t('evidence.verified.title')}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Parameters backed by official Census, NABARD, Mandi circulars, and verified portal regulations with timestamped source URLs.
+                {t('evidence.verified.desc')}
               </p>
             </div>
 
@@ -362,10 +357,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <AlertCircle className="w-5 h-5" />
               </div>
               <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
-                {t.estimatedBadge}
+                {t('evidence.estimated.title')}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Unit economics, informal competitor counts, and regional consumption extrapolations derived from statistical benchmarks.
+                {t('evidence.estimated.desc')}
               </p>
             </div>
 
@@ -375,10 +370,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <HelpCircle className="w-5 h-5" />
               </div>
               <h3 className="text-sm font-black uppercase tracking-wider text-rose-400">
-                {t.insufficientDataBadge}
+                {t('evidence.insufficient.title')}
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Explicitly declared when micro-ward telemetry is absent, preventing AI hallucination of fake local numbers.
+                {t('evidence.insufficient.desc')}
               </p>
             </div>
           </div>
@@ -389,17 +384,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <section className="py-20 bg-slate-50 border-t border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
-            {t.readyToExplore}
+            {t('cta.title')}
           </h2>
           <p className="text-base text-slate-600 max-w-xl mx-auto">
-            {t.readyToExploreDesc}
+            {t('cta.subtitle')}
           </p>
           <div className="pt-2">
             <button
               onClick={() => onNavigateToApp()}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
             >
-              <span>{t.startAnalysis}</span>
+              <span>{t('cta.button')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -414,12 +409,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               U
             </div>
             <div>
-              <span className="font-bold text-slate-900">UDYORA</span>
-              <span className="ml-2 text-slate-500">{t.tagline}</span>
+              <span className="font-bold text-slate-900">{t('brand.name')}</span>
+              <span className="ml-2 text-slate-500">{t('brand.tagline')}</span>
             </div>
           </div>
           <div className="text-slate-500">
-            <span>{t.developedBy}</span>
+            <span>{t('brand.developedBy')}</span>
           </div>
         </div>
       </footer>

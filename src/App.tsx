@@ -33,7 +33,7 @@ import { ResultDashboard } from './components/ResultDashboard';
 import { PrintableReport } from './components/PrintableReport';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { runFinancialUnitTests } from './tests/financialCalculator.test';
-import { getTranslations } from './utils/translations';
+import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
 function getRouteFromLocation(): 'landing' | 'app' {
   if (typeof window === 'undefined') return 'landing';
@@ -53,16 +53,13 @@ function getRouteFromLocation(): 'landing' | 'app' {
   return 'landing';
 }
 
-export default function App() {
-  // Robust initial route detection across pathname, hash, and search query
+function AppContent() {
+  const { t, language } = useLanguage();
   const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(getRouteFromLocation);
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
   const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([]);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
-  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
-
-  const t = getTranslations(currentLanguage);
 
   // Handle browser URL synchronization (pushState / popstate / hashchange)
   useEffect(() => {
@@ -96,7 +93,6 @@ export default function App() {
         window.history.pushState({ route }, '', urlPath);
       }
     } catch {
-      // Fallback to hash navigation if pushState is restricted
       window.location.hash = route === 'app' ? '/app' : '/';
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -114,7 +110,8 @@ export default function App() {
   const handleFormSubmit = async (input: UserBusinessInput) => {
     setCurrentScreen('executing');
     try {
-      const report = await executeMultiAgentWorkflow(input, (steps, activeId) => {
+      const inputWithLang = { ...input, language };
+      const report = await executeMultiAgentWorkflow(inputWithLang, (steps, activeId) => {
         setAgentSteps(steps);
         if (activeId) setActiveStepId(activeId);
       });
@@ -142,8 +139,6 @@ export default function App() {
     return (
       <LandingPage
         onNavigateToApp={handleNavigateToApp}
-        currentLanguage={currentLanguage}
-        onLanguageChange={setCurrentLanguage}
       />
     );
   }
@@ -165,8 +160,6 @@ export default function App() {
           onNavigateHome={handleNavigateHome}
           onReset={analysisReport ? handleReset : undefined}
           onPrint={analysisReport ? handlePrint : undefined}
-          currentLanguage={currentLanguage}
-          onLanguageChange={setCurrentLanguage}
           hasResult={!!analysisReport}
           isAppRoute={true}
         />
@@ -179,13 +172,13 @@ export default function App() {
               <div className="text-center max-w-3xl mx-auto pt-2 pb-4">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/70 text-blue-900 border border-blue-200 mb-3.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                  <span>{t.evidenceAwareBadge}</span>
+                  <span>{t('brand.badge')}</span>
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
-                  {t.appTitle}
+                  {t('form.title')}
                 </h1>
                 <p className="text-sm sm:text-base text-slate-600 mt-2.5 max-w-2xl mx-auto leading-relaxed">
-                  {t.appSubtitle}
+                  {t('form.subtitle')}
                 </p>
               </div>
 
@@ -193,7 +186,6 @@ export default function App() {
               <BusinessInputForm
                 onSubmit={handleFormSubmit}
                 isLoading={false}
-                currentLanguage={currentLanguage}
               />
             </div>
           )}
@@ -215,7 +207,6 @@ export default function App() {
                 report={analysisReport}
                 onReset={handleReset}
                 onPrint={handlePrint}
-                currentLanguage={currentLanguage}
               />
             </div>
           )}
@@ -228,19 +219,27 @@ export default function App() {
               <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
                 U
               </div>
-              <span className="font-bold text-slate-800">UDYORA</span>
-              <span>— {t.tagline}</span>
+              <span className="font-bold text-slate-800">{t('brand.name')}</span>
+              <span>— {t('brand.tagline')}</span>
             </div>
             <div className="flex items-center gap-4 text-slate-500">
               <span>Deterministic Financial Engine</span>
               <span>•</span>
               <span>Rule-based Schemes</span>
               <span>•</span>
-              <span>{t.developedBy}</span>
+              <span>{t('brand.developedBy')}</span>
             </div>
           </div>
         </footer>
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }
