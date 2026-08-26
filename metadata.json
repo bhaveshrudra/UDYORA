@@ -1,0 +1,6 @@
+{
+  "name": "UDYORA",
+  "description": "Hyper-Local Business Intelligence for Rural Entrepreneurs — Smart India Hackathon 2026 (SIH26091) prototype under development by Beyond Zero.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
