@@ -1,139 +1,113 @@
-/**
- * UDYORA - Hyper-Local Business Intelligence for Rural Entrepreneurs
- * 
- * Routes:
- * /    -> UDYORA Public Landing Page
- * /app -> UDYORA Functional Business Intelligence Application
- */
-
-import React, { useState, useEffect } from 'react';
-import {
-  Compass,
-  ArrowRight,
-  CheckCircle2,
-  FileText,
-  Building2,
-  ShieldCheck,
-  MapPin,
-  TrendingUp,
-  RotateCcw,
-  Sparkles,
-  Award,
-  Calculator,
-  Store,
-  Database,
-  Printer
-} from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShieldCheck } from 'lucide-react';
 import { UserBusinessInput, CompleteAnalysisReport, AgentStepStatus } from './types';
+import { DEMO_LOCATIONS } from './data/locations';
 import { Header } from './components/Header';
-import { LandingPage } from './components/LandingPage';
 import { BusinessInputForm } from './components/BusinessInputForm';
 import { AgentExecutionProgress } from './components/AgentExecutionProgress';
 import { ResultDashboard } from './components/ResultDashboard';
 import { PrintableReport } from './components/PrintableReport';
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { LandingPage } from './components/LandingPage';
 import { AdvisorChatbot } from './components/AdvisorChatbot';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { AnimatedBusinessBackground } from './components/AnimatedBusinessBackground';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
-import { validateAndNormalizeReport } from './services/reportValidator';
-import { runFinancialUnitTests } from './tests/financialCalculator.test';
-import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { useLanguage } from './i18n/LanguageContext';
 
-function getRouteFromLocation(): 'landing' | 'app' {
-  if (typeof window === 'undefined') return 'landing';
-  const path = window.location.pathname.toLowerCase();
-  const hash = window.location.hash.toLowerCase();
-  const searchParams = new URLSearchParams(window.location.search);
-  
-  if (
-    path.startsWith('/app') ||
-    hash.startsWith('#/app') ||
-    hash === '#app' ||
-    searchParams.get('route') === 'app' ||
-    searchParams.get('view') === 'app'
-  ) {
-    return 'app';
-  }
-  return 'landing';
-}
-
-function AppContent() {
+export function App() {
   const { t, language } = useLanguage();
-  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(getRouteFromLocation);
+  const appContainerRef = useRef<HTMLDivElement>(null);
+
+  // Simple client-side path router: 'landing' (/) vs 'app' (/app)
+  const [currentRoute, setCurrentRoute] = useState<'landing' | 'app'>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path === '/app' || path.startsWith('/app/')) return 'app';
+    }
+    return 'landing';
+  });
+
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
-  const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([]);
-  const [activeStepId, setActiveStepId] = useState<string>('evidence');
   const [currentInput, setCurrentInput] = useState<UserBusinessInput | undefined>(undefined);
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
 
-  // Handle browser URL synchronization (pushState / popstate / hashchange)
+  // Multi-agent execution steps
+  const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([
+    { id: 'evidence', name: 'Evidence & Data Agent', role: 'Census & Market Data Verification', status: 'PENDING', progressPct: 0, message: 'Ready to query localized datasets' },
+    { id: 'business', name: 'Business Analysis Agent', role: 'Unit Economics & Capacity Sizing', status: 'PENDING', progressPct: 0, message: 'Waiting for evidence layer' },
+    { id: 'market', name: 'Market Intelligence Agent', role: 'Local Demand & Infrastructure Proximity', status: 'PENDING', progressPct: 0, message: 'Waiting for business model' },
+    { id: 'finance', name: 'Financial Advisor Agent', role: 'CapEx, OpEx & Debt Service Math', status: 'PENDING', progressPct: 0, message: 'Waiting for unit economics' },
+    { id: 'schemes', name: 'Scheme Guidance Agent', role: 'Government Schemes Rule-Matching', status: 'PENDING', progressPct: 0, message: 'Waiting for financial sizing' },
+    { id: 'risks', name: 'Risk Analysis Agent', role: 'Risk Scoring & Mitigation Planning', status: 'PENDING', progressPct: 0, message: 'Waiting for scheme & market data' },
+    { id: 'aggregator', name: 'Aggregator & Validator', role: 'Synthesis & Consistency Auditing', status: 'PENDING', progressPct: 0, message: 'Waiting for all agent outputs' }
+  ]);
+  const [activeStepId, setActiveStepId] = useState<string>('evidence');
+
+  // Handle browser popstate
   useEffect(() => {
-    const handleNavigationEvent = () => {
-      setCurrentRoute(getRouteFromLocation());
-    };
-
-    window.addEventListener('popstate', handleNavigationEvent);
-    window.addEventListener('hashchange', handleNavigationEvent);
-    return () => {
-      window.removeEventListener('popstate', handleNavigationEvent);
-      window.removeEventListener('hashchange', handleNavigationEvent);
-    };
-  }, []);
-
-  // Run automated unit tests on mount to ensure deterministic math accuracy
-  useEffect(() => {
-    const testResult = runFinancialUnitTests();
-    if (testResult.passed) {
-      console.log('✅ [UDYORA Unit Tests] All 9 Deterministic Financial Calculations Passed:');
-      testResult.logs.forEach((log) => console.log(log));
-    } else {
-      console.error('❌ [UDYORA Unit Tests] Test Failures Detected:', testResult.logs);
-    }
-  }, []);
-
-  const navigateToRoute = (route: 'landing' | 'app', urlPath: string = route === 'app' ? '/app' : '/') => {
-    setCurrentRoute(route);
-    try {
-      if (window.location.pathname !== urlPath) {
-        window.history.pushState({ route }, '', urlPath);
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/app' || path.startsWith('/app/')) {
+        setCurrentRoute('app');
+      } else {
+        setCurrentRoute('landing');
       }
-    } catch {
-      window.location.hash = route === 'app' ? '/app' : '/';
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (route: 'landing' | 'app') => {
+    setCurrentRoute(route);
+    const targetPath = route === 'landing' ? '/' : '/app';
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleNavigateToApp = (scenario?: 'dairy' | 'tailoring' | 'retail') => {
-    navigateToRoute('app', '/app');
+  const handleNavigateToApp = (_scenario?: 'dairy' | 'tailoring' | 'retail') => {
+    navigateTo('app');
     setCurrentScreen('form');
   };
 
   const handleNavigateHome = () => {
-    navigateToRoute('landing', '/');
+    navigateTo('landing');
+    setCurrentScreen('form');
   };
 
   const handleFormSubmit = async (input: UserBusinessInput) => {
     setCurrentInput(input);
     setCurrentScreen('executing');
+    setAnalysisReport(null);
+
+    // Reset steps
+    setAgentSteps((prev) =>
+      prev.map((s) => ({
+        ...s,
+        status: 'PENDING',
+        progressPct: 0,
+        message: 'Queued...'
+      }))
+    );
+
     try {
-      const inputWithLang = { ...input, language };
-      const rawReport = await executeMultiAgentWorkflow(inputWithLang, (steps, activeId) => {
-        setAgentSteps(steps);
+      const report = await executeMultiAgentWorkflow(input, (updatedSteps, activeId) => {
+        setAgentSteps([...updatedSteps]);
         if (activeId) setActiveStepId(activeId);
       });
-      const validatedReport = validateAndNormalizeReport(rawReport);
-      setAnalysisReport(validatedReport);
+
+      setAnalysisReport(report);
       setCurrentScreen('result');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
-      console.error('Error during multi-agent analysis:', err);
+      console.error('Multi-agent analysis execution failed:', err);
+      alert('An error occurred during analysis. Please try again.');
       setCurrentScreen('form');
     }
   };
 
   const handleReset = () => {
-    setAnalysisReport(null);
     setCurrentScreen('form');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setAnalysisReport(null);
   };
 
   const handlePrint = () => {
@@ -151,7 +125,13 @@ function AppContent() {
 
   // ROUTE 2: FUNCTIONAL UDYORA APPLICATION (/app)
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans antialiased flex flex-col selection:bg-blue-100 selection:text-blue-950">
+    <div
+      ref={appContainerRef}
+      className="relative min-h-screen bg-slate-100/90 text-slate-900 font-sans antialiased flex flex-col selection:bg-blue-100 selection:text-blue-950 overflow-x-hidden"
+    >
+      {/* Background Animated Analytics Environment */}
+      <AnimatedBusinessBackground containerRef={appContainerRef} />
+
       {/* Printable View (Rendered only during browser print) */}
       {analysisReport && (
         <div className="hidden print:block bg-white min-h-screen">
@@ -160,7 +140,7 @@ function AppContent() {
       )}
 
       {/* Screen View (Hidden during print) */}
-      <div className="print:hidden flex flex-col flex-1">
+      <div className="relative z-10 print:hidden flex flex-col flex-1">
         {/* Main Application Header with Home navigation */}
         <Header
           onNavigateHome={handleNavigateHome}
@@ -171,24 +151,24 @@ function AppContent() {
         />
 
         <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* SCREEN 1: GUIDED INPUT & HERO */}
+          {/* SCREEN 1: GUIDED INPUT & WORKSPACE */}
           {currentScreen === 'form' && (
-            <div className="space-y-8 animate-fadeIn">
-              {/* App Top Intro Banner */}
-              <div className="text-center max-w-3xl mx-auto pt-2 pb-4">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/70 text-blue-900 border border-blue-200 mb-3.5">
+            <div className="space-y-6 animate-fadeIn">
+              {/* App Single Primary Heading Banner (No duplicate titles) */}
+              <div className="text-center max-w-3xl mx-auto pt-2 pb-2">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/80 text-blue-900 border border-blue-200 mb-3 shadow-2xs">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
                   <span>{t('brand.badge')}</span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
-                  {t('form.title')}
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-950">
+                  Enterprise Feasibility & Advisory Assessment
                 </h1>
-                <p className="text-sm sm:text-base text-slate-600 mt-2.5 max-w-2xl mx-auto leading-relaxed">
-                  {t('form.subtitle')}
+                <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl mx-auto leading-relaxed">
+                  Tell us about your location, business idea, and available capital to begin your assessment.
                 </p>
               </div>
 
-              {/* Input Form with 1-Click Demo Presets */}
+              {/* Input Form with Guided 3-Numbered Sequence */}
               <BusinessInputForm
                 onSubmit={handleFormSubmit}
                 isLoading={false}
@@ -243,19 +223,19 @@ function AppContent() {
         />
 
         {/* Global Public Service Footer */}
-        <footer className="border-t border-slate-200 bg-white py-6 mt-12">
+        <footer className="border-t border-slate-200/80 bg-white/95 backdrop-blur-xs py-6 mt-12">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
                 U
               </div>
-              <span className="font-bold text-slate-800">{t('brand.name')}</span>
+              <span className="font-bold text-slate-800">UDYORA</span>
               <span>— {t('brand.tagline')}</span>
             </div>
             <div className="flex items-center gap-4 text-slate-500">
-              <span>Deterministic Financial Engine</span>
+              <span>Deterministic Math</span>
               <span>•</span>
-              <span>Rule-based Schemes</span>
+              <span>Multi-Agent Synthesis</span>
               <span>•</span>
               <span>{t('brand.developedBy')}</span>
             </div>
@@ -265,11 +245,4 @@ function AppContent() {
     </div>
   );
 }
-
-export default function App() {
-  return (
-    <LanguageProvider>
-      <AppContent />
-    </LanguageProvider>
-  );
-}
+export default App;
