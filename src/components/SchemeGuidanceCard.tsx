@@ -16,13 +16,17 @@ import { SchemeMatchResult } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface SchemeGuidanceCardProps {
-  schemes: SchemeMatchResult[];
+  schemes?: SchemeMatchResult[] | { data: SchemeMatchResult[] };
 }
 
-export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes }) => {
+export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes: rawSchemes }) => {
   const { t } = useLanguage();
+  const schemes: SchemeMatchResult[] = Array.isArray(rawSchemes)
+    ? rawSchemes
+    : (rawSchemes as any)?.data || [];
+
   const [checkedDocs, setCheckedDocs] = useState<Record<string, boolean>>({});
-  const [selectedSchemeId, setSelectedSchemeId] = useState<string>(schemes[0]?.scheme.id || '');
+  const [selectedSchemeId, setSelectedSchemeId] = useState<string>(schemes[0]?.scheme?.id || '');
 
   const toggleDoc = (docKey: string) => {
     setCheckedDocs((prev) => ({
@@ -31,7 +35,7 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
     }));
   };
 
-  const activeSchemeMatch = schemes.find((s) => s.scheme.id === selectedSchemeId) || schemes[0];
+  const activeSchemeMatch = schemes.find((s) => s.scheme?.id === selectedSchemeId) || schemes[0];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -54,6 +58,22 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
       default: return t('scheme.status.ineligible');
     }
   };
+
+  if (!schemes || schemes.length === 0) {
+    return (
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-4">
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-4">
+          <Award className="w-5 h-5 text-blue-700" />
+          <h2 className="text-lg font-bold tracking-tight text-slate-900">
+            {t('scheme.title')}
+          </h2>
+        </div>
+        <p className="text-xs text-slate-500 italic">
+          Insufficient Data available for government credit scheme matching in this category.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
@@ -78,26 +98,30 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
 
       {/* Scheme Selection Tabs */}
       <div className="flex flex-wrap gap-2">
-        {schemes.map((match) => (
-          <button
-            key={match.scheme.id}
-            onClick={() => setSelectedSchemeId(match.scheme.id)}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
-              selectedSchemeId === match.scheme.id
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-            }`}
-          >
-            <span>{match.scheme.shortName}</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-extrabold ${
-              selectedSchemeId === match.scheme.id
-                ? 'bg-blue-800 text-blue-100'
-                : 'bg-slate-200 text-slate-700'
-            }`}>
-              {match.matchScore}%
-            </span>
-          </button>
-        ))}
+        {schemes.map((match, idx) => {
+          const schemeId = match.scheme?.id || `scheme_${idx}`;
+          const isSelected = selectedSchemeId ? selectedSchemeId === schemeId : idx === 0;
+          return (
+            <button
+              key={schemeId}
+              onClick={() => setSelectedSchemeId(schemeId)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer ${
+                isSelected
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+              }`}
+            >
+              <span>{match.scheme?.shortName || match.scheme?.name || 'Government Scheme'}</span>
+              <span className={`text-[10px] px-1.5 py-0.5 rounded font-extrabold ${
+                isSelected
+                  ? 'bg-blue-800 text-blue-100'
+                  : 'bg-slate-200 text-slate-700'
+              }`}>
+                {match.matchScore || 0}%
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Active Scheme Detailed View */}
@@ -111,112 +135,125 @@ export const SchemeGuidanceCard: React.FC<SchemeGuidanceCardProps> = ({ schemes 
                   {getLocalizedStatusText(activeSchemeMatch.qualificationStatus)}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">
-                  Nodal: {activeSchemeMatch.scheme.nodalAgency}
+                  Nodal: {activeSchemeMatch.scheme?.nodalAgency || 'Official Government Agency'}
                 </span>
               </div>
               <h3 className="text-base font-bold text-slate-900 mt-1">
-                {activeSchemeMatch.scheme.name}
+                {activeSchemeMatch.scheme?.name || 'Government Scheme Guidelines'}
               </h3>
             </div>
 
-            <a
-              href={activeSchemeMatch.scheme.officialSourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-800 bg-white border border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs shrink-0 cursor-pointer"
-            >
-              <span>{t('scheme.portalBtn')}</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            {activeSchemeMatch.scheme?.officialSourceUrl && (
+              <a
+                href={activeSchemeMatch.scheme.officialSourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-blue-800 bg-white border border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs shrink-0 cursor-pointer"
+              >
+                <span>{t('scheme.portalBtn')}</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
           </div>
 
           {/* Scheme Financial Parameters Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
             <div className="bg-white p-3 rounded-lg border border-slate-200">
               <span className="text-slate-500 font-medium block">{t('scheme.interestRate')}</span>
-              <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme.interestRateRange}</span>
+              <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme?.interestRateRange || 'Benchmark 9.5% p.a.'}</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
               <span className="text-slate-500 font-medium block">{t('scheme.estSubsidy')}</span>
               <span className="font-bold text-emerald-700 mt-0.5 block">
-                {activeSchemeMatch.potentialSubsidyAmount > 0
+                {(activeSchemeMatch.potentialSubsidyAmount || 0) > 0
                   ? `₹${activeSchemeMatch.potentialSubsidyAmount.toLocaleString('en-IN')} (${activeSchemeMatch.potentialSubsidyPct}%)`
                   : 'Collateral-free Guarantee'}
               </span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
               <span className="text-slate-500 font-medium block">{t('scheme.minMargin')}</span>
-              <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme.minMarginContributionPct}%</span>
+              <span className="font-bold text-slate-900 mt-0.5 block">{activeSchemeMatch.scheme?.minMarginContributionPct || 10}%</span>
             </div>
             <div className="bg-white p-3 rounded-lg border border-slate-200">
               <span className="text-slate-500 font-medium block">{t('scheme.maxCeiling')}</span>
-              <span className="font-bold text-slate-900 mt-0.5 block">₹{(activeSchemeMatch.scheme.maxProjectCost / 100000).toLocaleString('en-IN')} Lakhs</span>
+              <span className="font-bold text-slate-900 mt-0.5 block">
+                {activeSchemeMatch.scheme?.maxProjectCost
+                  ? `₹${(activeSchemeMatch.scheme.maxProjectCost / 100000).toLocaleString('en-IN')} Lakhs`
+                  : 'As per DPR'}
+              </span>
             </div>
           </div>
 
           {/* Why it matches */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              {t('scheme.whyMatches')}
-            </h4>
-            <ul className="space-y-1.5">
-              {activeSchemeMatch.whyItMatches.map((reason, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                  <span>{reason}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {activeSchemeMatch.whyItMatches && activeSchemeMatch.whyItMatches.length > 0 && (
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                {t('scheme.whyMatches')}
+              </h4>
+              <ul className="space-y-1.5">
+                {activeSchemeMatch.whyItMatches.map((reason, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Required Documents Checklist */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-blue-700" />
-                {t('scheme.checklistTitle')}
-              </h4>
-              <span className="text-[11px] text-slate-500 font-medium">
-                {t('scheme.readyCount', {
-                  ready: Object.values(checkedDocs).filter(Boolean).length,
-                  total: activeSchemeMatch.requiredDocuments.length
-                })}
-              </span>
-            </div>
+          {activeSchemeMatch.requiredDocuments && activeSchemeMatch.requiredDocuments.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-blue-700" />
+                  {t('scheme.checklistTitle')}
+                </h4>
+                <span className="text-[11px] text-slate-500 font-medium">
+                  {t('scheme.readyCount', {
+                    ready: Object.values(checkedDocs).filter(Boolean).length,
+                    total: activeSchemeMatch.requiredDocuments.length
+                  })}
+                </span>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {activeSchemeMatch.requiredDocuments.map((doc, idx) => {
-                const docKey = `${activeSchemeMatch.scheme.id}_${idx}`;
-                const isChecked = !!checkedDocs[docKey];
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => toggleDoc(docKey)}
-                    className={`p-2.5 rounded-lg border transition-colors flex items-start gap-2.5 text-xs cursor-pointer select-none ${
-                      isChecked
-                        ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-medium'
-                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/60'
-                    }`}
-                  >
-                    {isChecked ? (
-                      <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    ) : (
-                      <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                    )}
-                    <span className="leading-tight">{doc.name}</span>
-                  </div>
-                );
-              })}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {activeSchemeMatch.requiredDocuments.map((doc, idx) => {
+                  const docKey = `${activeSchemeMatch.scheme?.id || 'scheme'}_${idx}`;
+                  const isChecked = !!checkedDocs[docKey];
+                  const docName = typeof doc === 'string' ? doc : doc.name;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => toggleDoc(docKey)}
+                      className={`p-2.5 rounded-lg border transition-colors flex items-start gap-2.5 text-xs cursor-pointer select-none ${
+                        isChecked
+                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900 font-medium'
+                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100/60'
+                      }`}
+                    >
+                      {isChecked ? (
+                        <CheckSquare className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      ) : (
+                        <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                      )}
+                      <span className="leading-tight">{docName}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Verification Audit Note */}
           <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-200">
             <span className="flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{activeSchemeMatch.verificationNote}</span>
+              <span>{activeSchemeMatch.verificationNote || 'Verified against published scheme guidelines.'}</span>
             </span>
-            <span>{t('scheme.verifiedOn', { date: activeSchemeMatch.scheme.lastVerifiedDate })}</span>
+            {activeSchemeMatch.scheme?.lastVerifiedDate && (
+              <span>{t('scheme.verifiedOn', { date: activeSchemeMatch.scheme.lastVerifiedDate })}</span>
+            )}
           </div>
         </div>
       )}

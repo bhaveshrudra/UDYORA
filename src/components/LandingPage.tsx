@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
@@ -21,7 +21,8 @@ import {
   Globe
 } from 'lucide-react';
 import { BackgroundWatermark } from './BackgroundWatermark';
-import { HeroWatermark } from './HeroWatermark';
+import { HeroAnalyticsVisual } from './HeroAnalyticsVisual';
+import { ProductIntroSplash } from './ProductIntroSplash';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
 
@@ -35,6 +36,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const heroRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
   const { language, setLanguage, t, supportedLanguages } = useLanguage();
+
+  // Intro Splash state (only played on initial visit per session)
+  const [showSplash, setShowSplash] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return !sessionStorage.getItem('udyora_intro_seen');
+    } catch {
+      return false;
+    }
+  });
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+    try {
+      sessionStorage.setItem('udyora_intro_seen', 'true');
+    } catch {}
+  };
 
   // Smooth scroll helper for landing nav links
   const scrollToSection = (id: string) => {
@@ -83,6 +101,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
   return (
     <div className="relative min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-950">
+      {/* 1. First-time Visitor Product Intro Splash */}
+      {showSplash && <ProductIntroSplash onComplete={handleSplashComplete} />}
+
       {/* Background Watermarks & Grid */}
       <BackgroundWatermark />
 
@@ -129,17 +150,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </nav>
 
-          {/* Language Selector & Launch App Button */}
+          {/* Right Header Controls: Language Selector & Launch App Button */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700">
-              <Globe className="w-3.5 h-3.5 text-slate-500" />
+            {/* Global Language Selector Dropdown */}
+            <div className="relative inline-flex items-center">
+              <Globe className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 pointer-events-none" />
               <select
+                aria-label="Select Application Language"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
-                className="bg-transparent border-none text-xs font-medium text-slate-800 focus:outline-hidden cursor-pointer"
+                className="pl-7 pr-7 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-300 rounded-lg text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-600 cursor-pointer transition-colors appearance-none shadow-2xs"
               >
                 {supportedLanguages.map((lang) => (
-                  <option key={lang.code} value={lang.code}>
+                  <option key={lang.code} value={lang.code} className="py-1">
                     {lang.nativeName}
                   </option>
                 ))}
@@ -162,14 +185,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         ref={heroRef}
         className="relative pt-20 pb-24 sm:pt-28 sm:pb-32 px-4 sm:px-6 lg:px-8 overflow-hidden flex items-center justify-center min-h-[580px] sm:min-h-[640px]"
       >
-        {/* Animated Background Watermark: HTML Text U-D-Y-O-R-A with subtle opacity */}
-        <HeroWatermark containerRef={heroRef} />
+        {/* Abstract Business Intelligence Animated Background & Watermark */}
+        <HeroAnalyticsVisual containerRef={heroRef} />
 
         {/* Foreground Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto text-center space-y-6">
           {/* Subtle Tagline Badge */}
           <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-900 border border-blue-200/80 shadow-2xs"
@@ -180,7 +203,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Main Title */}
           <motion.h1
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
             className="text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-slate-950"
@@ -190,7 +213,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Supporting Statement */}
           <motion.p
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="text-base sm:text-xl text-slate-600 max-w-2xl mx-auto font-medium leading-relaxed"
@@ -198,27 +221,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {t('hero.supporting')}
           </motion.p>
 
-          {/* Call-To-Action Buttons */}
+          {/* Single Interactive Call-To-Action Button with Left-to-Right Sweep Fill */}
           <motion.div
-            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
+            initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4"
+            className="flex items-center justify-center pt-4"
           >
             <button
               onClick={() => onNavigateToApp()}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
+              className="group relative inline-flex items-center justify-center gap-3 px-9 py-4 rounded-xl text-sm sm:text-base font-bold text-slate-900 bg-white border border-slate-300 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md hover:border-slate-900 active:scale-[0.98] cursor-pointer"
             >
-              <span>{t('nav.getStarted')}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+              {/* Muted Blue Left-to-Right Sweep Fill Overlay */}
+              <span
+                className="absolute inset-0 w-full h-full bg-slate-900 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
+                aria-hidden="true"
+              />
 
-            <button
-              onClick={() => onNavigateToApp('dairy')}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-slate-800 bg-white hover:bg-slate-50 border border-slate-300 transition-all shadow-xs hover:shadow-sm cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-blue-700" />
-              <span>{t('nav.exploreDemo')}</span>
+              {/* Foreground Label with smooth color inversion */}
+              <span className="relative z-10 text-slate-900 group-hover:text-white transition-colors duration-300">
+                {t('nav.getStarted')}
+              </span>
+
+              {/* Interactive Arrow Indicator with 4px Right Shift */}
+              <ArrowRight className="relative z-10 w-4 h-4 text-slate-900 group-hover:text-white group-hover:translate-x-1.5 transition-all duration-300" />
             </button>
           </motion.div>
         </div>
@@ -253,27 +279,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-4">
                     {item.icon}
                   </div>
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-slate-950">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm font-semibold text-slate-800 mt-2 leading-relaxed">
-                    {item.desc}
-                  </p>
+                  <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.desc}</p>
                 </div>
-                <p className="text-xs text-slate-500 mt-4 pt-4 border-t border-slate-100">
+                <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] font-semibold text-blue-800">
                   {item.detail}
-                </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: HOW IT WORKS */}
+      {/* SECTION 2: 7-STEP MULTI-AGENT WORKFLOW */}
       <section id="how-it-works" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-800 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
               {t('workflow.badge')}
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 mt-3">
@@ -284,94 +306,66 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {workflowSteps.map((step, idx) => (
-              <motion.div
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {workflowSteps.map((s, idx) => (
+              <div
                 key={idx}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.5, delay: idx * 0.08 }}
-                className={`p-5 rounded-2xl border ${
-                  idx === workflowSteps.length - 1
-                    ? 'bg-slate-900 text-white border-slate-800 sm:col-span-2 lg:col-span-1 shadow-xs'
-                    : 'bg-slate-50 border-slate-200 text-slate-900'
-                }`}
+                className="border border-slate-200 rounded-2xl p-5 bg-slate-50/50 hover:bg-white hover:border-blue-300 transition-all flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className={`text-xs font-mono font-black ${
-                    idx === workflowSteps.length - 1 ? 'text-blue-300' : 'text-blue-800'
-                  }`}>
-                    STEP {step.step}
+                <div>
+                  <span className="text-xs font-mono font-black text-blue-700 block mb-2">
+                    STEP {s.step}
                   </span>
-                  <ChevronRight className={`w-4 h-4 ${
-                    idx === workflowSteps.length - 1 ? 'text-slate-600' : 'text-slate-300'
-                  }`} />
+                  <h3 className="text-sm font-bold text-slate-900">{s.title}</h3>
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">{s.desc}</p>
                 </div>
-                <h3 className="font-bold text-sm leading-snug">
-                  {step.title}
-                </h3>
-                <p className={`text-xs mt-1.5 leading-relaxed ${
-                  idx === workflowSteps.length - 1 ? 'text-slate-300' : 'text-slate-600'
-                }`}>
-                  {step.desc}
-                </p>
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* SECTION 3: RESPONSIBLE AI / EVIDENCE-LED GUIDANCE */}
+      {/* SECTION 3: RESPONSIBLE AI EVIDENCE AUDIT PRINCIPLES */}
       <section id="evidence" className="py-20 bg-slate-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto text-center space-y-4 mb-12">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-950 px-3 py-1 rounded-full border border-blue-800">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-300 bg-blue-900/60 px-3 py-1 rounded-full border border-blue-700">
               {t('evidence.badge')}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mt-3">
               {t('evidence.title')}
             </h2>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-300 mt-2">
               {t('evidence.desc')}
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
-            {/* VERIFIED */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 mx-auto">
-                <CheckCircle2 className="w-5 h-5" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-emerald-500" />
+                <h3 className="text-base font-bold text-white">{t('evidence.verified.title')}</h3>
               </div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-emerald-400">
-                {t('evidence.verified.title')}
-              </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {t('evidence.verified.desc')}
               </p>
             </div>
 
-            {/* ESTIMATED */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 mx-auto">
-                <AlertCircle className="w-5 h-5" />
+            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-amber-500" />
+                <h3 className="text-base font-bold text-white">{t('evidence.estimated.title')}</h3>
               </div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-amber-400">
-                {t('evidence.estimated.title')}
-              </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {t('evidence.estimated.desc')}
               </p>
             </div>
 
-            {/* INSUFFICIENT DATA */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-5 text-center space-y-2">
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 mx-auto">
-                <HelpCircle className="w-5 h-5" />
+            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-6 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-rose-500" />
+                <h3 className="text-base font-bold text-white">{t('evidence.insufficient.title')}</h3>
               </div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-rose-400">
-                {t('evidence.insufficient.title')}
-              </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {t('evidence.insufficient.desc')}
               </p>
@@ -380,19 +374,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* SECTION 4: FINAL CTA */}
-      <section className="py-20 bg-slate-50 border-t border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-5">
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950">
+      {/* FINAL LANDING CTA BANNER */}
+      <section className="py-16 bg-blue-50/50 border-t border-slate-200">
+        <div className="max-w-4xl mx-auto px-4 text-center space-y-5">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950">
             {t('cta.title')}
           </h2>
-          <p className="text-base text-slate-600 max-w-xl mx-auto">
+          <p className="text-sm text-slate-600 max-w-xl mx-auto">
             {t('cta.subtitle')}
           </p>
-          <div className="pt-2">
+          <div>
             <button
               onClick={() => onNavigateToApp()}
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
+              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold text-white bg-slate-900 hover:bg-blue-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
             >
               <span>{t('cta.button')}</span>
               <ArrowRight className="w-4 h-4" />
@@ -401,19 +395,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-200 bg-white py-10">
+      {/* PUBLIC SERVICE FOOTER */}
+      <footer className="border-t border-slate-200 bg-white py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[10px]">
               U
             </div>
-            <div>
-              <span className="font-bold text-slate-900">{t('brand.name')}</span>
-              <span className="ml-2 text-slate-500">{t('brand.tagline')}</span>
-            </div>
+            <span className="font-bold text-slate-800">{t('brand.name')}</span>
+            <span>— {t('brand.tagline')}</span>
           </div>
-          <div className="text-slate-500">
+          <div className="flex items-center gap-4 text-slate-500">
+            <span>Deterministic Financial Engine</span>
+            <span>•</span>
+            <span>Rule-based Schemes</span>
+            <span>•</span>
             <span>{t('brand.developedBy')}</span>
           </div>
         </div>

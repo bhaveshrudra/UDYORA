@@ -1,5 +1,5 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RotateCcw, ArrowLeft, ShieldAlert } from 'lucide-react';
+import React, { Component, ReactNode, ErrorInfo } from 'react';
+import { ShieldAlert, RotateCcw, ArrowLeft } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -14,30 +14,30 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+export class ErrorBoundary extends (Component as any) {
+  state: State = {
     hasError: false,
     error: null,
     errorInfo: null
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error, errorInfo: null };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('UDYORA Runtime Error Caught by Boundary:', error, errorInfo);
     this.setState({ error, errorInfo });
   }
 
-  private handleTryAgain = () => {
+  handleTryAgain = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
     if (this.props.onReset) {
       this.props.onReset();
     }
   };
 
-  public render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
         <div className="w-full max-w-3xl mx-auto my-8 p-6 sm:p-8 bg-white border border-rose-200 rounded-2xl shadow-sm space-y-6">

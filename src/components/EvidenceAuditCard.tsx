@@ -12,16 +12,21 @@ import { EvidenceRecord } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 
 interface EvidenceAuditCardProps {
-  evidenceRecords: EvidenceRecord[];
+  evidenceRecords?: EvidenceRecord[] | { data: EvidenceRecord[] };
 }
 
-export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRecords }) => {
+export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRecords: rawRecords }) => {
   const { t } = useLanguage();
+  const evidenceRecords: EvidenceRecord[] = Array.isArray(rawRecords)
+    ? rawRecords
+    : (rawRecords as any)?.data || [];
+
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
 
+  const validList = evidenceRecords.filter((r) => r && r.id);
   const filteredRecords = filterStatus === 'ALL'
-    ? evidenceRecords
-    : evidenceRecords.filter((r) => r.status === filterStatus);
+    ? validList
+    : validList.filter((r) => r.status === filterStatus);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -50,9 +55,9 @@ export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRe
     }
   };
 
-  const verifiedCount = evidenceRecords.filter((r) => r.status === 'VERIFIED').length;
-  const estimatedCount = evidenceRecords.filter((r) => r.status === 'ESTIMATED').length;
-  const insufficientCount = evidenceRecords.filter((r) => r.status === 'INSUFFICIENT DATA').length;
+  const verifiedCount = validList.filter((r) => r.status === 'VERIFIED').length;
+  const estimatedCount = validList.filter((r) => r.status === 'ESTIMATED').length;
+  const insufficientCount = validList.filter((r) => r.status === 'INSUFFICIENT DATA').length;
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
@@ -80,7 +85,7 @@ export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRe
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            {t('evidence.filterAll', { count: evidenceRecords.length })}
+            {t('evidence.filterAll', { count: validList.length })}
           </button>
           <button
             onClick={() => setFilterStatus('VERIFIED')}
@@ -115,59 +120,60 @@ export const EvidenceAuditCard: React.FC<EvidenceAuditCardProps> = ({ evidenceRe
         </div>
       </div>
 
-      {/* Audit Trail Table */}
+      {/* Evidence Table */}
       <div className="border border-slate-200 rounded-xl overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 text-xs">
           <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider">
             <tr>
               <th className="px-4 py-3 text-left">{t('evidence.table.param')}</th>
               <th className="px-3 py-3 text-left">{t('evidence.table.value')}</th>
-              <th className="px-3 py-3 text-center">{t('evidence.table.level')}</th>
               <th className="px-3 py-3 text-center">{t('evidence.table.status')}</th>
-              <th className="px-3 py-3 text-center">{t('evidence.table.confidence')}</th>
+              <th className="px-3 py-3 text-center">{t('evidence.table.level')}</th>
               <th className="px-4 py-3 text-left">{t('evidence.table.source')}</th>
+              <th className="px-3 py-3 text-right">{t('evidence.table.confidence')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white">
-            {filteredRecords.map((record, idx) => (
-              <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                <td className="px-4 py-3 font-bold text-slate-900">
-                  <p>{record.metricName}</p>
-                  {record.dataLimitationNote && (
-                    <p className="text-[11px] font-normal text-slate-500 mt-0.5">{record.dataLimitationNote}</p>
+            {filteredRecords.map((rec, idx) => (
+              <tr key={rec.id || idx} className="hover:bg-slate-50/60 transition-colors">
+                <td className="px-4 py-3">
+                  <span className="font-bold text-slate-900 block">{rec.metricName}</span>
+                  {rec.dataLimitationNote && (
+                    <span className="text-[11px] text-amber-800 block mt-0.5 font-medium">
+                      ⚠️ {rec.dataLimitationNote}
+                    </span>
                   )}
                 </td>
-                <td className="px-3 py-3 font-semibold text-slate-800">
-                  {typeof record.value === 'number' ? record.value.toLocaleString('en-IN') : String(record.value)}
-                </td>
-                <td className="px-3 py-3 text-center text-slate-500 uppercase font-medium">
-                  {record.geographicLevel}
+                <td className="px-3 py-3 font-semibold text-slate-800 whitespace-nowrap">
+                  {typeof rec.value === 'number' ? rec.value.toLocaleString('en-IN') : rec.value}
+                  {rec.unit && <span className="text-slate-500 font-normal ml-1">{rec.unit}</span>}
                 </td>
                 <td className="px-3 py-3 text-center whitespace-nowrap">
-                  {getStatusBadge(record.status)}
+                  {getStatusBadge(rec.status)}
                 </td>
-                <td className="px-3 py-3 text-center">
-                  <span className={`font-bold ${record.confidence >= 0.8 ? 'text-emerald-700' : record.confidence >= 0.5 ? 'text-blue-700' : 'text-amber-700'}`}>
-                    {Math.round(record.confidence * 100)}%
+                <td className="px-3 py-3 text-center whitespace-nowrap">
+                  <span className="text-[11px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">
+                    {rec.geographicLevel}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-slate-600">
-                  <div className="flex items-center gap-1.5">
-                    <span className="line-clamp-1">{record.source}</span>
-                    {record.sourceUrl && (
+                <td className="px-4 py-3">
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-600 line-clamp-1">{rec.source}</span>
+                    {rec.sourceUrl && (
                       <a
-                        href={record.sourceUrl}
+                        href={rec.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-700 hover:text-blue-900 shrink-0"
-                        title="View Official Source"
                       >
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-400 block mt-0.5 font-mono">
-                    {record.timestamp}
+                </td>
+                <td className="px-3 py-3 text-right whitespace-nowrap">
+                  <span className="font-mono font-bold text-slate-900">
+                    {Math.round((rec.confidence || 0.8) * 100)}%
                   </span>
                 </td>
               </tr>

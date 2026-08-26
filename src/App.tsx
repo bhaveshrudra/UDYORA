@@ -31,7 +31,9 @@ import { BusinessInputForm } from './components/BusinessInputForm';
 import { AgentExecutionProgress } from './components/AgentExecutionProgress';
 import { ResultDashboard } from './components/ResultDashboard';
 import { PrintableReport } from './components/PrintableReport';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
+import { validateAndNormalizeReport } from './services/reportValidator';
 import { runFinancialUnitTests } from './tests/financialCalculator.test';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 
@@ -111,11 +113,12 @@ function AppContent() {
     setCurrentScreen('executing');
     try {
       const inputWithLang = { ...input, language };
-      const report = await executeMultiAgentWorkflow(inputWithLang, (steps, activeId) => {
+      const rawReport = await executeMultiAgentWorkflow(inputWithLang, (steps, activeId) => {
         setAgentSteps(steps);
         if (activeId) setActiveStepId(activeId);
       });
-      setAnalysisReport(report);
+      const validatedReport = validateAndNormalizeReport(rawReport);
+      setAnalysisReport(validatedReport);
       setCurrentScreen('result');
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err) {
@@ -200,14 +203,20 @@ function AppContent() {
             </div>
           )}
 
-          {/* SCREEN 3: RESULT DASHBOARD */}
+          {/* SCREEN 3: RESULT DASHBOARD PROTECTED BY ERROR BOUNDARY */}
           {currentScreen === 'result' && analysisReport && (
             <div className="animate-fadeIn">
-              <ResultDashboard
-                report={analysisReport}
+              <ErrorBoundary
+                fallbackTitle="Unable to render the advisory report."
                 onReset={handleReset}
-                onPrint={handlePrint}
-              />
+                onNavigateHome={handleNavigateHome}
+              >
+                <ResultDashboard
+                  report={analysisReport}
+                  onReset={handleReset}
+                  onPrint={handlePrint}
+                />
+              </ErrorBoundary>
             </div>
           )}
         </main>
