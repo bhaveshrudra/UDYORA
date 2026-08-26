@@ -1,10 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { SupportedLanguage, TranslationDictionary, SUPPORTED_LANGUAGES, LanguageOption } from './types';
 import { TRANSLATIONS } from './translations';
 
 interface LanguageContextType {
   language: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
+  hasSelectedLanguage: boolean;
+  confirmInitialLanguage: (lang: SupportedLanguage) => void;
   t: (key: keyof TranslationDictionary, params?: Record<string, string | number>) => string;
   supportedLanguages: LanguageOption[];
 }
@@ -14,11 +16,27 @@ const STORAGE_KEY = 'udyora_language';
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [hasSelectedLanguage, setHasSelectedLanguage] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return !!(saved && ['en', 'hi', 'mr', 'te', 'kn'].includes(saved));
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY) as SupportedLanguage;
-      if (saved && ['en', 'hi', 'mr', 'te', 'kn'].includes(saved)) {
-        return saved;
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY) as SupportedLanguage;
+        if (saved && ['en', 'hi', 'mr', 'te', 'kn'].includes(saved)) {
+          return saved;
+        }
+      } catch {
+        return 'en';
       }
     }
     return 'en';
@@ -33,6 +51,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         console.warn('Unable to persist language to localStorage:', err);
       }
     }
+  };
+
+  const confirmInitialLanguage = (lang: SupportedLanguage) => {
+    setLanguage(lang);
+    setHasSelectedLanguage(true);
   };
 
   // Translation lookup with fallback and interpolation
@@ -62,6 +85,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       value={{
         language,
         setLanguage,
+        hasSelectedLanguage,
+        confirmInitialLanguage,
         t,
         supportedLanguages: SUPPORTED_LANGUAGES
       }}

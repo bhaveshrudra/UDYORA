@@ -1,5 +1,5 @@
 import React, { Component, ReactNode, ErrorInfo } from 'react';
-import { ShieldAlert, RotateCcw, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, RotateCcw, Home } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -34,6 +34,16 @@ export class ErrorBoundary extends (Component as any) {
     this.setState({ hasError: false, error: null, errorInfo: null });
     if (this.props.onReset) {
       this.props.onReset();
+    } else {
+      window.location.reload();
+    }
+  };
+
+  handleGoHome = () => {
+    if (this.props.onNavigateHome) {
+      this.props.onNavigateHome();
+    } else {
+      window.location.href = '/';
     }
   };
 
@@ -50,13 +60,13 @@ export class ErrorBoundary extends (Component as any) {
                 UDYORA
               </span>
               <h2 className="text-lg font-bold text-slate-900">
-                {this.props.fallbackTitle || 'Unable to render the advisory report.'}
+                {this.props.fallbackTitle || 'Something went wrong while loading this page.'}
               </h2>
             </div>
           </div>
 
           <p className="text-sm text-slate-600 leading-relaxed">
-            An unexpected error occurred while compiling the final advisory dashboard. The underlying data model or report parameters may have encountered a schema inconsistency.
+            An unexpected error occurred. You can retry the action or return to the home page.
           </p>
 
           {/* Development Debug Info */}
@@ -79,18 +89,16 @@ export class ErrorBoundary extends (Component as any) {
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors cursor-pointer shadow-xs"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Try Analysis Again</span>
+              <span>Retry</span>
             </button>
 
-            {this.props.onNavigateHome && (
-              <button
-                onClick={this.props.onNavigateHome}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Return to Input</span>
-              </button>
-            )}
+            <button
+              onClick={this.handleGoHome}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+            >
+              <Home className="w-4 h-4" />
+              <span>Go to Home</span>
+            </button>
           </div>
         </div>
       );
