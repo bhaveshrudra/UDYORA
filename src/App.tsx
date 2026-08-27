@@ -238,17 +238,6 @@ export function App() {
   }
 
   // =========================================================================
-  // 3. STARTUP STATE: OPENING LETTER-BY-LETTER INTRO SPLASH IN SELECTED LANGUAGE
-  // =========================================================================
-  if (startupState === 'intro') {
-    return (
-      <ProductIntroSplash
-        onComplete={completeIntro}
-      />
-    );
-  }
-
-  // =========================================================================
   // 4. STARTUP STATE: READY -> ROUTE TO INTENDED APPLICATION DESTINATION
   // =========================================================================
 

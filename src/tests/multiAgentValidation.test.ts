@@ -242,6 +242,19 @@ async function runAllTests() {
     'Dairy vs Retail yields business-specific opportunity scoring and reasoning'
   );
 
+  // -------------------------------------------------------------
+  // TEST 12: Startup Language Selection & Storage Normalization
+  // -------------------------------------------------------------
+  console.log('\nTEST 12: Language Selection & Storage Normalization');
+  const { normalizeLanguageCode, toStorageLanguageCode } = await import('../i18n/LanguageContext');
+  assert(normalizeLanguageCode('te') === 'te', 'Telugu code "te" normalizes to "te"');
+  assert(normalizeLanguageCode('te-IN') === 'te', 'Telugu locale "te-IN" normalizes to "te"');
+  assert(normalizeLanguageCode('hi-in') === 'hi', 'Hindi locale "hi-in" normalizes to "hi"');
+  assert(normalizeLanguageCode('mr') === 'mr', 'Marathi code "mr" normalizes to "mr"');
+  assert(normalizeLanguageCode('kn') === 'kn', 'Kannada code "kn" normalizes to "kn"');
+  assert(normalizeLanguageCode(null) === null, 'Null storage returns null to trigger select-language screen');
+  assert(normalizeLanguageCode('xyz') === null, 'Unknown language returns null safely');
+
   console.log('\n--------------------------------------------------');
   console.log(`TEST RESULTS: ${passedCount} PASSED, ${failedCount} FAILED`);
   console.log('--------------------------------------------------\n');

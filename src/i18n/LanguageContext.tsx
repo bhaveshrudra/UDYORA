@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { SupportedLanguage, TranslationDictionary, SUPPORTED_LANGUAGES, LanguageOption } from './types';
 import { TRANSLATIONS } from './translations';
 
-export type StartupState = 'checking' | 'select-language' | 'intro' | 'ready';
+export type StartupState = 'checking' | 'select-language' | 'ready';
 
 export interface LanguageContextType {
   language: SupportedLanguage;
@@ -29,99 +29,95 @@ export function normalizeLanguageCode(code: string | null | undefined): Supporte
 }
 
 export function toStorageLanguageCode(lang: SupportedLanguage): string {
-  switch (lang) {
-    case 'en': return 'en-IN';
-    case 'hi': return 'hi-IN';
-    case 'mr': return 'mr-IN';
-    case 'te': return 'te-IN';
-    case 'kn': return 'kn-IN';
-    default: return 'en-IN';
-  }
+  return lang;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [startupState, setStartupState] = useState<StartupState>('checking');
-  const [language, setLanguageState] = useState<SupportedLanguage>('en');
+  // Synchronous initial state reading from localStorage (zero flash of wrong language on load)
+  const [language, setLanguageState] = useState<SupportedLanguage>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const normalized = normalizeLanguageCode(saved);
+        if (normalized) return normalized;
+      } catch (e) {
+        // Fallback to English if localStorage is unavailable
+      }
+    }
+    return 'en';
+  });
 
-  // Initial startup verification
+  const [startupState, setStartupState] = useState<StartupState>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        const normalized = normalizeLanguageCode(saved);
+        if (normalized) {
+          return 'ready'; // Returning user: Home page directly in saved language
+        }
+      } catch (e) {
+        // Fallback
+      }
+      return 'select-language'; // First-time user: Language Selection screen first
+    }
+    return 'checking';
+  });
+
+  // Verify storage on mount (handling cross-tab changes)
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       const normalized = normalizeLanguageCode(saved);
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('[UDYORA STARTUP]', {
-          savedLanguage: saved,
-          normalized,
-          startupState: normalized ? 'intro' : 'select-language'
-        });
-      }
-
       if (normalized) {
         setLanguageState(normalized);
-        setStartupState('intro');
+        setStartupState('ready');
       } else {
         setStartupState('select-language');
       }
     } catch (err) {
-      console.warn('[UDYORA STARTUP] localStorage check failed:', err);
       setStartupState('select-language');
     }
   }, []);
 
-  // Update language at any time (e.g. from header dropdown)
+  // Update language at any time (e.g. from header selector)
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
       try {
-        const storageVal = toStorageLanguageCode(lang);
-        localStorage.setItem(STORAGE_KEY, storageVal);
+        localStorage.setItem(STORAGE_KEY, lang);
       } catch (err) {
         console.warn('Unable to persist language to localStorage:', err);
       }
     }
   };
 
-  // Called when user selects language from startup language screen and clicks Continue
+  // Called when first-time user selects language and clicks Continue
   const selectLanguageAndProceed = (lang: SupportedLanguage) => {
     setLanguage(lang);
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[UDYORA STARTUP] Selected language confirmed:', {
-        selectedLanguage: lang,
-        storageValue: toStorageLanguageCode(lang),
-        nextState: 'intro'
-      });
-    }
-    setStartupState('intro');
+    setStartupState('ready'); // Navigate straight to UDYORA Home in chosen language
   };
 
-  // Called when letter-by-letter intro splash finishes
   const completeIntro = () => {
     setStartupState('ready');
   };
 
-  // Dev helper to clear language preference
+  // Helper to clear language preference (triggers language screen on next load)
   const resetLanguagePreference = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     }
     setStartupState('select-language');
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[UDYORA STARTUP] Language preference reset to select-language.');
-    }
   };
 
-  // Translation lookup with fallback and interpolation
+  // Translation lookup with fallback and parameter interpolation
   const t = (key: keyof TranslationDictionary, params?: Record<string, string | number>): string => {
     const langDict = TRANSLATIONS[language] || TRANSLATIONS.en;
     let template = langDict[key];
 
     if (!template) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn(`[i18n] Missing translation key "${key}" for language "${language}". Using English fallback.`);
-      }
       template = TRANSLATIONS.en[key] || (key as string);
     }
 
