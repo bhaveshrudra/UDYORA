@@ -28,7 +28,8 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
     disclaimer: ''
   };
 
-  const { score = 75, category = 'MODERATE', headline = '', explanation = '', criticalCaveat } = verdict;
+  const safeScore = Number.isFinite(verdict.score) ? verdict.score : 75;
+  const { category = 'MODERATE', headline = '', explanation = '', criticalCaveat } = verdict;
   const readinessFactors = Array.isArray(verdict.readinessFactors) ? verdict.readinessFactors : [];
 
   const getCategoryColor = (cat: string) => {
@@ -104,7 +105,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
           <div className="text-center">
             <div className="flex items-baseline justify-center gap-1">
               <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
-                {score}
+                {safeScore}
               </span>
               <span className="text-lg font-bold text-slate-400">/ 100</span>
             </div>
@@ -124,44 +125,48 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            {readinessFactors.map((factor, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col justify-between space-y-2"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-xs font-bold text-slate-900 truncate">
-                      {factor.area}
-                    </span>
-                    <span className="text-[10px] text-slate-500 font-mono">
-                      {factor.weight}%
-                    </span>
+            {readinessFactors.map((factor, idx) => {
+              const factorScore = Number.isFinite(factor.score) ? factor.score : 0;
+              const safeWidthPct = Math.min(100, Math.max(0, factorScore));
+              return (
+                <div
+                  key={idx}
+                  className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col justify-between space-y-2"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-1">
+                      <span className="text-xs font-bold text-slate-900 truncate">
+                        {factor.area}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono">
+                        {factor.weight}%
+                      </span>
+                    </div>
+
+                    {/* Visual mini progress bar */}
+                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-2">
+                      <div
+                        className={`h-full rounded-full ${
+                          factorScore >= 80 ? 'bg-emerald-600' : factorScore >= 60 ? 'bg-blue-600' : 'bg-amber-500'
+                        }`}
+                        style={{ width: `${safeWidthPct}%` }}
+                      />
+                    </div>
+
+                    <p className="text-[11px] text-slate-600 leading-snug">
+                      {factor.summary}
+                    </p>
                   </div>
 
-                  {/* Visual mini progress bar */}
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mb-2">
-                    <div
-                      className={`h-full rounded-full ${
-                        factor.score >= 80 ? 'bg-emerald-600' : factor.score >= 60 ? 'bg-blue-600' : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${factor.score}%` }}
-                    />
+                  <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900">{factorScore}/100</span>
+                    <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${getRatingBadge(factor.rating)}`}>
+                      {getLocalizedRating(factor.rating)}
+                    </span>
                   </div>
-
-                  <p className="text-[11px] text-slate-600 leading-snug">
-                    {factor.summary}
-                  </p>
                 </div>
-
-                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-900">{factor.score}/100</span>
-                  <span className={`text-[10px] font-bold uppercase px-1.5 py-0.5 rounded border ${getRatingBadge(factor.rating)}`}>
-                    {getLocalizedRating(factor.rating)}
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

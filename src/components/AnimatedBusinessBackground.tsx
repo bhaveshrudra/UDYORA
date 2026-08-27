@@ -214,10 +214,9 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
               fillOpacity="0.04"
               animate={
                 shouldReduceMotion
-                  ? {}
+                  ? { fillOpacity: 0.04 }
                   : {
-                      height: [bar.baseH, bar.baseH + 16, bar.baseH],
-                      y: [560 - bar.baseH, 560 - bar.baseH - 16, 560 - bar.baseH]
+                      fillOpacity: [0.03, 0.065, 0.03]
                     }
               }
               transition={{
@@ -244,12 +243,14 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
 
           {/* Animated Travelling Pulse 1 along the Primary S-Curve Path */}
           <motion.circle
+            cx={220}
+            cy={380}
             r="4.5"
             fill="#2563eb"
             fillOpacity="0.45"
             animate={
               shouldReduceMotion
-                ? {}
+                ? { opacity: 0.3 }
                 : {
                     cx: [220, 520, 880, 1220, 780, 260, 680, 1180, 850, 520],
                     cy: [380, 620, 840, 1100, 1380, 1600, 1900, 2150, 2450, 2700],
@@ -261,12 +262,14 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
 
           {/* Animated Travelling Pulse 2 along Secondary Data Trail */}
           <motion.circle
+            cx={1220}
+            cy={1100}
             r="3.5"
             fill="#059669"
             fillOpacity="0.4"
             animate={
               shouldReduceMotion
-                ? {}
+                ? { opacity: 0.3 }
                 : {
                     cx: [1220, 780, 260, 680, 1180, 850, 520, 220, 520, 880],
                     cy: [1100, 1380, 1600, 1900, 2150, 2450, 2700, 380, 620, 840],
@@ -282,21 +285,25 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
           {/* Node 1: Village Hub Catchment (Hero Right) */}
           <g transform="translate(1120, 340)">
             <motion.circle
+              cx="0"
+              cy="0"
               r="34"
               fill="none"
               stroke="#2563eb"
               strokeWidth="1"
               strokeOpacity="0.14"
-              animate={shouldReduceMotion ? {} : { scale: [0.85, 1.4, 0.85], opacity: [0.15, 0.03, 0.15] }}
+              animate={shouldReduceMotion ? { opacity: 0.14 } : { scale: [0.85, 1.4, 0.85], opacity: [0.15, 0.03, 0.15] }}
               transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.circle
+              cx="0"
+              cy="0"
               r="18"
               fill="none"
               stroke="#2563eb"
               strokeWidth="1.2"
               strokeOpacity="0.22"
-              animate={shouldReduceMotion ? {} : { scale: [1, 1.25, 1], opacity: [0.25, 0.08, 0.25] }}
+              animate={shouldReduceMotion ? { opacity: 0.22 } : { scale: [1, 1.25, 1], opacity: [0.25, 0.08, 0.25] }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
             />
             <circle cx="0" cy="0" r="4.5" fill="#1e3a8a" fillOpacity="0.35" />
@@ -305,12 +312,14 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
           {/* Node 2: Dairy Cooperative Catchment (Capabilities Area) */}
           <g transform="translate(180, 960)">
             <motion.circle
+              cx="0"
+              cy="0"
               r="40"
               fill="none"
               stroke="#059669"
               strokeWidth="1"
               strokeOpacity="0.12"
-              animate={shouldReduceMotion ? {} : { scale: [0.9, 1.35, 0.9], opacity: [0.14, 0.02, 0.14] }}
+              animate={shouldReduceMotion ? { opacity: 0.12 } : { scale: [0.9, 1.35, 0.9], opacity: [0.14, 0.02, 0.14] }}
               transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
             />
             <circle cx="0" cy="0" r="4" fill="#059669" fillOpacity="0.3" />
@@ -319,12 +328,14 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
           {/* Node 3: APMC Mandi Node (How It Works Area) */}
           <g transform="translate(1260, 1580)">
             <motion.circle
+              cx="0"
+              cy="0"
               r="36"
               fill="none"
               stroke="#d97706"
               strokeWidth="1"
               strokeOpacity="0.14"
-              animate={shouldReduceMotion ? {} : { scale: [0.88, 1.3, 0.88], opacity: [0.16, 0.03, 0.16] }}
+              animate={shouldReduceMotion ? { opacity: 0.14 } : { scale: [0.88, 1.3, 0.88], opacity: [0.16, 0.03, 0.16] }}
               transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
             />
             <circle cx="0" cy="0" r="4.5" fill="#d97706" fillOpacity="0.32" />
@@ -333,12 +344,14 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
           {/* Node 4: Credit Guarantee Hub (Evidence Principles Area) */}
           <g transform="translate(220, 2240)">
             <motion.circle
+              cx="0"
+              cy="0"
               r="38"
               fill="none"
               stroke="#2563eb"
               strokeWidth="1"
               strokeOpacity="0.16"
-              animate={shouldReduceMotion ? {} : { scale: [0.9, 1.38, 0.9], opacity: [0.18, 0.04, 0.18] }}
+              animate={shouldReduceMotion ? { opacity: 0.16 } : { scale: [0.9, 1.38, 0.9], opacity: [0.18, 0.04, 0.18] }}
               transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
             />
             <circle cx="0" cy="0" r="4.5" fill="#1e3a8a" fillOpacity="0.35" />

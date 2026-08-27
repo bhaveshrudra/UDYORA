@@ -143,10 +143,11 @@ export const HeroAnalyticsComposition: React.FC = () => {
                     key={idx}
                     cx={pt.cx}
                     cy={pt.cy}
-                    r="3.5"
+                    r={3.5}
                     fill="#ffffff"
                     stroke="#2563eb"
-                    strokeWidth="2"
+                    strokeWidth={2}
+                    style={{ transformOrigin: `${pt.cx}px ${pt.cy}px` }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{

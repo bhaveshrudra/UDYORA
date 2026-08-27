@@ -246,12 +246,12 @@ export function HeroAnalyticsVisual({ containerRef }: HeroAnalyticsVisualProps) 
           {/* 3. Subtle Background Analytics Bar Chart (Bottom-Left to Center) */}
           <g opacity="0.6" className="hidden sm:block">
             {[
-              { x: 120, h: 45, maxH: 65, delay: 0 },
-              { x: 145, h: 65, maxH: 90, delay: 0.4 },
-              { x: 170, h: 50, maxH: 75, delay: 0.8 },
-              { x: 195, h: 80, maxH: 110, delay: 1.2 },
-              { x: 220, h: 95, maxH: 130, delay: 1.6 },
-              { x: 245, h: 115, maxH: 145, delay: 2.0 },
+              { x: 120, h: 45, delay: 0 },
+              { x: 145, h: 65, delay: 0.4 },
+              { x: 170, h: 50, delay: 0.8 },
+              { x: 195, h: 80, delay: 1.2 },
+              { x: 220, h: 95, delay: 1.6 },
+              { x: 245, h: 115, delay: 2.0 },
             ].map((bar, idx) => (
               <motion.rect
                 key={idx}
@@ -261,13 +261,12 @@ export function HeroAnalyticsVisual({ containerRef }: HeroAnalyticsVisualProps) 
                 height={bar.h}
                 rx="3"
                 fill="#1e3a8a"
+                fillOpacity="0.04"
                 animate={
                   shouldReduceMotion
-                    ? { fillOpacity: 0.045 }
+                    ? { fillOpacity: 0.04 }
                     : {
-                        height: [bar.h, bar.maxH, bar.h],
-                        y: [520 - bar.h, 520 - bar.maxH, 520 - bar.h],
-                        fillOpacity: [0.035, 0.065, 0.035],
+                        fillOpacity: [0.03, 0.065, 0.03],
                       }
                 }
                 transition={{

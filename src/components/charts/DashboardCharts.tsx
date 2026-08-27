@@ -43,8 +43,9 @@ export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
   return (
     <div className="space-y-4">
       {items.map((item, idx) => {
-        const barMax = item.max || maxValue;
-        const pct = Math.min(100, Math.max(0, (item.value / barMax) * 100));
+        const val = Number.isFinite(item.value) ? item.value : 0;
+        const barMax = Number.isFinite(item.max) && (item.max as number) > 0 ? (item.max as number) : (Number.isFinite(maxValue) && maxValue > 0 ? maxValue : 100);
+        const pct = barMax > 0 ? Math.min(100, Math.max(0, (val / barMax) * 100)) : 0;
         const barColor = item.color || '#2563eb';
 
         return (
@@ -66,7 +67,7 @@ export const HorizontalBarChart: React.FC<HorizontalBarChartProps> = ({
                 )}
               </div>
               <span className="font-mono font-bold text-slate-900 shrink-0">
-                {valueFormat(item.value)} {item.unit || ''}
+                {valueFormat(val)} {item.unit || ''}
               </span>
             </div>
 
@@ -116,6 +117,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   const shouldReduceMotion = useReducedMotion();
   const [activeSegment, setActiveSegment] = useState<DonutSegment | null>(null);
 
+  const safeSize = Number.isFinite(size) && size > 0 ? size : 200;
   const radius = 70;
   const strokeWidth = 24;
   const circumference = 2 * Math.PI * radius;
@@ -133,8 +135,8 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
       {/* SVG Donut */}
-      <div className="relative shrink-0 flex items-center justify-center" style={{ width: size, height: size }}>
-        <svg width={size} height={size} viewBox="0 0 200 200" className="transform -rotate-90">
+      <div className="relative shrink-0 flex items-center justify-center" style={{ width: safeSize, height: safeSize }}>
+        <svg width={safeSize} height={safeSize} viewBox="0 0 200 200" className="transform -rotate-90">
           {/* Background Track Ring */}
           <circle
             cx="100"
@@ -147,9 +149,11 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 
           {/* Rendered Arc Segments */}
           {segments.map((seg, idx) => {
-            const strokeDashoffset = circumference - (seg.percentage / 100) * circumference;
+            const rawPct = Number.isFinite(seg.percentage) ? seg.percentage : 0;
+            const pct = Math.max(0, Math.min(100, rawPct));
+            const strokeDashoffset = circumference - (pct / 100) * circumference;
             const rotation = (cumulativePercent / 100) * 360;
-            cumulativePercent += seg.percentage;
+            cumulativePercent += pct;
 
             return (
               <motion.circle
@@ -199,13 +203,18 @@ export const DonutChart: React.FC<DonutChartProps> = ({
               activeSegment?.name === seg.name ? 'bg-slate-100 font-bold' : 'hover:bg-slate-50'
             }`}
           >
-            <div className="flex items-center gap-2 truncate">
-              <span className="w-3 h-3 rounded-md shrink-0" style={{ backgroundColor: seg.color }} />
-              <span className="text-slate-800 truncate">{seg.name}</span>
+            <div className="flex items-center gap-2">
+              <span
+                className="w-3 h-3 rounded-md shrink-0"
+                style={{ backgroundColor: seg.color }}
+              />
+              <span className="text-slate-700 font-medium">{seg.name}</span>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="font-bold text-slate-900">{seg.formatted}</span>
-              <span className="text-[10px] font-mono text-slate-400">({seg.percentage}%)</span>
+            <div className="flex items-center gap-2 font-mono text-slate-900">
+              <span>{seg.formatted}</span>
+              <span className="text-[11px] text-slate-400 font-normal">
+                ({seg.percentage}%)
+              </span>
             </div>
           </div>
         ))}
@@ -215,7 +224,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
 };
 
 /* =========================================================================
-   3. REPAYMENT LINE CHART (OUTSTANDING BALANCE)
+   3. 5-YEAR REPAYMENT LINE & AMORTIZATION CHART
    ========================================================================= */
 interface RepaymentPoint {
   month: number;
@@ -233,16 +242,23 @@ export const RepaymentLineChart: React.FC<RepaymentLineChartProps> = ({ schedule
   const shouldReduceMotion = useReducedMotion();
   const [hoveredPoint, setHoveredPoint] = useState<RepaymentPoint | null>(null);
 
-  if (!schedule || schedule.length === 0) {
+  const validSchedule = Array.isArray(schedule) ? schedule.filter((p) => p && Number.isFinite(p.month)) : [];
+
+  if (validSchedule.length === 0) {
     return (
-      <div className="p-8 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-        INSUFFICIENT REPAYMENT DATA
+      <div className="p-6 text-center text-xs text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+        Repayment schedule unavailable.
       </div>
     );
   }
 
-  const maxBalance = Math.max(...schedule.map((p) => p.balance || p.emi * 50), 100000);
-  const totalMonths = schedule[schedule.length - 1]?.month || 60;
+  const maxBalance = Math.max(
+    100000,
+    ...validSchedule.map((p) => (Number.isFinite(p.balance) ? p.balance : (Number.isFinite(p.emi) ? p.emi * 50 : 100000)))
+  );
+  const totalMonths = validSchedule[validSchedule.length - 1]?.month && Number.isFinite(validSchedule[validSchedule.length - 1].month)
+    ? validSchedule[validSchedule.length - 1].month
+    : 60;
 
   // Chart SVG Coordinates
   const chartW = 500;
@@ -250,12 +266,23 @@ export const RepaymentLineChart: React.FC<RepaymentLineChartProps> = ({ schedule
   const padX = 45;
   const padY = 25;
 
-  const getX = (m: number) => padX + (m / totalMonths) * (chartW - padX - 20);
-  const getY = (bal: number) => chartH - padY - (bal / maxBalance) * (chartH - 2 * padY);
+  const getX = (m: number) => {
+    const monthNum = Number.isFinite(m) ? m : 0;
+    const val = padX + (monthNum / (totalMonths || 60)) * (chartW - padX - 20);
+    return Number.isFinite(val) ? Math.round(val * 10) / 10 : padX;
+  };
+
+  const getY = (bal: number) => {
+    const balanceNum = Number.isFinite(bal) ? bal : 0;
+    const val = chartH - padY - (balanceNum / (maxBalance || 100000)) * (chartH - 2 * padY);
+    return Number.isFinite(val) ? Math.round(val * 10) / 10 : chartH - padY;
+  };
 
   // SVG Spline Path
-  const points = schedule.map((p) => `${getX(p.month)},${getY(p.balance)}`).join(' L ');
-  const areaPath = `M ${getX(schedule[0].month)},${chartH - padY} L ${points} L ${getX(schedule[schedule.length - 1].month)},${chartH - padY} Z`;
+  const points = validSchedule.map((p) => `${getX(p.month)},${getY(p.balance)}`).join(' L ');
+  const firstX = getX(validSchedule[0].month);
+  const lastX = getX(validSchedule[validSchedule.length - 1].month);
+  const areaPath = `M ${firstX},${chartH - padY} L ${points} L ${lastX},${chartH - padY} Z`;
 
   return (
     <div className="space-y-3">
@@ -266,7 +293,7 @@ export const RepaymentLineChart: React.FC<RepaymentLineChartProps> = ({ schedule
         </span>
         {hoveredPoint ? (
           <span className="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-            Month {hoveredPoint.month}: Outstanding ₹{hoveredPoint.balance.toLocaleString('en-IN')}
+            Month {hoveredPoint.month}: Outstanding ₹{Math.round(hoveredPoint.balance || 0).toLocaleString('en-IN')}
           </span>
         ) : (
           <span className="text-[11px] text-slate-400">
@@ -314,7 +341,7 @@ export const RepaymentLineChart: React.FC<RepaymentLineChartProps> = ({ schedule
           />
 
           {/* Interactive Data Points */}
-          {schedule.map((p, idx) => {
+          {validSchedule.map((p, idx) => {
             const cx = getX(p.month);
             const cy = getY(p.balance);
             return (
@@ -334,7 +361,7 @@ export const RepaymentLineChart: React.FC<RepaymentLineChartProps> = ({ schedule
                   className="transition-all"
                 />
                 {/* Month labels at bottom */}
-                {(idx % 2 === 0 || idx === schedule.length - 1) && (
+                {(idx % 2 === 0 || idx === validSchedule.length - 1) && (
                   <text
                     x={cx}
                     y={chartH - 8}
@@ -369,7 +396,8 @@ interface RiskMatrixProps {
 }
 
 export const RiskMatrixGrid: React.FC<RiskMatrixProps> = ({ items }) => {
-  const [selectedRisk, setSelectedRisk] = useState<any | null>(items[0] || null);
+  const safeItems = Array.isArray(items) ? items : [];
+  const [selectedRisk, setSelectedRisk] = useState<any | null>(safeItems[0] || null);
 
   const getCellColor = (impact: string, likelihood: string) => {
     if (impact === 'HIGH' && likelihood === 'HIGH') return 'bg-rose-100/90 border-rose-300 text-rose-900';
@@ -383,7 +411,7 @@ export const RiskMatrixGrid: React.FC<RiskMatrixProps> = ({ items }) => {
       <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
         {['HIGH', 'MEDIUM', 'LOW'].map((impact) =>
           ['LOW', 'MEDIUM', 'HIGH'].map((likelihood) => {
-            const matching = items.filter((r) => r.impact === impact && r.likelihood === likelihood);
+            const matching = safeItems.filter((r) => r.impact === impact && r.likelihood === likelihood);
             return (
               <div
                 key={`${impact}-${likelihood}`}
