@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
   html,
   body {
     width: 100%;
@@ -8,6 +12,11 @@
     overflow-x: hidden;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Sticky header offset for smooth anchor scrolling */
+  section[id] {
+    scroll-margin-top: 80px;
   }
   
   /* Prevent any element from creating accidental horizontal scroll */

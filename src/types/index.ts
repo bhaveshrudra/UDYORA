@@ -1,4 +1,4 @@
-export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'INSUFFICIENT DATA';
+export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'OBSERVED' | 'INSUFFICIENT DATA';
 
 export type GeographicLevel = string;
 
@@ -30,6 +30,9 @@ export interface UserBusinessInput {
   beneficiaryCategory?: 'General' | 'SC/ST' | 'OBC' | 'Women' | 'Minority' | 'Ex-Servicemen' | string;
   locationAreaType?: 'Rural' | 'Semi-Urban' | 'Urban' | string;
   language?: 'en' | 'hi' | 'mr' | 'te' | 'ta' | 'kn' | 'bn' | 'gu' | string;
+  latitude?: number;
+  longitude?: number;
+  locationResolution?: any;
 }
 
 export interface LocationData {
@@ -40,6 +43,12 @@ export interface LocationData {
   state: string;
   pincode: string;
   areaType: 'Rural' | 'Semi-Urban' | 'Urban' | string;
+  latitude?: number;
+  longitude?: number;
+  administrativeSource?: string;
+  mappingSource?: string;
+  mapEvidence?: any;
+  observedNearbyPlaces?: any[];
   population: EvidenceRecord;
   householdCount: EvidenceRecord;
   nearestTownDistanceKm: EvidenceRecord;

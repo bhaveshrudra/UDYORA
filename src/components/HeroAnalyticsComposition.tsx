@@ -8,9 +8,6 @@ import {
   CheckCircle2,
   Sparkles,
   Bot,
-  Layers,
-  Award,
-  BarChart3,
   ArrowUpRight
 } from 'lucide-react';
 
@@ -23,22 +20,32 @@ export const HeroAnalyticsComposition: React.FC = () => {
       <div className="absolute -inset-4 bg-radial from-blue-100/60 via-indigo-50/30 to-transparent rounded-3xl blur-2xl pointer-events-none" />
 
       {/* Decorative Corner Sparkles & Nodes */}
-      <div className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-blue-100/80 flex items-center justify-center text-blue-600 shadow-xs pointer-events-none">
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-blue-100/80 flex items-center justify-center text-blue-600 shadow-xs pointer-events-none"
+      >
         <Sparkles className="w-3.5 h-3.5" />
-      </div>
+      </motion.div>
 
       <div className="relative z-10 space-y-4">
         {/* =========================================================================
             1. MAIN ANALYTICS DASHBOARD CARD
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: 0.98 }}
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.75, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-5 sm:p-6 space-y-4 relative overflow-hidden"
         >
-          {/* Card Top Accent Line */}
-          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500" />
+          {/* Card Top Accent Line with Gradient Animation */}
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
+            className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 origin-left"
+          />
 
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -56,10 +63,15 @@ export const HeroAnalyticsComposition: React.FC = () => {
               </div>
             </div>
 
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.7 }}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200"
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>Multi-Agent Live</span>
-            </span>
+            </motion.span>
           </div>
 
           {/* Mini Revenue / Demand Growth Spline Chart */}
@@ -69,13 +81,18 @@ export const HeroAnalyticsComposition: React.FC = () => {
                 <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
                 <span>Unit Economics & Revenue Curve</span>
               </span>
-              <span className="font-mono font-bold text-emerald-700 flex items-center text-[11px]">
+              <motion.span
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 1.2 }}
+                className="font-mono font-bold text-emerald-700 flex items-center text-[11px]"
+              >
                 <ArrowUpRight className="w-3 h-3" />
                 <span>+28.4% Net Yield</span>
-              </span>
+              </motion.span>
             </div>
 
-            {/* SVG Interactive Line Spline */}
+            {/* SVG Interactive Line Spline with Progressive Stroke Animation */}
             <div className="w-full h-24 pt-1">
               <svg viewBox="0 0 320 80" className="w-full h-full overflow-visible">
                 <defs>
@@ -95,12 +112,15 @@ export const HeroAnalyticsComposition: React.FC = () => {
                 <line x1="0" y1="50" x2="320" y2="50" stroke="#e2e8f0" strokeDasharray="3 3" />
 
                 {/* Area Fill */}
-                <path
+                <motion.path
                   d="M 10 70 C 60 65, 110 52, 160 38 C 210 24, 260 18, 310 8 L 310 75 L 10 75 Z"
                   fill="url(#heroSplineGrad)"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 1.0, delay: 0.8 }}
                 />
 
-                {/* Growth Stroke Line */}
+                {/* Growth Stroke Line - Draws Smoothly from Left to Right */}
                 <motion.path
                   d="M 10 70 C 60 65, 110 52, 160 38 C 210 24, 260 18, 310 8"
                   fill="none"
@@ -109,17 +129,17 @@ export const HeroAnalyticsComposition: React.FC = () => {
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
-                  transition={{ duration: shouldReduceMotion ? 0 : 1.4, ease: 'easeOut' }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 1.3, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 />
 
-                {/* Data point pulses */}
+                {/* Sequential Staggered Data Points Pop */}
                 {[
-                  { cx: 10, cy: 70 },
-                  { cx: 110, cy: 52 },
-                  { cx: 210, cy: 24 },
-                  { cx: 310, cy: 8 }
+                  { cx: 10, cy: 70, delay: 0.75 },
+                  { cx: 110, cy: 52, delay: 1.0 },
+                  { cx: 210, cy: 24, delay: 1.25 },
+                  { cx: 310, cy: 8, delay: 1.5 }
                 ].map((pt, idx) => (
-                  <circle
+                  <motion.circle
                     key={idx}
                     cx={pt.cx}
                     cy={pt.cy}
@@ -127,56 +147,84 @@ export const HeroAnalyticsComposition: React.FC = () => {
                     fill="#ffffff"
                     stroke="#2563eb"
                     strokeWidth="2"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{
+                      duration: shouldReduceMotion ? 0 : 0.4,
+                      delay: shouldReduceMotion ? 0 : pt.delay,
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 15
+                    }}
                   />
                 ))}
               </svg>
             </div>
           </div>
 
-          {/* Metric Capacity Comparison Bars */}
+          {/* Metric Capacity Comparison Bars Growing Upward/Across */}
           <div className="space-y-2 pt-0.5">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-600 font-medium">Local Catchment Consumption</span>
-              <span className="font-bold text-slate-900 font-mono">88%</span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.3 }}
+                className="font-bold text-slate-900 font-mono"
+              >
+                88%
+              </motion.span>
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: '88%' }}
-                transition={{ duration: 1.0, delay: 0.3, ease: 'easeOut' }}
+                transition={{ duration: shouldReduceMotion ? 0 : 1.0, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
                 className="h-full bg-emerald-600 rounded-full"
               />
             </div>
 
             <div className="flex items-center justify-between text-[11px] pt-1">
               <span className="text-slate-600 font-medium">Cooperative Hub Off-take</span>
-              <span className="font-bold text-slate-900 font-mono">94%</span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.4 }}
+                className="font-bold text-slate-900 font-mono"
+              >
+                94%
+              </motion.span>
             </div>
             <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: '94%' }}
-                transition={{ duration: 1.0, delay: 0.4, ease: 'easeOut' }}
+                transition={{ duration: shouldReduceMotion ? 0 : 1.0, delay: 1.05, ease: [0.22, 1, 0.36, 1] }}
                 className="h-full bg-blue-600 rounded-full"
               />
             </div>
           </div>
 
           {/* Quick Benchmark Footnotes */}
-          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 1.4 }}
+            className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium"
+          >
             <span className="flex items-center gap-1 font-bold text-slate-800">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>DSCR 2.3x (Bank Viable)</span>
             </span>
             <span className="text-slate-400">10% Promoter Margin</span>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* =========================================================================
             2. FLOATING CARD: AGENT INTELLIGENCE BUBBLE (TOP RIGHT)
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, x: 20, y: -10 }}
+          initial={{ opacity: 0, x: 24, y: -10 }}
           animate={
             shouldReduceMotion
               ? { opacity: 1, x: 0, y: 0 }
@@ -187,9 +235,14 @@ export const HeroAnalyticsComposition: React.FC = () => {
                 }
           }
           transition={{
-            duration: 5.5,
-            repeat: Infinity,
-            ease: 'easeInOut'
+            opacity: { duration: 0.6, delay: 1.1 },
+            x: { duration: 0.6, delay: 1.1 },
+            y: {
+              duration: 5.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: 1.7
+            }
           }}
           className="absolute -top-6 -right-3 sm:-right-6 bg-slate-900 text-white rounded-2xl p-3 sm:p-3.5 shadow-xl border border-slate-800 max-w-[240px] space-y-1 z-20"
         >
@@ -207,10 +260,10 @@ export const HeroAnalyticsComposition: React.FC = () => {
         </motion.div>
 
         {/* =========================================================================
-            3. FLOATING CARD: HYPER-LOCAL CATCHMENT PILL (BOTTOM LEFT)
+            3. FLOATING CARD: HYPER-LOCAL CATCHMENT PILL WITH RADAR PULSE (BOTTOM LEFT)
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, x: -20, y: 15 }}
+          initial={{ opacity: 0, x: -24, y: 15 }}
           animate={
             shouldReduceMotion
               ? { opacity: 1, x: 0, y: 0 }
@@ -221,15 +274,22 @@ export const HeroAnalyticsComposition: React.FC = () => {
                 }
           }
           transition={{
-            duration: 6.5,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 1.0
+            opacity: { duration: 0.6, delay: 1.3 },
+            x: { duration: 0.6, delay: 1.3 },
+            y: {
+              duration: 6.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: 1.9
+            }
           }}
           className="absolute -bottom-6 -left-3 sm:-left-6 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-lg border border-slate-200 max-w-[220px] space-y-1 z-20"
         >
           <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-blue-700" />
+            <div className="relative flex h-3.5 w-3.5 items-center justify-center">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-70" />
+              <MapPin className="relative w-3.5 h-3.5 text-blue-700" />
+            </div>
             <span className="text-[11px] font-bold text-slate-900">
               Catchment Node
             </span>
@@ -257,10 +317,13 @@ export const HeroAnalyticsComposition: React.FC = () => {
                 }
           }
           transition={{
-            duration: 4.8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 2.0
+            opacity: { duration: 0.5, delay: 1.5 },
+            scale: {
+              duration: 4.8,
+              repeat: Infinity,
+              ease: 'easeInOut',
+              delay: 2.0
+            }
           }}
           className="absolute -bottom-3 right-4 bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 z-20"
         >

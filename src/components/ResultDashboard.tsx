@@ -19,7 +19,8 @@ import {
   MapPin,
   IndianRupee,
   BarChart3,
-  PieChart
+  PieChart,
+  Compass
 } from 'lucide-react';
 import { CompleteAnalysisReport } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
@@ -30,6 +31,7 @@ import { MarketIntelligenceCard } from './MarketIntelligenceCard';
 import { RiskAnalysisCard } from './RiskAnalysisCard';
 import { EvidenceAuditCard } from './EvidenceAuditCard';
 import { DomainComparisonSection } from './DomainComparisonSection';
+import { InteractiveMap } from './InteractiveMap';
 
 import {
   prepareOverviewPillarData,
@@ -505,6 +507,47 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
               valueFormat={(v) => `${v}`}
             />
           </div>
+
+          {/* Spatial Map & Catchment Component */}
+          {location.latitude && location.longitude && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-blue-700" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Locality & Spatial Catchment Map
+                  </h3>
+                </div>
+                <span className="text-[10px] font-mono font-bold bg-blue-50 text-blue-900 px-2 py-0.5 rounded border border-blue-200">
+                  📍 {location.village} ({location.latitude.toFixed(4)}° N, {location.longitude.toFixed(4)}° E)
+                </span>
+              </div>
+              <InteractiveMap
+                location={{
+                  id: `res_dash_${location.id || Date.now()}`,
+                  localityName: location.village,
+                  villageName: location.village,
+                  subDistrictName: location.block || 'Sub-District',
+                  districtName: location.district,
+                  stateName: location.state,
+                  stateCode: 36,
+                  districtCode: 3601,
+                  subDistrictCode: 360101,
+                  pincode: location.pincode || '501218',
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  administrativeSource: location.administrativeSource || 'Local Government Directory (LGD), MoPR',
+                  mappingSource: location.mappingSource || 'OpenStreetMap / Nominatim Spatial Engine',
+                  confidence: 0.95,
+                  formattedAddress: `${location.village}, ${location.block || ''}, ${location.district}, ${location.state}`,
+                  areaType: (location.areaType as any) || 'Rural'
+                }}
+                businessCategory={(input.businessCategoryId as any) || 'dairy'}
+                radiusKm={5}
+                isCompact={true}
+              />
+            </div>
+          )}
 
           {/* Detailed Market Intelligence Component */}
           {marketAnalysis && <MarketIntelligenceCard marketData={marketAnalysis} />}

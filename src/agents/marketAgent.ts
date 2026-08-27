@@ -61,6 +61,33 @@ export function runMarketAgent(
     }
   );
 
+  // Ingest spatial map-observed POIs if available
+  if (location.observedNearbyPlaces && Array.isArray(location.observedNearbyPlaces)) {
+    location.observedNearbyPlaces.forEach((poi: any) => {
+      if (!nearbyFacilities.some((f) => f.name === poi.placeName)) {
+        nearbyFacilities.push({
+          name: poi.placeName,
+          distanceKm: poi.distanceKm,
+          type: poi.categoryLabel || poi.category,
+          source: poi.source,
+          dataQuality: poi.dataQuality || 'OBSERVED'
+        });
+      }
+    });
+
+    generatedEvidence.push({
+      id: `ev_map_pois_${location.id}`,
+      metricName: `Observed Spatial Infrastructure Nodes (${location.observedNearbyPlaces.length} mapped)`,
+      value: `${location.observedNearbyPlaces.length} places observed`,
+      source: location.mappingSource || 'OpenStreetMap Spatial Index',
+      geographicLevel: 'Sub-District',
+      timestamp: new Date().toISOString(),
+      status: 'OBSERVED',
+      confidence: 0.85,
+      dataLimitationNote: 'Observed spatial points of interest retrieved from OpenStreetMap. Third-party observations do not represent an exhaustive municipal census.'
+    });
+  }
+
   if (category === 'dairy') {
     marketOpportunitySummary = `Strong local milk off-take potential driven by established cooperative collection within ${dairyCoopDist} km and high peri-urban dairy consumption along ${transportVal}.`;
     estimatedMarketReach = `Primary Catchment: ${location.village} (${popVal} residents) + Secondary Supply to Dairy Cooperative Union Network (serving 50,000+ urban households).`;

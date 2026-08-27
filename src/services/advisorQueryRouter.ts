@@ -272,10 +272,25 @@ export function routeAdvisorQuery(
     };
   }
 
-  // 7. LOCATION INTENT (Village, District, Mandal/Taluka, APMC proximity)
+  // 7. LOCATION & MAP INTENT (Village, Coordinates, Near me, Nearby Banks, Market Distance, Map Radius)
   if (
-    query.includes('village') ||
     query.includes('location') ||
+    query.includes('show me my location') ||
+    query.includes('my location') ||
+    query.includes('near me') ||
+    query.includes('nearby') ||
+    query.includes('what is near me') ||
+    query.includes('banks nearby') ||
+    query.includes('how far') ||
+    query.includes('nearest market') ||
+    query.includes('nearest bank') ||
+    query.includes('observed nearby') ||
+    query.includes('10 km') ||
+    query.includes('5 km') ||
+    query.includes('map') ||
+    query.includes('catchment') ||
+    query.includes('coordinates') ||
+    query.includes('village') ||
     query.includes('district') ||
     query.includes('taluka') ||
     query.includes('mandal') ||
@@ -284,18 +299,23 @@ export function routeAdvisorQuery(
     query.includes('lgd') ||
     query.includes('गाव') ||
     query.includes('स्थान') ||
+    query.includes('नजदीक') ||
+    query.includes('पास') ||
     query.includes('గ్రామం') ||
     query.includes('జిల్లా') ||
-    query.includes('గ్రామము') ||
+    query.includes('దగ్గర') ||
     query.includes('మండలం') ||
-    query.includes('ಗ್ರಾಮ') ||
-    query.includes('ಸ್ಥಳ')
+    query.includes('మ్యాప్') ||
+    query.includes('బ్యాంకులు') ||
+    query.includes('నక్షా') ||
+    query.includes('ನನ್ನ ಸ್ಥಳ') ||
+    query.includes('ಹತ್ತಿರ')
   ) {
     return {
       intent: 'LOCATION',
-      confidence: 0.93,
-      serviceCalled: 'LGD Location Hierarchy Service (locationHierarchyService.ts)',
-      entities: { topic: 'administrative_location' }
+      confidence: 0.95,
+      serviceCalled: 'Map Intelligence & LGD Spatial Service (mapService.ts)',
+      entities: { topic: 'map_and_locality' }
     };
   }
 

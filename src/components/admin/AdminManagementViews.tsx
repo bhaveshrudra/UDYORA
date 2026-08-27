@@ -27,7 +27,8 @@ import {
   Check,
   Ban,
   ArrowRight,
-  Info
+  Info,
+  Compass
 } from 'lucide-react';
 import {
   LocationEntity,
@@ -1376,6 +1377,62 @@ export const AdminSettingsView: React.FC = () => {
               value={settings.platformVersion}
               className="w-full bg-slate-100 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-500"
             />
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-slate-200 space-y-4">
+          <div className="flex items-center gap-2 text-slate-900 font-bold">
+            <Compass className="w-4 h-4 text-blue-700" />
+            <span className="text-sm">Map & Spatial Intelligence Configuration</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1.5">
+                Default Analysis Radius
+              </label>
+              <select
+                defaultValue="5"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              >
+                <option value="5">5 Kilometers (Primary Catchment)</option>
+                <option value="10">10 Kilometers (Extended Catchment)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1.5">
+                Map Tile Provider
+              </label>
+              <select
+                defaultValue="osm"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              >
+                <option value="osm">OpenStreetMap Standard (High Performance)</option>
+                <option value="carto">CartoDB Positron (Clean Minimalist)</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-bold uppercase text-slate-600 mb-1.5">
+                Spatial Cache Expiry
+              </label>
+              <select
+                defaultValue="24"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              >
+                <option value="12">12 Hours</option>
+                <option value="24">24 Hours (Recommended)</option>
+                <option value="48">48 Hours</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-slate-800 text-[11px] space-y-1 font-medium">
+            <span className="font-bold block text-blue-950">Spatial Observation Governance:</span>
+            <p>
+              Observed POIs are tagged with quality badge <code>OBSERVED</code>. Authoritative administrative boundaries remain anchored to Local Government Directory (LGD).
+            </p>
           </div>
         </div>
 

@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "UDYORA",
+    "slug": "udyora",
+    "scheme": "udyora",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F8FAFC"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.udyora.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "UDYORA uses your location to identify local market boundaries and LGD administrative directories.",
+        "NSMicrophoneUsageDescription": "UDYORA uses your microphone for voice-based business proposal input in your regional language."
+      }
+    },
+    "android": {
+      "package": "com.udyora.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#1E3A8A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "RECORD_AUDIO"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

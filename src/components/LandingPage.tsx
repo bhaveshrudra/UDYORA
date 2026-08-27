@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { motion, useReducedMotion, Variants, AnimatePresence } from 'motion/react';
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useReducedMotion, Variants, AnimatePresence, useScroll, useSpring } from 'motion/react';
 import {
   ArrowRight,
   Store,
@@ -28,9 +28,7 @@ import {
 } from 'lucide-react';
 import { AnimatedBusinessBackground } from './AnimatedBusinessBackground';
 import { HeroAnalyticsComposition } from './HeroAnalyticsComposition';
-import { ProductIntroSplash } from './ProductIntroSplash';
 import { useLanguage } from '../i18n/LanguageContext';
-import { SupportedLanguage } from '../i18n/types';
 import { BrandLogo } from './BrandLogo';
 import { PublicFooter } from './PublicFooter';
 import { HeaderLanguageSelector } from './HeaderLanguageSelector';
@@ -48,6 +46,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   const shouldReduceMotion = useReducedMotion();
   const { language, setLanguage, t, supportedLanguages } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  // Scroll Progress Indicator Tracker
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 24,
+    restDelta: 0.001
+  });
+
+  // Track active section via IntersectionObserver for scroll-active navigation
+  useEffect(() => {
+    const sectionIds = ['capabilities', 'how-it-works', 'evidence'];
+    const observers: IntersectionObserver[] = [];
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveSection(id);
+            }
+          });
+        },
+        { rootMargin: '-20% 0px -60% 0px', threshold: 0.1 }
+      );
+
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => {
+      observers.forEach((obs) => obs.disconnect());
+    };
+  }, []);
 
   // Smooth scroll helper for landing nav links
   const scrollToSection = (id: string) => {
@@ -62,17 +98,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
      ANIMATION VARIANTS (STAGGERED CHOREOGRAPHY)
      ========================================================================= */
   const sectionHeaderVariants: Variants = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.12 }
+      transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], staggerChildren: 0.12 }
     }
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 14 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } }
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 16 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }
   };
 
   const capabilities = [
@@ -125,11 +161,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       ref={landingRef}
       className="relative min-h-screen flex flex-col bg-white text-slate-900 font-sans antialiased selection:bg-blue-100 selection:text-blue-950 overflow-x-hidden w-full"
     >
+      {/* Scroll Progress Indicator Bar at Very Top of Viewport */}
+      <motion.div
+        style={{ scaleX }}
+        className="fixed top-0 inset-x-0 h-[2.5px] bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-500 origin-left z-50 pointer-events-none"
+      />
+
       {/* 1. Full-Page Continuous Business Intelligence Background Animation Layer */}
       <AnimatedBusinessBackground containerRef={landingRef} />
-
-      {/* Top Header Accent Band */}
-      <div className="relative z-50 w-full h-1 bg-gradient-to-r from-blue-700 via-indigo-600 to-emerald-600" />
 
       {/* =========================================================================
           LANDING HEADER
@@ -139,25 +178,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {/* Brand Logo & Name */}
           <BrandLogo size="md" />
 
-          {/* Desktop Navigation (Hidden on Mobile) */}
+          {/* Desktop Navigation with Active Scroll Highlighting */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-bold uppercase tracking-wider text-slate-600">
             <button
               onClick={() => scrollToSection('capabilities')}
-              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
+              className={`relative hover:text-blue-900 transition-colors cursor-pointer py-2 ${
+                activeSection === 'capabilities' ? 'text-blue-900 font-extrabold' : ''
+              }`}
             >
-              {t('nav.capabilities')}
+              <span>{t('nav.capabilities')}</span>
+              {activeSection === 'capabilities' && (
+                <motion.div
+                  layoutId="activeNavUnderline"
+                  className="absolute -bottom-0.5 inset-x-0 h-0.5 bg-blue-700 rounded-full"
+                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                />
+              )}
             </button>
+
             <button
               onClick={() => scrollToSection('how-it-works')}
-              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
+              className={`relative hover:text-blue-900 transition-colors cursor-pointer py-2 ${
+                activeSection === 'how-it-works' ? 'text-blue-900 font-extrabold' : ''
+              }`}
             >
-              {t('nav.howItWorks')}
+              <span>{t('nav.howItWorks')}</span>
+              {activeSection === 'how-it-works' && (
+                <motion.div
+                  layoutId="activeNavUnderline"
+                  className="absolute -bottom-0.5 inset-x-0 h-0.5 bg-blue-700 rounded-full"
+                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                />
+              )}
             </button>
+
             <button
               onClick={() => scrollToSection('evidence')}
-              className="hover:text-blue-900 transition-colors cursor-pointer py-2"
+              className={`relative hover:text-blue-900 transition-colors cursor-pointer py-2 ${
+                activeSection === 'evidence' ? 'text-blue-900 font-extrabold' : ''
+              }`}
             >
-              {t('nav.evidence')}
+              <span>{t('nav.evidence')}</span>
+              {activeSection === 'evidence' && (
+                <motion.div
+                  layoutId="activeNavUnderline"
+                  className="absolute -bottom-0.5 inset-x-0 h-0.5 bg-blue-700 rounded-full"
+                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                />
+              )}
             </button>
           </nav>
 
@@ -271,28 +339,28 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </header>
 
       {/* =========================================================================
-          TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION
+          TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION (CHOREOGRAPHED BUILD)
           ========================================================================= */}
       <section className="relative pt-8 pb-14 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 flex items-center min-h-[560px]">
         <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
-          {/* LEFT COLUMN: HIGH-IMPACT HEADLINE & PRIMARY CTA */}
+          {/* LEFT COLUMN: HIGH-IMPACT HEADLINE & PRIMARY CTA (SEQUENTIAL STAGGER) */}
           <div className="lg:col-span-6 xl:col-span-6 space-y-5 sm:space-y-6 text-left">
-            {/* Subtle Tagline Badge */}
+            {/* Step 2: Hero Tagline Badge */}
             <motion.div
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 10 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.55, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-blue-50 text-blue-900 border border-blue-200/90 shadow-2xs"
             >
               <ShieldCheck className="w-4 h-4 text-blue-700" />
               <span>Hyper-Local Business Intelligence Platform</span>
             </motion.div>
 
-            {/* Large Bold Hero Headline with Fluid Typography */}
+            {/* Step 3: Large Bold Hero Headline */}
             <motion.h1
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.65, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
               className="fluid-hero-heading font-black tracking-tight text-slate-950"
             >
               Understand Your Local Business.{' '}
@@ -301,21 +369,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               </span>
             </motion.h1>
 
-            {/* Supporting Paragraph */}
+            {/* Step 4: Supporting Paragraph */}
             <motion.p
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.65, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
               className="text-sm sm:text-base lg:text-lg text-slate-600 font-medium leading-relaxed max-w-xl"
             >
               UDYORA combines local business intelligence, financial planning, risk analysis and evidence-backed guidance to help rural and semi-urban entrepreneurs make better-informed decisions.
             </motion.p>
 
-            {/* Primary Action Button with Left-to-Right Fill Sweep */}
+            {/* Step 5: Primary Action Button with Left-to-Right Fill Sweep */}
             <motion.div
               initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.65, delay: 0.38, ease: [0.22, 1, 0.36, 1] }}
               className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5"
             >
               <button
@@ -339,7 +407,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </motion.div>
           </div>
 
-          {/* RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
+          {/* Step 6: RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
           <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center w-full overflow-hidden">
             <HeroAnalyticsComposition />
           </div>
@@ -347,7 +415,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* =========================================================================
-          SECTION 1: PRODUCT CAPABILITIES (ANIMATED CARDS, SYMBOLS & STAGGERED TEXT)
+          SECTION 1: PRODUCT CAPABILITIES (SCROLL-TRIGGERED STAGGERED REVEAL)
           ========================================================================= */}
       <section id="capabilities" className="relative z-10 py-20 border-t border-b border-slate-200/80 bg-slate-50/50 backdrop-blur-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -356,7 +424,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             variants={sectionHeaderVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+            viewport={{ once: true, amount: 0.2 }}
             className="text-center max-w-3xl mx-auto mb-14"
           >
             <motion.span
@@ -379,14 +447,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </motion.p>
           </motion.div>
 
-          {/* 4 Animated Capability Cards Grid */}
+          {/* 4 Animated Capability Cards Grid with Staggered Delays */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {capabilities.map((item, idx) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: 0.98 }}
+                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24, scale: 0.98 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, margin: '-40px' }}
+                viewport={{ once: true, amount: 0.15 }}
                 transition={{
                   duration: shouldReduceMotion ? 0 : 0.65,
                   delay: shouldReduceMotion ? 0 : idx * 0.12,
@@ -397,7 +465,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                     ? {}
                     : {
                         y: -4,
-                        boxShadow: '0 12px 28px -6px rgba(15, 23, 42, 0.12)',
+                        boxShadow: '0 14px 30px -6px rgba(15, 23, 42, 0.12)',
                         borderColor: '#2563eb'
                       }
                 }
@@ -515,7 +583,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             variants={sectionHeaderVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+            viewport={{ once: true, amount: 0.2 }}
             className="text-center max-w-3xl mx-auto mb-14"
           >
             <motion.span
@@ -543,10 +611,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {workflowSteps.map((s, idx) => (
               <motion.div
                 key={`mob-step-${idx}`}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -12 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true, margin: '-20px' }}
-                transition={{ duration: 0.4, delay: idx * 0.05 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.45, delay: idx * 0.06 }}
                 className="relative bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs"
               >
                 <div className="absolute -left-[31px] top-4 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-blue-100 flex items-center justify-center">
@@ -566,10 +634,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             {workflowSteps.map((s, idx) => (
               <motion.div
                 key={idx}
-                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
+                initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-30px' }}
-                transition={{ duration: 0.5, delay: shouldReduceMotion ? 0 : idx * 0.08 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 0.55, delay: shouldReduceMotion ? 0 : idx * 0.08 }}
                 whileHover={shouldReduceMotion ? {} : { y: -3, borderColor: '#2563eb' }}
                 className="relative border border-slate-200 rounded-2xl p-5 bg-white/90 backdrop-blur-xs hover:shadow-xs transition-all duration-300 flex flex-col justify-between"
               >
@@ -615,7 +683,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             variants={sectionHeaderVariants}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
+            viewport={{ once: true, amount: 0.2 }}
             className="text-center max-w-3xl mx-auto mb-14"
           >
             <motion.span
@@ -641,16 +709,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* 1. VERIFIED with check pulse */}
             <motion.div
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-md hover:border-emerald-700/60 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <span className="relative flex h-3 w-3">
+                <span className="relative flex h-3.5 w-3.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500" />
                 </span>
                 <h3 className="text-base font-bold text-white">{t('evidence.verified.title')}</h3>
               </div>
@@ -661,14 +729,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* 2. ESTIMATED with slow breathing dot */}
             <motion.div
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-md hover:border-amber-700/60 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <span className="w-3 h-3 rounded-full bg-amber-400 animate-pulse" />
+                <span className="w-3.5 h-3.5 rounded-full bg-amber-400 animate-pulse" />
                 <h3 className="text-base font-bold text-white">{t('evidence.estimated.title')}</h3>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -678,14 +746,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
             {/* 3. INSUFFICIENT DATA with soft ring */}
             <motion.div
-              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20 }}
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.6, delay: 0.3 }}
               className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 space-y-3 shadow-md hover:border-rose-700/60 transition-colors"
             >
               <div className="flex items-center gap-2.5">
-                <span className="w-3 h-3 rounded-full bg-rose-500" />
+                <span className="w-3.5 h-3.5 rounded-full bg-rose-500" />
                 <h3 className="text-base font-bold text-white">{t('evidence.insufficient.title')}</h3>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -704,7 +772,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           variants={sectionHeaderVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-40px' }}
+          viewport={{ once: true, amount: 0.25 }}
           className="max-w-4xl mx-auto px-4 text-center space-y-5"
         >
           <motion.h2

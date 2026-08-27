@@ -123,6 +123,15 @@ export async function executeMultiAgentWorkflow(
     ? createCustomLocationData(input.customLocationText)
     : getLocationById(input.locationId);
 
+  if (input.latitude && input.longitude) {
+    location.latitude = input.latitude;
+    location.longitude = input.longitude;
+  }
+  if (input.locationResolution) {
+    location.administrativeSource = input.locationResolution.administrativeSource;
+    location.mappingSource = input.locationResolution.mappingSource;
+  }
+
   // Step 1: Evidence Agent
   updateStep('evidence', 'RUNNING', 30, 'Retrieving ground truth parameters from Census and District GIS...');
   await delay(300);
