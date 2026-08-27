@@ -1,8 +1,10 @@
-export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'OBSERVED' | 'INSUFFICIENT DATA';
+export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'OBSERVED' | 'INSUFFICIENT DATA' | 'INSUFFICIENT_DATA';
 
 export type GeographicLevel = string;
 
 export type FeasibilityCategory = 'HIGH' | 'MODERATE' | 'CONDITIONAL' | 'LOW';
+
+export type AgentExecutionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'PARTIAL' | 'FAILED' | 'ERROR' | 'SUCCESS' | 'DEGRADED';
 
 export interface EvidenceRecord {
   id: string;
@@ -21,7 +23,7 @@ export interface EvidenceRecord {
 export interface UserBusinessInput {
   locationId: string;
   customLocationText?: string;
-  businessCategoryId: 'dairy' | 'tailoring' | 'retail' | 'poultry' | 'custom';
+  businessCategoryId: 'dairy' | 'tailoring' | 'retail' | 'poultry' | 'custom' | string;
   businessIdea: string;
   availableCapital: number; // in INR (e.g. 100000)
   experienceYears?: number;
@@ -66,6 +68,7 @@ export interface LocationData {
   weeklyHaatFrequency?: EvidenceRecord;
   localCompetitorsCount?: EvidenceRecord;
   averageHouseholdIncomeBand?: EvidenceRecord;
+  blockTaluk?: string;
 }
 
 export interface CostComponent {
@@ -95,11 +98,12 @@ export interface RepaymentInstallment {
 export interface FinancialPlan {
   availableOwnCapital: number;
   marginPercentage: number; // e.g. 10%
-  indicativeProjectCost: number;
+  indicativeProjectCost: number; // PS Margin Capacity: Available Own Capital / 0.10
+  indicativeFinancingRequirement: number; // PS Financing Requirement: 90% of Project Cost
+  recommendedBusinessProjectSize?: number; // Distinct business-plan unit economics recommended size
   capitalExpenditureTotal?: number;
   workingCapitalTotal?: number;
   costBreakdown: CostComponent[];
-  indicativeFinancingRequirement: number;
   eligibleSubsidyEstimate?: number;
   netLoanRequirement?: number;
   annualInterestRate: number; // in %
@@ -136,6 +140,9 @@ export interface GovernmentScheme {
   subsidyPercentageRural?: number;
   subsidyGeneralRuralPct?: number;
   subsidySpecialRuralPct?: number;
+  subsidyPercentage?: number;
+  minOwnContributionPercentage?: number;
+  maxProjectCostCeiling?: number;
   maxSubsidyAmount?: number;
   maxTenureMonths?: number;
   moratoriumMonthsMax?: number;
@@ -144,8 +151,10 @@ export interface GovernmentScheme {
   collateralRequirement?: string;
   requiredDocuments: any[];
   officialSourceUrl: string;
+  portalUrl?: string;
   lastVerifiedDate: string;
   notes?: string;
+  description?: string;
   status?: DataQualityStatus;
   verificationStatus?: DataQualityStatus;
 }
@@ -156,7 +165,9 @@ export interface SchemeMatchResult {
   scheme: GovernmentScheme;
   matchScore: number; // 0 to 100
   qualificationStatus: 'ELIGIBLE' | 'CONDITIONALLY_ELIGIBLE' | 'REQUIRES_VERIFICATION' | 'INELIGIBLE';
+  status?: 'ELIGIBLE' | 'CONDITIONALLY_ELIGIBLE' | 'REQUIRES_VERIFICATION' | 'INELIGIBLE';
   whyItMatches: string[];
+  qualificationReason?: string;
   potentialSubsidyPct: number;
   potentialSubsidyAmount: number;
   minimumOwnCapitalRequired?: number;
@@ -192,11 +203,14 @@ export interface BusinessTemplate {
 export interface RiskFactor {
   id?: string;
   title?: string;
+  factor?: string;
+  riskName?: string;
   dimension?: 'OPERATIONAL' | 'FINANCIAL' | 'SEASONAL' | 'MARKET' | 'BIOLOGICAL' | 'DATA_QUALITY' | string;
   category: string;
   description: string;
   severity: 'HIGH' | 'MEDIUM' | 'LOW';
   mitigation?: string;
+  recommendedAction?: string;
   mitigationSuggestion?: string;
   potentialImpact?: string;
   confidence?: number;
@@ -220,11 +234,15 @@ export interface AgentPayload<T> {
   version?: string;
   timestamp?: string;
   confidenceScore?: number;
-  status?: string;
+  status: AgentExecutionStatus | string;
   summary?: string;
-  dataQuality?: string;
+  dataQuality: DataQualityStatus;
   overallConfidence?: number;
+  confidence?: number;
   executionTimeMs?: number;
+  sources?: string[];
+  warnings?: string[];
+  errors?: string[];
   evidenceGenerated?: EvidenceRecord[];
   data: T;
   auditTrail?: string[];
@@ -251,6 +269,8 @@ export interface MarketAgentData {
     targetVillagePopulation: number;
     households: number;
   };
+  estimatedPopulation?: number;
+  estimatedHouseholds?: number;
   competitionLevel?: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN' | string;
   competitionDensity?: 'HIGH' | 'MODERATE' | 'LOW' | 'UNKNOWN' | string;
   competitionSummary?: string;
@@ -270,13 +290,30 @@ export interface MarketAgentData {
   dataLimitations?: string[];
   marketOpportunitySummary?: string;
   estimatedMarketReach?: string;
+  recommendedOpportunitySpots?: import('./map').OpportunitySpot[];
+  topOpportunitySpot?: import('./map').OpportunitySpot;
+}
+
+export interface FeasibilityDimension {
+  id: string;
+  name: string;
+  weight: number; // e.g. 0.25 (25%)
+  score: number; // 0 - 100
+  confidence: number; // 0.0 to 1.0
+  status: DataQualityStatus;
+  rating: 'STRONG' | 'ADEQUATE' | 'NEEDS_ATTENTION' | 'CRITICAL';
+  summary: string;
+  evidenceRefIds?: string[];
 }
 
 export interface FinalFeasibilityVerdict {
-  score: number; // 0 - 100
+  score: number; // 0 - 100 (Overall Feasibility Score)
+  feasibilityScore?: number;
+  dataConfidenceScore: number; // 0 - 100 (Data Confidence %)
   category: FeasibilityCategory;
   headline: string;
   explanation: string;
+  dimensions: FeasibilityDimension[];
   readinessFactors: {
     area: string;
     score: number;
@@ -356,6 +393,7 @@ export interface CompleteAnalysisReport {
     inconsistenciesResolved: string[];
     warnings: string[];
     validationTimestamp: string;
+    flags?: Record<string, boolean>;
   };
 }
 
@@ -363,9 +401,8 @@ export interface AgentStepStatus {
   id: string;
   name: string;
   role: string;
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'ERROR';
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'ERROR' | 'FAILED' | 'PARTIAL';
   progressPct: number;
   message: string;
   durationMs?: number;
 }
-

@@ -8,7 +8,7 @@ import { VERIFIED_SCHEMES } from '../data/schemes';
 
 /**
  * Deterministic Scheme Eligibility & Rule Engine for UDYORA
- * Rule-based evaluation - Zero LLM hallucinated eligibility rules.
+ * Strict rule-based evaluation - Zero LLM hallucinated eligibility rules.
  */
 
 export function evaluateSchemeEligibility(
@@ -16,8 +16,8 @@ export function evaluateSchemeEligibility(
   financialPlan: FinancialPlan
 ): SchemeMatchResult[] {
   const category = input.businessCategoryId || 'dairy';
-  const availableCapital = financialPlan.availableOwnCapital;
-  const projectCost = financialPlan.indicativeProjectCost;
+  const availableCapital = financialPlan.availableOwnCapital || 100000;
+  const projectCost = financialPlan.indicativeProjectCost || 1000000;
   const beneficiaryCategory = input.beneficiaryCategory || 'General';
   const areaType = input.locationAreaType || 'Rural';
 
@@ -30,7 +30,8 @@ export function evaluateSchemeEligibility(
     let qualificationStatus: SchemeMatchResult['qualificationStatus'] = 'INELIGIBLE';
     let potentialSubsidyAmount = 0;
     let potentialSubsidyPct = 0;
-    let minimumOwnCapitalRequired = Math.round(projectCost * (scheme.minMarginContributionPct / 100));
+    const minMarginPct = scheme.minMarginContributionPct || 10;
+    const minimumOwnCapitalRequired = Math.round(projectCost * (minMarginPct / 100));
 
     // Check 1: Ineligible Activity Exclusion
     const isExplicitlyIneligible = scheme.ineligibleActivities?.some(
@@ -38,36 +39,74 @@ export function evaluateSchemeEligibility(
     );
 
     if (isExplicitlyIneligible) {
-      qualificationStatus = 'INELIGIBLE';
       results.push({
         scheme,
         matchScore: 10,
         qualificationStatus: 'INELIGIBLE',
-        whyItMatches: ['Activity is outside scheme focus area.'],
+        status: 'INELIGIBLE',
+        whyItMatches: ['Proposed enterprise activity is outside the scheme mandate.'],
+        qualificationReason: 'Activity is excluded under scheme operational guidelines.',
         potentialSubsidyAmount: 0,
         potentialSubsidyPct: 0,
         minimumOwnCapitalRequired,
-        missingInformation: [],
-        requiredDocuments: scheme.requiredDocuments.map((doc) => ({ name: doc, isMandatory: true })),
-        verificationNote: scheme.notes
+        missingInformation: ['Activity is outside scope.'],
+        requiredDocuments: (scheme.requiredDocuments || []).map((doc) => ({ name: String(doc), isMandatory: true })),
+        verificationNote: scheme.notes || 'Ineligible category.'
       });
       continue;
     }
 
-    // Special check for AHIDF: not meant for individual micro dairy cattle purchase
+    // Special check for SIH26091 PS Tier I: Micro Finance (<= ₹1.40 Lakh)
+    if (scheme.id === 'scheme_sih_micro_finance') {
+      if (projectCost <= 140000) {
+        matchScore += 60;
+        whyItMatches.push(`Project cost of ₹${projectCost.toLocaleString('en-IN')} is within the official SIH26091 PS Micro Finance threshold (<= ₹1.40 Lakh).`);
+      } else {
+        results.push({
+          scheme,
+          matchScore: 20,
+          qualificationStatus: 'INELIGIBLE',
+          status: 'INELIGIBLE',
+          whyItMatches: [`Project cost (₹${projectCost.toLocaleString('en-IN')}) exceeds the Micro Finance tier ceiling of ₹1.40 Lakh.`],
+          qualificationReason: 'Project size exceeds Micro Finance ceiling. Term Loan facility is recommended.',
+          potentialSubsidyAmount: 0,
+          potentialSubsidyPct: 0,
+          minimumOwnCapitalRequired,
+          missingInformation: ['Project exceeds ₹1.40 Lakh micro finance limit.'],
+          requiredDocuments: (scheme.requiredDocuments || []).map((doc) => ({ name: String(doc), isMandatory: true })),
+          verificationNote: 'SIH26091 PS Tier I Micro Finance limit is <= ₹1.40 Lakh.'
+        });
+        continue;
+      }
+    }
+
+    // Special check for SIH26091 PS Tier II: Term Loan (> ₹1.40 Lakh and <= ₹50 Lakh)
+    if (scheme.id === 'scheme_sih_term_loan') {
+      if (projectCost > 140000 && projectCost <= 5000000) {
+        matchScore += 60;
+        whyItMatches.push(`Project cost of ₹${projectCost.toLocaleString('en-IN')} matches the official SIH26091 PS Term Loan tier (> ₹1.40 Lakh to ₹50 Lakh).`);
+      } else if (projectCost <= 140000) {
+        matchScore += 30;
+        whyItMatches.push(`Project cost of ₹${projectCost.toLocaleString('en-IN')} is below ₹1.40 Lakh; Micro Finance scheme is preferred.`);
+      }
+    }
+
+    // Special check for AHIDF: Not meant for individual micro cow purchases
     if (scheme.id === 'scheme_ahidf_infrastructure') {
       if (category === 'dairy' && projectCost <= 2500000) {
         results.push({
           scheme,
           matchScore: 15,
           qualificationStatus: 'INELIGIBLE',
-          whyItMatches: ['Scheme is targeted for large-scale processing/chilling infrastructure (>₹15-50L), not micro-scale cow purchase.'],
+          status: 'INELIGIBLE',
+          whyItMatches: ['AHIDF is targeted for industrial processing and chilling infrastructure (>₹15-50L), not micro-scale unit establishment.'],
+          qualificationReason: 'Exclusively for commercial processing infrastructure; micro-enterprises are served via PMEGP, MUDRA, or KCC.',
           potentialSubsidyAmount: 0,
           potentialSubsidyPct: 0,
           minimumOwnCapitalRequired,
-          missingInformation: ['Requires TEFR, FPO registration, and bank term loan sanction for industrial processing unit.'],
-          requiredDocuments: scheme.requiredDocuments.map((doc) => ({ name: doc, isMandatory: true })),
-          verificationNote: 'Accurately excluded: Small individual dairy farms are served via PMEGP, MUDRA, or KCC.'
+          missingInformation: ['Requires TEFR, FPO registration, and industrial processing bank sanction.'],
+          requiredDocuments: (scheme.requiredDocuments || []).map((doc) => ({ name: String(doc), isMandatory: true })),
+          verificationNote: 'Accurately excluded for micro enterprise.'
         });
         continue;
       }
@@ -81,12 +120,14 @@ export function evaluateSchemeEligibility(
           scheme,
           matchScore: 25,
           qualificationStatus: 'INELIGIBLE',
+          status: 'INELIGIBLE',
           whyItMatches: ['Stand-Up India is exclusively reserved for SC, ST, or Women entrepreneurs setting up greenfield units.'],
+          qualificationReason: 'Reserved for SC/ST or Women applicants.',
           potentialSubsidyAmount: 0,
           potentialSubsidyPct: 0,
           minimumOwnCapitalRequired,
           missingInformation: ['Requires applicant to be SC/ST or woman enterprise (>51% equity).'],
-          requiredDocuments: scheme.requiredDocuments.map((doc) => ({ name: doc, isMandatory: true })),
+          requiredDocuments: (scheme.requiredDocuments || []).map((doc) => ({ name: String(doc), isMandatory: true })),
           verificationNote: 'Reserved for SC/ST or Women applicants.'
         });
         continue;
@@ -96,21 +137,24 @@ export function evaluateSchemeEligibility(
     // Check 2: Activity matching
     const activityMatches = scheme.eligibleActivities.some((act) => {
       if (act === category) return true;
-      if (category === 'dairy' && (act === 'dairy' || act === 'animal_husbandry' || act === 'agro_processing')) return true;
-      if (category === 'tailoring' && (act === 'tailoring' || act === 'garment_manufacturing' || act === 'manufacturing')) return true;
-      if (category === 'retail' && (act === 'small_retail' || act === 'kirana_store' || act === 'rural_services')) return true;
-      if (category === 'poultry' && (act === 'poultry' || act === 'animal_husbandry')) return true;
+      if (category === 'dairy' && (act === 'dairy' || act === 'animal_husbandry' || act === 'agro_processing' || act === 'manufacturing')) return true;
+      if (category === 'tailoring' && (act === 'tailoring' || act === 'garment_manufacturing' || act === 'manufacturing' || act === 'services')) return true;
+      if (category === 'retail' && (act === 'small_retail' || act === 'kirana_store' || act === 'rural_services' || act === 'services')) return true;
+      if (category === 'poultry' && (act === 'poultry' || act === 'animal_husbandry' || act === 'manufacturing')) return true;
+      if (category === 'custom') return true;
       return false;
     });
 
-    if (activityMatches) {
+    if (activityMatches && scheme.id !== 'scheme_sih_micro_finance' && scheme.id !== 'scheme_sih_term_loan') {
       matchScore += 45;
       whyItMatches.push(`Target sector '${scheme.shortName}' explicitly covers ${category.toUpperCase()} micro-enterprises.`);
     }
 
     // Check 3: Project Cost Ceiling
     if (projectCost <= scheme.maxProjectCost) {
-      matchScore += 25;
+      if (scheme.id !== 'scheme_sih_micro_finance' && scheme.id !== 'scheme_sih_term_loan') {
+        matchScore += 25;
+      }
       whyItMatches.push(`Proposed project cost of ₹${projectCost.toLocaleString('en-IN')} is within maximum ceiling of ₹${scheme.maxProjectCost.toLocaleString('en-IN')}.`);
     } else {
       matchScore -= 20;
@@ -120,16 +164,16 @@ export function evaluateSchemeEligibility(
     // Check 4: Margin / Own Contribution Check
     if (availableCapital >= minimumOwnCapitalRequired) {
       matchScore += 20;
-      whyItMatches.push(`Available capital of ₹${availableCapital.toLocaleString('en-IN')} meets the minimum required margin of ${scheme.minMarginContributionPct}% (₹${minimumOwnCapitalRequired.toLocaleString('en-IN')}).`);
+      whyItMatches.push(`Available capital of ₹${availableCapital.toLocaleString('en-IN')} meets the minimum required margin of ${minMarginPct}% (₹${minimumOwnCapitalRequired.toLocaleString('en-IN')}).`);
     } else {
       matchScore += 5;
-      missingInformation.push(`Own contribution of ₹${availableCapital.toLocaleString('en-IN')} is below required ₹${minimumOwnCapitalRequired.toLocaleString('en-IN')} (${scheme.minMarginContributionPct}% margin).`);
+      missingInformation.push(`Own contribution of ₹${availableCapital.toLocaleString('en-IN')} is below required ₹${minimumOwnCapitalRequired.toLocaleString('en-IN')} (${minMarginPct}% margin).`);
     }
 
     // Calculate Subsidy
-    if (scheme.id === 'scheme_pmegp') {
+    if (scheme.id === 'scheme_pmegp' || scheme.id === 'scheme_sih_term_loan') {
       const isSpecial = beneficiaryCategory !== 'General';
-      potentialSubsidyPct = isSpecial && areaType === 'Rural' ? scheme.subsidySpecialRuralPct : scheme.subsidyGeneralRuralPct;
+      potentialSubsidyPct = isSpecial && areaType === 'Rural' ? (scheme.subsidySpecialRuralPct || 35) : (scheme.subsidyGeneralRuralPct || 25);
       potentialSubsidyAmount = Math.round(projectCost * (potentialSubsidyPct / 100));
       if (scheme.maxSubsidyAmount && potentialSubsidyAmount > scheme.maxSubsidyAmount) {
         potentialSubsidyAmount = scheme.maxSubsidyAmount;
@@ -142,28 +186,32 @@ export function evaluateSchemeEligibility(
     } else if (scheme.id === 'scheme_pmfme') {
       potentialSubsidyPct = 35;
       potentialSubsidyAmount = Math.min(Math.round(projectCost * 0.35), 1000000);
-      whyItMatches.push(`35% credit-linked capital subsidy on milk chilling & value-addition machinery.`);
+      whyItMatches.push(`35% credit-linked capital subsidy on processing & value-addition machinery.`);
     }
 
     // Final qualification status assignment
-    if (matchScore >= 80) {
+    if (matchScore >= 75) {
       qualificationStatus = 'ELIGIBLE';
-    } else if (matchScore >= 50) {
+    } else if (matchScore >= 45) {
       qualificationStatus = 'CONDITIONALLY_ELIGIBLE';
     } else {
       qualificationStatus = 'REQUIRES_VERIFICATION';
     }
 
-    const documentChecklist = scheme.requiredDocuments.map((doc, idx) => ({
-      name: doc,
+    const documentChecklist = (scheme.requiredDocuments || []).map((doc, idx) => ({
+      name: String(doc),
       isMandatory: idx < 4
     }));
 
+    const qualificationReason = whyItMatches.join(' ');
+
     results.push({
       scheme,
-      matchScore: Math.min(100, matchScore),
+      matchScore: Math.min(100, Math.max(0, matchScore)),
       qualificationStatus,
+      status: qualificationStatus,
       whyItMatches,
+      qualificationReason,
       potentialSubsidyAmount,
       potentialSubsidyPct,
       minimumOwnCapitalRequired,

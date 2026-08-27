@@ -101,7 +101,7 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
         className="absolute top-24 left-0 right-0 flex justify-center items-center pointer-events-none"
       >
         <div
-          className="font-mono font-black text-[120px] sm:text-[200px] md:text-[260px] lg:text-[320px] tracking-[0.14em] text-slate-900 select-none transition-opacity duration-1000 ease-in-out"
+          className="font-mono font-black text-[56px] xs:text-[76px] sm:text-[160px] md:text-[220px] lg:text-[280px] tracking-[0.08em] sm:tracking-[0.14em] text-slate-900 select-none transition-opacity duration-1000 ease-in-out text-center max-w-full px-2"
           style={{ opacity: watermarkOpacity }}
         >
           {letters.map((letter, idx) => (
@@ -203,28 +203,15 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
             { x: 1230, baseH: 135, delay: 1.2 },
             { x: 1260, baseH: 170, delay: 2.0 }
           ].map((bar, idx) => (
-            <motion.rect
+            <rect
               key={`hero-bar-${idx}`}
               x={bar.x}
               y={560 - bar.baseH}
-              width="14"
+              width={14}
               height={bar.baseH}
-              rx="4"
+              rx={4}
               fill="#1e3a8a"
-              fillOpacity="0.04"
-              animate={
-                shouldReduceMotion
-                  ? { fillOpacity: 0.04 }
-                  : {
-                      fillOpacity: [0.03, 0.065, 0.03]
-                    }
-              }
-              transition={{
-                duration: 4.5,
-                repeat: Infinity,
-                ease: 'easeInOut',
-                delay: bar.delay
-              }}
+              fillOpacity={0.04}
             />
           ))}
 
@@ -242,119 +229,147 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
           />
 
           {/* Animated Travelling Pulse 1 along the Primary S-Curve Path */}
-          <motion.circle
-            cx={220}
-            cy={380}
-            r="4.5"
-            fill="#2563eb"
-            fillOpacity="0.45"
+          <motion.g
+            initial={{ x: 220, y: 380, opacity: 0.2 }}
             animate={
               shouldReduceMotion
-                ? { opacity: 0.3 }
+                ? { x: 220, y: 380, opacity: 0.3 }
                 : {
-                    cx: [220, 520, 880, 1220, 780, 260, 680, 1180, 850, 520],
-                    cy: [380, 620, 840, 1100, 1380, 1600, 1900, 2150, 2450, 2700],
+                    x: [220, 520, 880, 1220, 780, 260, 680, 1180, 850, 520],
+                    y: [380, 620, 840, 1100, 1380, 1600, 1900, 2150, 2450, 2700],
                     opacity: [0.2, 0.7, 0.3, 0.8, 0.3, 0.7, 0.3, 0.8, 0.3, 0.2]
                   }
             }
             transition={{ duration: 24, repeat: Infinity, ease: 'linear' }}
-          />
+          >
+            <circle
+              cx={0}
+              cy={0}
+              r={4.5}
+              fill="#2563eb"
+              fillOpacity={0.45}
+            />
+          </motion.g>
 
           {/* Animated Travelling Pulse 2 along Secondary Data Trail */}
-          <motion.circle
-            cx={1220}
-            cy={1100}
-            r="3.5"
-            fill="#059669"
-            fillOpacity="0.4"
+          <motion.g
+            initial={{ x: 1220, y: 1100, opacity: 0.3 }}
             animate={
               shouldReduceMotion
-                ? { opacity: 0.3 }
+                ? { x: 1220, y: 1100, opacity: 0.3 }
                 : {
-                    cx: [1220, 780, 260, 680, 1180, 850, 520, 220, 520, 880],
-                    cy: [1100, 1380, 1600, 1900, 2150, 2450, 2700, 380, 620, 840],
+                    x: [1220, 780, 260, 680, 1180, 850, 520, 220, 520, 880],
+                    y: [1100, 1380, 1600, 1900, 2150, 2450, 2700, 380, 620, 840],
                     opacity: [0.3, 0.7, 0.2, 0.8, 0.3, 0.7, 0.2, 0.6, 0.3, 0.7]
                   }
             }
             transition={{ duration: 28, repeat: Infinity, ease: 'linear', delay: 4 }}
-          />
+          >
+            <circle
+              cx={0}
+              cy={0}
+              r={3.5}
+              fill="#059669"
+              fillOpacity={0.4}
+            />
+          </motion.g>
 
           {/* ========================================================
               INTERACTIVE GEOGRAPHIC CATCHMENT NODES & EXPANDING RINGS
               ======================================================== */}
           {/* Node 1: Village Hub Catchment (Hero Right) */}
           <g transform="translate(1120, 340)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="34"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="1"
-              strokeOpacity="0.14"
+            <motion.g
+              initial={{ scale: 0.85, opacity: 0.14 }}
               animate={shouldReduceMotion ? { opacity: 0.14 } : { scale: [0.85, 1.4, 0.85], opacity: [0.15, 0.03, 0.15] }}
               transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="18"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="1.2"
-              strokeOpacity="0.22"
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={34}
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth={1}
+                strokeOpacity={0.14}
+              />
+            </motion.g>
+            <motion.g
+              initial={{ scale: 1, opacity: 0.22 }}
               animate={shouldReduceMotion ? { opacity: 0.22 } : { scale: [1, 1.25, 1], opacity: [0.25, 0.08, 0.25] }}
               transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            />
-            <circle cx="0" cy="0" r="4.5" fill="#1e3a8a" fillOpacity="0.35" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={18}
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth={1.2}
+                strokeOpacity={0.22}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={4.5} fill="#1e3a8a" fillOpacity={0.35} />
           </g>
 
           {/* Node 2: Dairy Cooperative Catchment (Capabilities Area) */}
           <g transform="translate(180, 960)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="40"
-              fill="none"
-              stroke="#059669"
-              strokeWidth="1"
-              strokeOpacity="0.12"
+            <motion.g
+              initial={{ scale: 0.9, opacity: 0.12 }}
               animate={shouldReduceMotion ? { opacity: 0.12 } : { scale: [0.9, 1.35, 0.9], opacity: [0.14, 0.02, 0.14] }}
               transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <circle cx="0" cy="0" r="4" fill="#059669" fillOpacity="0.3" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={40}
+                fill="none"
+                stroke="#059669"
+                strokeWidth={1}
+                strokeOpacity={0.12}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={4} fill="#059669" fillOpacity={0.3} />
           </g>
 
           {/* Node 3: APMC Mandi Node (How It Works Area) */}
           <g transform="translate(1260, 1580)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="36"
-              fill="none"
-              stroke="#d97706"
-              strokeWidth="1"
-              strokeOpacity="0.14"
+            <motion.g
+              initial={{ scale: 0.88, opacity: 0.14 }}
               animate={shouldReduceMotion ? { opacity: 0.14 } : { scale: [0.88, 1.3, 0.88], opacity: [0.16, 0.03, 0.16] }}
               transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-            />
-            <circle cx="0" cy="0" r="4.5" fill="#d97706" fillOpacity="0.32" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={36}
+                fill="none"
+                stroke="#d97706"
+                strokeWidth={1}
+                strokeOpacity={0.14}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={4.5} fill="#d97706" fillOpacity={0.32} />
           </g>
 
           {/* Node 4: Credit Guarantee Hub (Evidence Principles Area) */}
           <g transform="translate(220, 2240)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="38"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="1"
-              strokeOpacity="0.16"
+            <motion.g
+              initial={{ scale: 0.9, opacity: 0.16 }}
               animate={shouldReduceMotion ? { opacity: 0.16 } : { scale: [0.9, 1.38, 0.9], opacity: [0.18, 0.04, 0.18] }}
               transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <circle cx="0" cy="0" r="4.5" fill="#1e3a8a" fillOpacity="0.35" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={38}
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth={1}
+                strokeOpacity={0.16}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={4.5} fill="#1e3a8a" fillOpacity={0.35} />
           </g>
 
           {/* ========================================================

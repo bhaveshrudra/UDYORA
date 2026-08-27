@@ -129,13 +129,13 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
                   : 'bg-white border-slate-150 opacity-60'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex items-start sm:items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-2xs shrink-0 mt-0.5 sm:mt-0">
                     {getAgentIcon(step.id)}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <span className="text-xs font-bold text-slate-900">
                         {getLocalizedAgentName(step.id)}
                       </span>
@@ -143,13 +143,13 @@ export const AgentExecutionProgress: React.FC<AgentExecutionProgressProps> = ({
                         ({getLocalizedAgentRole(step.id)})
                       </span>
                     </div>
-                    <p className={`text-xs mt-0.5 ${isRunning ? 'text-blue-900 font-medium' : 'text-slate-600'}`}>
+                    <p className={`text-xs mt-0.5 ${isRunning ? 'text-blue-900 font-medium' : 'text-slate-600'} break-words`}>
                       {step.message}
                     </p>
                   </div>
                 </div>
 
-                <div className="shrink-0 flex items-center gap-2">
+                <div className="shrink-0 flex items-center justify-end gap-2 pl-11 sm:pl-0">
                   {isCompleted && (
                     <div className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5" />

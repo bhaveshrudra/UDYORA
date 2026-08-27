@@ -65,8 +65,10 @@ export function ProductIntroSplash({ onComplete, logoSrc }: ProductIntroSplashPr
           key="udyora-splash"
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.01 }}
-          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white select-none pointer-events-none px-4"
+          transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          onClick={onComplete}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white select-none cursor-pointer px-4"
+          title="Tap anywhere to skip"
         >
           {/* Subtle Ambient Radial Light */}
           <div className="absolute inset-0 bg-radial from-blue-50/60 via-transparent to-transparent opacity-80 pointer-events-none" />
@@ -121,8 +123,8 @@ export function ProductIntroSplash({ onComplete, logoSrc }: ProductIntroSplashPr
               <p className="text-xs sm:text-sm md:text-base font-bold text-slate-800 tracking-wide">
                 {t('brand.tagline')}
               </p>
-              <p className="text-[11px] sm:text-xs font-semibold text-slate-400 uppercase tracking-[0.2em]">
-                {t('hero.supporting')}
+              <p className="text-[10px] sm:text-xs text-slate-400 font-medium">
+                Tap anywhere to enter
               </p>
             </motion.div>
           </div>

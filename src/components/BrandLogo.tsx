@@ -78,7 +78,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
             UDYORA
           </span>
           {showTagline && (
-            <p className={`${sizeMap[size].tagline} ${subTextColor} font-semibold tracking-normal mt-0.5`}>
+            <p className={`${sizeMap[size].tagline} ${subTextColor} font-semibold tracking-normal mt-0.5 hidden sm:block`}>
               Hyper-Local Business Intelligence for Rural Entrepreneurs
             </p>
           )}

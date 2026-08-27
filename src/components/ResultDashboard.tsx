@@ -28,8 +28,7 @@ import { FeasibilityGauge } from './FeasibilityGauge';
 import { FinancialPlanCard } from './FinancialPlanCard';
 import { SchemeGuidanceCard } from './SchemeGuidanceCard';
 import { MarketIntelligenceCard } from './MarketIntelligenceCard';
-import { RiskAnalysisCard } from './RiskAnalysisCard';
-import { EvidenceAuditCard } from './EvidenceAuditCard';
+import { EvidenceSchemeGuidanceCard } from './EvidenceSchemeGuidanceCard';
 import { DomainComparisonSection } from './DomainComparisonSection';
 import { InteractiveMap } from './InteractiveMap';
 
@@ -55,7 +54,7 @@ interface ResultDashboardProps {
   onPrint: () => void;
 }
 
-type TabType = 'overview' | 'comparison' | 'financial' | 'schemes' | 'market' | 'risks' | 'evidence';
+type TabType = 'overview' | 'comparison' | 'financial' | 'evidence_schemes' | 'market' | 'risks';
 
 export const ResultDashboard: React.FC<ResultDashboardProps> = ({
   report,
@@ -68,11 +67,10 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <FileText className="w-4 h-4" /> },
     { id: 'comparison', label: 'Domain Comparison', icon: <Layers className="w-4 h-4" /> },
-    { id: 'financial', label: t('dash.tab.finance'), icon: <Calculator className="w-4 h-4" /> },
-    { id: 'schemes', label: t('dash.tab.schemes'), icon: <Award className="w-4 h-4" /> },
+    { id: 'financial', label: t('dash.tab.finance') || 'Financial Plan', icon: <Calculator className="w-4 h-4" /> },
+    { id: 'evidence_schemes', label: t('dash.tab.evidenceSchemes') || 'Evidence & Scheme Guidance', icon: <Award className="w-4 h-4" /> },
     { id: 'market', label: 'Market & Infrastructure', icon: <Store className="w-4 h-4" /> },
-    { id: 'risks', label: t('dash.tab.risks'), icon: <ShieldAlert className="w-4 h-4" /> },
-    { id: 'evidence', label: 'Evidence Audit', icon: <Database className="w-4 h-4" /> }
+    { id: 'risks', label: t('dash.tab.risks') || 'Risk Analysis', icon: <ShieldAlert className="w-4 h-4" /> }
   ];
 
   // Defensive field unwrapping to prevent any undefined crashes
@@ -433,17 +431,18 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
       )}
 
       {/* =========================================================================
-          TAB 3: GOVERNMENT SCHEMES
+          TAB 3: EVIDENCE & SCHEME GUIDANCE (COMBINED UNIFIED ADVISORY)
           ========================================================================= */}
-      {activeTab === 'schemes' && (
+      {activeTab === 'evidence_schemes' && (
         <div className="space-y-6">
-          {/* Scheme Match Score Analytics Bar Chart */}
-          {schemeData.length > 0 && (
+          {/* Analytics Overview Row: Match Scores & Data Quality */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Scheme Match Score Analytics Bar Chart */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
               <div className="border-b border-slate-100 pb-3">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                   <Award className="w-4 h-4 text-blue-700" />
-                  <span>Scheme Match & Qualification Score</span>
+                  <span>Scheme Match & Qualification Index</span>
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
                   Algorithmically verified against activity eligibility and margin constraints.
@@ -464,13 +463,31 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
                 maxValue={100}
               />
             </div>
-          )}
 
-          {/* Scheme Guidance Cards & Detailed Checklists */}
-          <SchemeGuidanceCard
-            matchResults={schemeMatches}
-            indicativeLoanAmount={financialData.loanAmount}
-            beneficiaryCategory={input.beneficiaryCategory || 'General'}
+            {/* Evidence Verification Ratio Donut */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="border-b border-slate-100 pb-3">
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <Database className="w-4 h-4 text-blue-700" />
+                  <span>Evidence Verification Ratio</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Breakdown of officially verified vs statistically estimated vs flagged parameters.
+                </p>
+              </div>
+
+              <DonutChart
+                segments={evidenceData.qualityDistribution}
+                centerTitle={`${evidenceData.totalRecords}`}
+                centerSubtitle="Total Metrics"
+              />
+            </div>
+          </div>
+
+          {/* Unified Evidence & Scheme Guidance Card */}
+          <EvidenceSchemeGuidanceCard
+            schemes={schemeMatches}
+            evidenceRecords={evidenceRecords}
           />
         </div>
       )}
@@ -604,65 +621,6 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
 
           {/* Full Risk Analysis & Mitigations Card */}
           {riskProfile && <RiskAnalysisCard riskProfile={riskProfile} />}
-        </div>
-      )}
-
-      {/* =========================================================================
-          TAB 6: EVIDENCE AUDIT TRAIL
-          ========================================================================= */}
-      {activeTab === 'evidence' && (
-        <div className="space-y-6">
-          {/* Data Quality Donut & Confidence by Domain */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Data Quality Donut */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Database className="w-4 h-4 text-blue-700" />
-                  <span>Evidence Verification Ratio</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Breakdown of officially verified vs statistically estimated vs flagged parameters.
-                </p>
-              </div>
-
-              <DonutChart
-                segments={evidenceData.qualityDistribution}
-                centerTitle={`${evidenceData.totalRecords}`}
-                centerSubtitle="Total Metrics"
-              />
-            </div>
-
-            {/* Domain Confidence Horizontal Bar Chart */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="border-b border-slate-100 pb-3">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                  <span>Domain Confidence Scores</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Mathematical confidence index derived from source authenticity and geographic specificity.
-                </p>
-              </div>
-
-              <HorizontalBarChart
-                items={evidenceData.confidenceByGroup.map((g, idx) => ({
-                  id: `conf_${idx}`,
-                  label: g.group,
-                  value: g.confidencePct,
-                  max: 100,
-                  unit: '%',
-                  color: g.color,
-                  badge: `${g.recordCount} records`
-                }))}
-                maxValue={100}
-                valueFormat={(v) => `${v}`}
-              />
-            </div>
-          </div>
-
-          {/* Full Searchable & Filterable Evidence Table */}
-          {evidenceRecords && <EvidenceAuditCard evidenceRecords={evidenceRecords} />}
         </div>
       )}
     </div>

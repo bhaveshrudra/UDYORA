@@ -401,6 +401,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               </div>
               <input
                 type="text"
+                inputMode="numeric"
                 value={isEditingCapital ? rawCapitalString : `₹${availableCapital.toLocaleString('en-IN')}`}
                 onFocus={() => {
                   setIsEditingCapital(true);
@@ -522,8 +523,9 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               </span>
             </div>
 
-            {/* Interactive Leaflet Map with Radius & POI Overlay */}
+            {/* Interactive Google Map with Radius & POI Overlay */}
             <InteractiveMap
+              key={`${locationResolution.latitude}-${locationResolution.longitude}-${analysisRadius}`}
               location={locationResolution}
               businessCategory={businessCategory}
               radiusKm={analysisRadius}

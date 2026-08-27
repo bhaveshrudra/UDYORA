@@ -69,10 +69,11 @@ export function runFinanceAgent(
 
   return {
     agentName: 'Financial Advisor Agent',
-    status: 'SUCCESS',
+    status: 'COMPLETED',
     executionTimeMs: Date.now() - startTime,
     dataQuality: 'VERIFIED',
     overallConfidence: 0.98,
+    confidence: 0.98,
     summary: `Project Cost: ₹${financialPlan.indicativeProjectCost.toLocaleString('en-IN')} | Own Capital: ₹${financialPlan.availableOwnCapital.toLocaleString('en-IN')} | Financing: ₹${financialPlan.indicativeFinancingRequirement.toLocaleString('en-IN')} | Monthly EMI: ₹${financialPlan.monthlyEMI.toLocaleString('en-IN')} | DSCR: ${financialPlan.debtServiceCoverageRatio}`,
     data: financialPlan,
     evidenceGenerated: generatedEvidence

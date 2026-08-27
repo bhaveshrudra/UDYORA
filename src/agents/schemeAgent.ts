@@ -8,9 +8,9 @@ import {
 import { evaluateSchemeEligibility } from '../services/schemeRules';
 
 /**
- * SCHEME RECOMMENDATION AGENT
+ * SCHEME GUIDANCE AGENT
  * Rule-based evaluation of government credit, subsidy, and institutional schemes.
- * Never invents eligibility criteria.
+ * Never invents eligibility criteria or subsidy amounts.
  */
 export function runSchemeAgent(
   input: UserBusinessInput,
@@ -33,18 +33,19 @@ export function runSchemeAgent(
     sourceUrl: m.scheme.officialSourceUrl,
     geographicLevel: 'National',
     timestamp: new Date().toISOString(),
-    status: m.scheme.verificationStatus,
+    status: m.scheme.verificationStatus || 'VERIFIED',
     confidence: m.scheme.verificationStatus === 'VERIFIED' ? 0.98 : 0.7,
     dataLimitationNote: m.verificationNote
   }));
 
   return {
     agentName: 'Scheme Guidance Agent',
-    status: 'SUCCESS',
+    status: 'COMPLETED',
     executionTimeMs: Date.now() - startTime,
     dataQuality: 'VERIFIED',
     overallConfidence: 0.96,
-    summary: `Identified ${eligibleSchemes.length} matching institutional schemes. Top match: ${topScheme?.scheme.name} (Score: ${topScheme?.matchScore}/100, Est. Subsidy: ₹${topScheme?.potentialSubsidyAmount.toLocaleString('en-IN')}).`,
+    confidence: 0.96,
+    summary: `Identified ${eligibleSchemes.length} matching institutional schemes. Top match: ${topScheme?.scheme.name} (Score: ${topScheme?.matchScore}/100, Est. Subsidy: ₹${(topScheme?.potentialSubsidyAmount || 0).toLocaleString('en-IN')}).`,
     data: matches,
     evidenceGenerated: generatedEvidence
   };

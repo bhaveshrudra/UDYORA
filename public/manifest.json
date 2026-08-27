@@ -1,0 +1,23 @@
+{
+  "name": "UDYORA — Hyper-Local Business Intelligence",
+  "short_name": "UDYORA",
+  "description": "Hyper-Local Business Intelligence for Rural Entrepreneurs",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#091124",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

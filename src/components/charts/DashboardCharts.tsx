@@ -156,27 +156,24 @@ export const DonutChart: React.FC<DonutChartProps> = ({
             cumulativePercent += pct;
 
             return (
-              <motion.circle
-                key={idx}
-                cx="100"
-                cy="100"
-                r={radius}
-                fill="transparent"
-                stroke={seg.color}
-                strokeWidth={strokeWidth}
-                strokeDasharray={`${circumference} ${circumference}`}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset }}
-                transition={{
-                  duration: shouldReduceMotion ? 0 : 0.9,
-                  delay: shouldReduceMotion ? 0 : idx * 0.15,
-                  ease: [0.22, 1, 0.36, 1]
-                }}
-                transform={`rotate(${rotation} 100 100)`}
-                onMouseEnter={() => setActiveSegment(seg)}
-                onMouseLeave={() => setActiveSegment(null)}
-                className="cursor-pointer transition-opacity hover:opacity-85"
-              />
+              <g key={idx} transform={`rotate(${rotation} 100 100)`}>
+                <circle
+                  cx={100}
+                  cy={100}
+                  r={radius}
+                  fill="transparent"
+                  stroke={seg.color}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  strokeDashoffset={strokeDashoffset}
+                  style={{
+                    transition: shouldReduceMotion ? 'none' : 'stroke-dashoffset 0.9s cubic-bezier(0.22, 1, 0.36, 1)'
+                  }}
+                  onMouseEnter={() => setActiveSegment(seg)}
+                  onMouseLeave={() => setActiveSegment(null)}
+                  className="cursor-pointer transition-opacity hover:opacity-85"
+                />
+              </g>
             );
           })}
         </svg>

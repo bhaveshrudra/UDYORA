@@ -37,7 +37,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({
 
       {/* Main Footer Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
           {/* Brand & Purpose Column (Spans 2 cols on lg) */}
           <div className="lg:col-span-2 space-y-4">
             <BrandLogo size="md" showTagline={true} onClick={onNavigateHome} />
@@ -96,28 +96,7 @@ export const PublicFooter: React.FC<PublicFooterProps> = ({
             </ul>
           </div>
 
-          {/* Column 2: RESOURCES */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
-              Resources
-            </h3>
-            <ul className="space-y-2 text-xs font-medium text-slate-600">
-              <li>
-                <span className="hover:text-blue-900 cursor-default">Local Market Catchments</span>
-              </li>
-              <li>
-                <span className="hover:text-blue-900 cursor-default">Deterministic Loan EMI Math</span>
-              </li>
-              <li>
-                <span className="hover:text-blue-900 cursor-default">Government Scheme Rules</span>
-              </li>
-              <li>
-                <span className="hover:text-blue-900 cursor-default">Responsible AI Audit Trail</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column 3: LANGUAGES & CONTACT */}
+          {/* Column 2: LANGUAGES */}
           <div className="space-y-3">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
               Languages

@@ -1,12 +1,8 @@
 import React from 'react';
 import {
-  Award,
-  TrendingUp,
-  ShieldCheck,
   AlertTriangle,
-  CheckCircle2,
-  HelpCircle,
   BarChart3,
+  ShieldCheck,
   Info
 } from 'lucide-react';
 import { FinalFeasibilityVerdict } from '../types';
@@ -20,6 +16,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
   const { t } = useLanguage();
   const verdict: FinalFeasibilityVerdict = (rawVerdict as any)?.data || rawVerdict || {
     score: 75,
+    dataConfidenceScore: 88,
     category: 'MODERATE',
     headline: 'Standard Enterprise Feasibility',
     explanation: 'Viable unit economics under rural business benchmarks.',
@@ -29,6 +26,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
   };
 
   const safeScore = Number.isFinite(verdict.score) ? verdict.score : 75;
+  const safeConfidence = Number.isFinite(verdict.dataConfidenceScore) ? verdict.dataConfidenceScore : 85;
   const { category = 'MODERATE', headline = '', explanation = '', criticalCaveat } = verdict;
   const readinessFactors = Array.isArray(verdict.readinessFactors) ? verdict.readinessFactors : [];
 
@@ -84,11 +82,14 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
       {/* Top Banner with Score Gauge */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 pb-6 mb-6">
         <div className="flex-1">
-          <div className="flex items-center gap-2.5 mb-2">
+          <div className="flex flex-wrap items-center gap-2.5 mb-2">
             <span className={`px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider border ${getCategoryColor(category)}`}>
               {t('feasibility.statusBadge')}: {getLocalizedCategory(category)}
             </span>
-            <span className="text-xs text-slate-500 font-medium">{t('feasibility.explainableLabel')}</span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+              Data Confidence: {safeConfidence}%
+            </span>
           </div>
 
           <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-snug">
@@ -100,23 +101,37 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
           </p>
         </div>
 
-        {/* Score Ring / Gauge Display */}
-        <div className="shrink-0 flex items-center justify-center bg-slate-50 border border-slate-200 rounded-2xl p-5 w-full sm:w-auto">
-          <div className="text-center">
+        {/* Dual Metric Gauge Display: Feasibility Score & Data Confidence */}
+        <div className="shrink-0 flex items-center justify-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-4 w-full sm:w-auto">
+          {/* Metric 1: Feasibility Index */}
+          <div className="text-center px-3 border-r border-slate-200">
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
                 {safeScore}
               </span>
-              <span className="text-lg font-bold text-slate-400">/ 100</span>
+              <span className="text-sm font-bold text-slate-400">/ 100</span>
             </div>
-            <p className="text-xs font-bold text-slate-600 uppercase tracking-wider mt-1">
-              {t('feasibility.index')}
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-0.5">
+              Feasibility Score
+            </p>
+          </div>
+
+          {/* Metric 2: Evidence Grounding Confidence */}
+          <div className="text-center px-3">
+            <div className="flex items-baseline justify-center gap-0.5">
+              <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-900">
+                {safeConfidence}
+              </span>
+              <span className="text-sm font-bold text-blue-500">%</span>
+            </div>
+            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-0.5">
+              Data Confidence
             </p>
           </div>
         </div>
       </div>
 
-      {/* 5 Explainable Readiness Pillars */}
+      {/* 5-6 Explainable Readiness Pillars */}
       {readinessFactors.length > 0 && (
         <div className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
@@ -124,7 +139,7 @@ export const FeasibilityGauge: React.FC<FeasibilityGaugeProps> = ({ verdict: raw
             {t('feasibility.breakdownTitle')}
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             {readinessFactors.map((factor, idx) => {
               const factorScore = Number.isFinite(factor.score) ? factor.score : 0;
               const safeWidthPct = Math.min(100, Math.max(0, factorScore));

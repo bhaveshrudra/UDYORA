@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="topAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#10b981" />
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#091124" />
+    </linearGradient>
+  </defs>
+  <!-- Background Navy Squircle -->
+  <rect width="64" height="64" rx="14" fill="url(#bgGrad)" />
+  <!-- Subtle Border -->
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.25" fill="none" stroke="#334155" stroke-width="1.5" />
+  <!-- Top Accent Gradient Stripe -->
+  <rect x="12" y="3" width="40" height="3.5" rx="1.75" fill="url(#topAccent)" />
+  <!-- Bold Centered U Brand Mark -->
+  <path d="M 20 18 L 20 34 C 20 40.6 25.4 46 32 46 C 38.6 46 44 40.6 44 34 L 44 18 L 36.5 18 L 36.5 34 C 36.5 36.5 34.5 38.5 32 38.5 C 29.5 38.5 27.5 36.5 27.5 34 L 27.5 18 Z" fill="#ffffff" />
+</svg>

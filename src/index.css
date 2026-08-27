@@ -10,7 +10,7 @@
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', 'Noto Sans Kannada', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
   
@@ -74,11 +74,11 @@
 }
 
 /* =========================================================================
-   DEDICATED PRINT STYLESHEET
+   DEDICATED PRINT STYLESHEET (STRICT 2-PAGE A4 FORMAT)
    ========================================================================= */
 @media print {
   @page {
-    margin: 12mm 15mm;
+    margin: 8mm 10mm;
     size: A4 portrait;
   }
 
@@ -99,10 +99,11 @@
     width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 10.5pt !important;
-    line-height: 1.4 !important;
+    font-size: 9.5pt !important;
+    line-height: 1.3 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    font-family: 'Plus Jakarta Sans', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', 'Noto Sans Kannada', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   }
 
   /* Hide web-only elements */
@@ -125,20 +126,22 @@
   }
 
   /* Print Page-Break Helpers */
+  .print-page-1 {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .print-page-break {
+    page-break-after: always !important;
+    break-after: page !important;
+    height: 0 !important;
+    display: block !important;
+  }
+
   .print-avoid-break,
   .print-card {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-  }
-
-  .print-break-after {
-    break-after: page !important;
-    page-break-after: always !important;
-  }
-
-  .print-break-before {
-    break-before: page !important;
-    page-break-before: always !important;
   }
 
   /* Static Print Watermark Overlay */

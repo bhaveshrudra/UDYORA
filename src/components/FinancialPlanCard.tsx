@@ -252,7 +252,7 @@ export const FinancialPlanCard: React.FC<FinancialPlanCardProps> = ({ initialPla
         </button>
 
         {showFullBreakdown && (
-          <div className="mt-3 border border-slate-200 rounded-xl overflow-hidden">
+          <div className="mt-3 border border-slate-200 rounded-xl overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-xs">
               <thead className="bg-slate-50 text-slate-700 font-bold uppercase tracking-wider">
                 <tr>

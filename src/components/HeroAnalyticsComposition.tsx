@@ -134,20 +134,13 @@ export const HeroAnalyticsComposition: React.FC = () => {
 
                 {/* Sequential Staggered Data Points Pop */}
                 {[
-                  { cx: 10, cy: 70, delay: 0.75 },
-                  { cx: 110, cy: 52, delay: 1.0 },
-                  { cx: 210, cy: 24, delay: 1.25 },
-                  { cx: 310, cy: 8, delay: 1.5 }
+                  { x: 10, y: 70, delay: 0.75 },
+                  { x: 110, y: 52, delay: 1.0 },
+                  { x: 210, y: 24, delay: 1.25 },
+                  { x: 310, y: 8, delay: 1.5 }
                 ].map((pt, idx) => (
-                  <motion.circle
+                  <motion.g
                     key={idx}
-                    cx={pt.cx}
-                    cy={pt.cy}
-                    r={3.5}
-                    fill="#ffffff"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    style={{ transformOrigin: `${pt.cx}px ${pt.cy}px` }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{
@@ -157,7 +150,17 @@ export const HeroAnalyticsComposition: React.FC = () => {
                       stiffness: 300,
                       damping: 15
                     }}
-                  />
+                    style={{ transformOrigin: `${pt.x}px ${pt.y}px` }}
+                  >
+                    <circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={3.5}
+                      fill="#ffffff"
+                      stroke="#2563eb"
+                      strokeWidth={2}
+                    />
+                  </motion.g>
                 ))}
               </svg>
             </div>
@@ -245,7 +248,7 @@ export const HeroAnalyticsComposition: React.FC = () => {
               delay: 1.7
             }
           }}
-          className="absolute -top-6 -right-3 sm:-right-6 bg-slate-900 text-white rounded-2xl p-3 sm:p-3.5 shadow-xl border border-slate-800 max-w-[240px] space-y-1 z-20"
+          className="hidden sm:block absolute -top-6 -right-3 sm:-right-6 bg-slate-900 text-white rounded-2xl p-3 sm:p-3.5 shadow-xl border border-slate-800 max-w-[240px] space-y-1 z-20"
         >
           <div className="flex items-center gap-1.5">
             <div className="w-5 h-5 rounded bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
@@ -284,7 +287,7 @@ export const HeroAnalyticsComposition: React.FC = () => {
               delay: 1.9
             }
           }}
-          className="absolute -bottom-6 -left-3 sm:-left-6 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-lg border border-slate-200 max-w-[220px] space-y-1 z-20"
+          className="hidden sm:block absolute -bottom-6 -left-3 sm:-left-6 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-lg border border-slate-200 max-w-[220px] space-y-1 z-20"
         >
           <div className="flex items-center gap-1.5">
             <div className="relative flex h-3.5 w-3.5 items-center justify-center">
@@ -326,7 +329,7 @@ export const HeroAnalyticsComposition: React.FC = () => {
               delay: 2.0
             }
           }}
-          className="absolute -bottom-3 right-4 bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 shadow-md flex items-center gap-2 z-20"
+          className="hidden sm:flex absolute -bottom-3 right-4 bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 shadow-md items-center gap-2 z-20"
         >
           <div className="w-5 h-5 rounded-md bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
             <IndianRupee className="w-3 h-3" />

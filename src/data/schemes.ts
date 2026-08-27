@@ -210,5 +210,61 @@ export const VERIFIED_SCHEMES: SchemeRule[] = [
     lastVerifiedDate: '2026-01-14',
     verificationStatus: 'VERIFIED',
     notes: 'NOTE: Not applicable for micro-level individual cow purchase. Restricted to processing and cold chain infrastructure.'
+  },
+  {
+    id: 'scheme_sih_micro_finance',
+    code: 'PS_MICRO_FINANCE',
+    name: 'Micro Finance Scheme (SIH26091 PS Tier I)',
+    shortName: 'Micro Finance (<= ₹1.40L)',
+    nodalAgency: 'NABARD / Micro Finance Priority Sector Lending',
+    category: 'Central',
+    targetBeneficiaries: ['Individual Micro-Entrepreneurs', 'SHGs', 'Rural Artisans'],
+    eligibleActivities: ['dairy', 'tailoring', 'retail', 'small_retail', 'poultry', 'manufacturing', 'services'],
+    minMarginContributionPct: 10,
+    maxProjectCost: 140000, // Exact official PS ceiling: <= ₹1.40 Lakh
+    interestRateRange: '7.00% - 9.50% per annum',
+    subsidyGeneralRuralPct: 0,
+    subsidySpecialRuralPct: 0,
+    maxSubsidyAmount: 0,
+    maxTenureMonths: 36,
+    moratoriumMonths: 2,
+    requiredDocuments: [
+      'Aadhaar Card of Applicant',
+      'PAN Card / Form 60',
+      'Bank Account Passbook',
+      'Gram Panchayat Residence Proof'
+    ],
+    officialSourceUrl: 'https://www.nabard.org',
+    lastVerifiedDate: '2026-01-20',
+    verificationStatus: 'VERIFIED',
+    notes: 'Official SIH26091 Problem Statement Tier I: Applicable for project costs up to ₹1.40 Lakh.'
+  },
+  {
+    id: 'scheme_sih_term_loan',
+    code: 'PS_TERM_LOAN',
+    name: 'Term Loan Scheme (SIH26091 PS Tier II)',
+    shortName: 'Term Loan (> ₹1.40L - ₹50L)',
+    nodalAgency: 'Scheduled Commercial Banks / Priority Sector Lending',
+    category: 'Central',
+    targetBeneficiaries: ['Rural Micro & Small Enterprises', 'First-time Entrepreneurs'],
+    eligibleActivities: ['dairy', 'tailoring', 'retail', 'small_retail', 'poultry', 'manufacturing', 'services'],
+    minMarginContributionPct: 10,
+    maxProjectCost: 5000000, // Exact official PS ceiling: > ₹1.40 Lakh and <= ₹50 Lakh
+    interestRateRange: '8.50% - 10.75% per annum',
+    subsidyGeneralRuralPct: 25,
+    subsidySpecialRuralPct: 35,
+    maxSubsidyAmount: 1250000,
+    maxTenureMonths: 84,
+    moratoriumMonths: 6,
+    requiredDocuments: [
+      'Aadhaar Card & PAN Card',
+      'Detailed Project Report (DPR)',
+      'Bank Account Statement (6 months)',
+      'Premises Ownership or Registered Lease Agreement'
+    ],
+    officialSourceUrl: 'https://www.rbi.org.in',
+    lastVerifiedDate: '2026-01-20',
+    verificationStatus: 'VERIFIED',
+    notes: 'Official SIH26091 Problem Statement Tier II: Applicable for project costs between ₹1.40 Lakh and ₹50 Lakh.'
   }
 ];

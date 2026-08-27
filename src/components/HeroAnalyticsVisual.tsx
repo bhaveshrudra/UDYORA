@@ -246,35 +246,22 @@ export function HeroAnalyticsVisual({ containerRef }: HeroAnalyticsVisualProps) 
           {/* 3. Subtle Background Analytics Bar Chart (Bottom-Left to Center) */}
           <g opacity="0.6" className="hidden sm:block">
             {[
-              { x: 120, h: 45, delay: 0 },
-              { x: 145, h: 65, delay: 0.4 },
-              { x: 170, h: 50, delay: 0.8 },
-              { x: 195, h: 80, delay: 1.2 },
-              { x: 220, h: 95, delay: 1.6 },
-              { x: 245, h: 115, delay: 2.0 },
+              { x: 120, h: 45 },
+              { x: 145, h: 65 },
+              { x: 170, h: 50 },
+              { x: 195, h: 80 },
+              { x: 220, h: 95 },
+              { x: 245, h: 115 },
             ].map((bar, idx) => (
-              <motion.rect
+              <rect
                 key={idx}
                 x={bar.x}
                 y={520 - bar.h}
-                width="14"
+                width={14}
                 height={bar.h}
-                rx="3"
+                rx={3}
                 fill="#1e3a8a"
-                fillOpacity="0.04"
-                animate={
-                  shouldReduceMotion
-                    ? { fillOpacity: 0.04 }
-                    : {
-                        fillOpacity: [0.03, 0.065, 0.03],
-                      }
-                }
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: 'easeInOut',
-                  delay: bar.delay,
-                }}
+                fillOpacity={0.045}
               />
             ))}
           </g>
@@ -282,77 +269,89 @@ export function HeroAnalyticsVisual({ containerRef }: HeroAnalyticsVisualProps) 
           {/* 4. Location Intelligence & Geographic Network Nodes */}
           {/* Node 1: Village Hub (Left) */}
           <g transform="translate(240, 220)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="24"
-              fill="#3b82f6"
-              fillOpacity="0.025"
-              stroke="#3b82f6"
-              strokeWidth="0.75"
-              strokeOpacity="0.15"
+            <motion.g
+              initial={{ scale: 0.8, opacity: 0.2 }}
               animate={
                 shouldReduceMotion
-                  ? {}
+                  ? { opacity: 0.15 }
                   : {
-                      r: [16, 28, 16],
-                      strokeOpacity: [0.2, 0.04, 0.2],
+                      scale: [0.75, 1.25, 0.75],
+                      opacity: [0.2, 0.04, 0.2]
                     }
               }
               transition={{ duration: 4.5, repeat: Infinity, ease: 'easeInOut' }}
-            />
-            <circle cx="0" cy="0" r="3.5" fill="#1d4ed8" fillOpacity="0.25" />
-            <circle cx="0" cy="0" r="1.5" fill="#ffffff" fillOpacity="0.9" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={24}
+                fill="#3b82f6"
+                fillOpacity={0.025}
+                stroke="#3b82f6"
+                strokeWidth={0.75}
+                strokeOpacity={0.15}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={3.5} fill="#1d4ed8" fillOpacity={0.25} />
+            <circle cx={0} cy={0} r={1.5} fill="#ffffff" fillOpacity={0.9} />
           </g>
 
           {/* Node 2: Weekly Haat / Market Node (Top Right) */}
           <g transform="translate(980, 180)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="30"
-              fill="#059669"
-              fillOpacity="0.02"
-              stroke="#059669"
-              strokeWidth="0.75"
-              strokeOpacity="0.18"
+            <motion.g
+              initial={{ scale: 0.8, opacity: 0.25 }}
               animate={
                 shouldReduceMotion
-                  ? {}
+                  ? { opacity: 0.18 }
                   : {
-                      r: [20, 36, 20],
-                      strokeOpacity: [0.25, 0.05, 0.25],
+                      scale: [0.75, 1.25, 0.75],
+                      opacity: [0.25, 0.05, 0.25]
                     }
               }
               transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-            />
-            <circle cx="0" cy="0" r="4" fill="#059669" fillOpacity="0.3" />
-            <circle cx="0" cy="0" r="1.5" fill="#ffffff" fillOpacity="0.9" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={30}
+                fill="#059669"
+                fillOpacity={0.02}
+                stroke="#059669"
+                strokeWidth={0.75}
+                strokeOpacity={0.18}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={4} fill="#059669" fillOpacity={0.3} />
+            <circle cx={0} cy={0} r={1.5} fill="#ffffff" fillOpacity={0.9} />
           </g>
 
           {/* Node 3: Dairy Cooperative Node (Center Right) */}
           <g transform="translate(760, 320)">
-            <motion.circle
-              cx="0"
-              cy="0"
-              r="20"
-              fill="#6366f1"
-              fillOpacity="0.03"
-              stroke="#6366f1"
-              strokeWidth="0.75"
-              strokeOpacity="0.15"
+            <motion.g
+              initial={{ scale: 0.8, opacity: 0.18 }}
               animate={
                 shouldReduceMotion
-                  ? {}
+                  ? { opacity: 0.15 }
                   : {
-                      r: [14, 26, 14],
-                      strokeOpacity: [0.18, 0.03, 0.18],
+                      scale: [0.75, 1.3, 0.75],
+                      opacity: [0.18, 0.03, 0.18]
                     }
               }
               transition={{ duration: 4.8, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            />
-            <circle cx="0" cy="0" r="3" fill="#6366f1" fillOpacity="0.25" />
-            <circle cx="0" cy="0" r="1.2" fill="#ffffff" fillOpacity="0.8" />
+            >
+              <circle
+                cx={0}
+                cy={0}
+                r={20}
+                fill="#6366f1"
+                fillOpacity={0.03}
+                stroke="#6366f1"
+                strokeWidth={0.75}
+                strokeOpacity={0.15}
+              />
+            </motion.g>
+            <circle cx={0} cy={0} r={3} fill="#6366f1" fillOpacity={0.25} />
+            <circle cx={0} cy={0} r={1.2} fill="#ffffff" fillOpacity={0.8} />
           </g>
 
           {/* Dotted Interconnecting Network Routes */}

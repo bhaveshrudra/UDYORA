@@ -48,10 +48,46 @@ export interface NearbyPlace {
   distanceKm: number;
   source: string; // e.g. "OpenStreetMap Overpass Engine"
   retrievedAt: string;
-  dataQuality: 'OBSERVED' | 'VERIFIED' | 'INSUFFICIENT DATA';
+  dataQuality: 'OBSERVED' | 'VERIFIED' | 'INSUFFICIENT DATA' | 'INSUFFICIENT_DATA';
   address?: string;
   businessRelevance: 'HIGH' | 'MODERATE' | 'GENERAL';
   tags?: Record<string, string>;
+}
+
+export interface OpportunityFactor {
+  factorName: string;
+  weight: number; // e.g. 0.25 (25%)
+  score: number; // 0 - 100
+  rating: 'HIGH' | 'MODERATE' | 'LOW';
+  details: string;
+}
+
+export interface OpportunitySpot {
+  id: string;
+  spotName: string;
+  category: 'SETTLEMENT' | 'MARKET_JUNCTION' | 'HIGHWAY_CORRIDOR' | 'COOPERATIVE_CLUSTER' | 'COMMERCIAL_HUB';
+  categoryLabel: string;
+  latitude: number;
+  longitude: number;
+  distanceKm: number; // Haversine distance in km
+  opportunityScore: number; // 0 - 100
+  dataConfidence: number; // 0 - 100%
+  dataQuality: 'VERIFIED' | 'ESTIMATED' | 'INSUFFICIENT_DATA' | 'OBSERVED';
+  rank: number; // 1, 2, 3...
+  summaryReason: string;
+  factors: {
+    populationReach: OpportunityFactor;
+    marketAccessibility: OpportunityFactor;
+    competitionGap: OpportunityFactor;
+    transportAccessibility: OpportunityFactor;
+    demandIndicators: OpportunityFactor;
+    dataConfidence: OpportunityFactor;
+  };
+  sources: {
+    name: string;
+    url?: string;
+    quality: string;
+  }[];
 }
 
 export interface MapSearchResult {
@@ -80,7 +116,7 @@ export interface MapEvidence {
   nearestTransportDistanceKm?: number;
   observedCompetitorCount?: number;
   retrievedTimestamp: string;
-  status: 'OBSERVED' | 'INSUFFICIENT DATA';
+  status: 'OBSERVED' | 'INSUFFICIENT DATA' | 'INSUFFICIENT_DATA';
   limitationsNote: string;
 }
 
