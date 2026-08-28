@@ -13,10 +13,28 @@ import {
   LGD_SOURCE_METADATA
 } from '../data/lgdHierarchy';
 import { LocationData, EvidenceRecord } from '../types';
+import { SupportedLanguage } from '../i18n/types';
 
 /* =========================================================================
-   LGD HIERARCHICAL QUERY SERVICE (POSTGRESQL-READY INTERFACE)
+   LGD HIERARCHICAL QUERY SERVICE & LOCALIZATION LAYER
    ========================================================================= */
+
+export function getLocalizedLocationName(
+  entity: { name: string; nameMap?: Record<string, string> } | null | undefined,
+  language: SupportedLanguage = 'en'
+): string {
+  if (!entity) return '';
+  if (entity.nameMap && entity.nameMap[language]) {
+    return entity.nameMap[language];
+  }
+  if (entity.nameMap && entity.nameMap.en) {
+    return entity.nameMap.en;
+  }
+  if (import.meta.env?.DEV && language !== 'en' && (!entity.nameMap || !entity.nameMap[language])) {
+    console.warn(`[LGD i18n] Missing ${language} translation for location: ${entity.name}`);
+  }
+  return entity.name || '';
+}
 
 export function getLgdStates(): LgdState[] {
   return OFFICIAL_LGD_STATES;

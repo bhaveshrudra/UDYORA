@@ -30,6 +30,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_28',
     lgdCode: 28,
     name: 'Andhra Pradesh',
+    nameMap: {
+      en: 'Andhra Pradesh',
+      hi: 'आंध्र प्रदेश',
+      mr: 'आंध्र प्रदेश',
+      te: 'ఆంధ్ర ప్రదేశ్',
+      kn: 'ಆಂಧ್ರ ಪ್ರದೇಶ'
+    },
     shortName: 'AP',
     subDistrictTerm: 'Mandal',
     districtsCount: 26,
@@ -42,6 +49,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_36',
     lgdCode: 36,
     name: 'Telangana',
+    nameMap: {
+      en: 'Telangana',
+      hi: 'तेलंगाना',
+      mr: 'तेलंगणा',
+      te: 'తెలంగాణ',
+      kn: 'ತೆಲಂಗಾಣ'
+    },
     shortName: 'TS',
     subDistrictTerm: 'Mandal',
     districtsCount: 33,
@@ -54,6 +68,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_27',
     lgdCode: 27,
     name: 'Maharashtra',
+    nameMap: {
+      en: 'Maharashtra',
+      hi: 'महाराष्ट्र',
+      mr: 'महाराष्ट्र',
+      te: 'మహారాష్ట్ర',
+      kn: 'ಮಹಾರಾಷ್ಟ್ರ'
+    },
     shortName: 'MH',
     subDistrictTerm: 'Taluka',
     districtsCount: 36,
@@ -66,6 +87,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_29',
     lgdCode: 29,
     name: 'Karnataka',
+    nameMap: {
+      en: 'Karnataka',
+      hi: 'कर्नाटक',
+      mr: 'कर्नाटक',
+      te: 'కర్ణాటక',
+      kn: 'ಕರ್ನಾಟಕ'
+    },
     shortName: 'KA',
     subDistrictTerm: 'Taluk',
     districtsCount: 31,
@@ -78,6 +106,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_33',
     lgdCode: 33,
     name: 'Tamil Nadu',
+    nameMap: {
+      en: 'Tamil Nadu',
+      hi: 'तमिलनाडु',
+      mr: 'तमिळनाडू',
+      te: 'తమిళనాడు',
+      kn: 'ತಮಿಳುನಾಡು'
+    },
     shortName: 'TN',
     subDistrictTerm: 'Taluk',
     districtsCount: 38,
@@ -90,6 +125,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_24',
     lgdCode: 24,
     name: 'Gujarat',
+    nameMap: {
+      en: 'Gujarat',
+      hi: 'गुजरात',
+      mr: 'गुजरात',
+      te: 'గుజరాత్',
+      kn: 'ಗುಜರಾತ್'
+    },
     shortName: 'GJ',
     subDistrictTerm: 'Taluka',
     districtsCount: 33,
@@ -102,6 +144,13 @@ export const OFFICIAL_LGD_STATES: LgdState[] = [
     id: 'lgd_st_09',
     lgdCode: 9,
     name: 'Uttar Pradesh',
+    nameMap: {
+      en: 'Uttar Pradesh',
+      hi: 'उत्तर प्रदेश',
+      mr: 'उत्तर प्रदेश',
+      te: 'ఉత్తర ప్రదేశ్',
+      kn: 'ಉತ್ತರ ಪ್ರದೇಶ'
+    },
     shortName: 'UP',
     subDistrictTerm: 'Tehsil',
     districtsCount: 75,
@@ -473,6 +522,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Pune',
+    nameMap: {
+      en: 'Pune',
+      hi: 'पुणे',
+      mr: 'पुणे',
+      te: 'పుణే',
+      kn: 'ಪುಣೆ'
+    },
     headquarters: 'Pune',
     subDistrictsCount: 14,
     status: 'VERIFIED',
@@ -487,6 +543,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Nashik',
+    nameMap: {
+      en: 'Nashik',
+      hi: 'नाशिक',
+      mr: 'नाशिक',
+      te: 'నాశిక్',
+      kn: 'ನಾಶಿಕ್'
+    },
     headquarters: 'Nashik',
     subDistrictsCount: 15,
     status: 'VERIFIED',
@@ -501,6 +564,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Satara',
+    nameMap: {
+      en: 'Satara',
+      hi: 'सतारा',
+      mr: 'सातारा',
+      te: 'సతారా',
+      kn: 'ಸತಾರಾ'
+    },
     headquarters: 'Satara',
     subDistrictsCount: 11,
     status: 'VERIFIED',
@@ -515,6 +585,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Solapur',
+    nameMap: {
+      en: 'Solapur',
+      hi: 'सोलापुर',
+      mr: 'सोलापूर',
+      te: 'సోలాపూర్',
+      kn: 'ಸೋಲಾಪುರ'
+    },
     headquarters: 'Solapur',
     subDistrictsCount: 11,
     status: 'VERIFIED',
@@ -529,6 +606,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Kolhapur',
+    nameMap: {
+      en: 'Kolhapur',
+      hi: 'कोल्हापुर',
+      mr: 'कोल्हापूर',
+      te: 'కొల్హాపూర్',
+      kn: 'ಕೊಲ್ಹಾಪುರ'
+    },
     headquarters: 'Kolhapur',
     subDistrictsCount: 12,
     status: 'VERIFIED',
@@ -545,6 +629,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 28,
     stateName: 'Andhra Pradesh',
     name: 'Visakhapatnam',
+    nameMap: {
+      en: 'Visakhapatnam',
+      hi: 'विशाखापत्तनम',
+      mr: 'विशाखापट्टणम',
+      te: 'విశాఖపట్నం',
+      kn: 'ವಿಶಾಖಪಟ್ಟಣ'
+    },
     headquarters: 'Visakhapatnam',
     subDistrictsCount: 11,
     status: 'VERIFIED',
@@ -559,6 +650,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 28,
     stateName: 'Andhra Pradesh',
     name: 'Chittoor',
+    nameMap: {
+      en: 'Chittoor',
+      hi: 'चित्तूर',
+      mr: 'चित्तूर',
+      te: 'చిత్తూరు',
+      kn: 'ಚಿತ್ತೂರು'
+    },
     headquarters: 'Chittoor',
     subDistrictsCount: 31,
     status: 'VERIFIED',
@@ -573,6 +671,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 28,
     stateName: 'Andhra Pradesh',
     name: 'Guntur',
+    nameMap: {
+      en: 'Guntur',
+      hi: 'गुंटूर',
+      mr: 'गुंटूर',
+      te: 'గుంటూరు',
+      kn: 'గుంటూరు'
+    },
     headquarters: 'Guntur',
     subDistrictsCount: 18,
     status: 'VERIFIED',
@@ -589,6 +694,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 29,
     stateName: 'Karnataka',
     name: 'Mandya',
+    nameMap: {
+      en: 'Mandya',
+      hi: 'मैंड्या',
+      mr: 'मांड्या',
+      te: 'మండ్య',
+      kn: 'ಮಂಡ್ಯ'
+    },
     headquarters: 'Mandya',
     subDistrictsCount: 7,
     status: 'VERIFIED',
@@ -603,6 +715,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 29,
     stateName: 'Karnataka',
     name: 'Belagavi',
+    nameMap: {
+      en: 'Belagavi',
+      hi: 'बेलगाम',
+      mr: 'बेळगाव',
+      te: 'బెల్గాం',
+      kn: 'ಬೆಳಗಾವಿ'
+    },
     headquarters: 'Belagavi',
     subDistrictsCount: 14,
     status: 'VERIFIED',
@@ -617,6 +736,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 29,
     stateName: 'Karnataka',
     name: 'Mysuru',
+    nameMap: {
+      en: 'Mysuru',
+      hi: 'मैसूर',
+      mr: 'म्हैसूर',
+      te: 'మైసూర్',
+      kn: 'ಮೈಸೂರು'
+    },
     headquarters: 'Mysuru',
     subDistrictsCount: 9,
     status: 'VERIFIED',
@@ -633,6 +759,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 36,
     stateName: 'Telangana',
     name: 'Rangareddy',
+    nameMap: {
+      en: 'Rangareddy',
+      hi: 'रंगारेड्डी',
+      mr: 'रंगारेड्डी',
+      te: 'రంగారెడ్డి',
+      kn: 'ರಂಗಾರೆಡ್ಡಿ'
+    },
     headquarters: 'Shamshabad',
     subDistrictsCount: 27,
     status: 'VERIFIED',
@@ -647,6 +780,13 @@ export const OFFICIAL_LGD_DISTRICTS: LgdDistrict[] = [
     stateCode: 36,
     stateName: 'Telangana',
     name: 'Karimnagar',
+    nameMap: {
+      en: 'Karimnagar',
+      hi: 'करीमनगर',
+      mr: 'करीमनगर',
+      te: 'కరీంనగర్',
+      kn: 'ಕರೀಂನಗರ'
+    },
     headquarters: 'Karimnagar',
     subDistrictsCount: 16,
     status: 'VERIFIED',
@@ -702,6 +842,13 @@ export const OFFICIAL_LGD_SUB_DISTRICTS: LgdSubDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Haveli',
+    nameMap: {
+      en: 'Haveli',
+      hi: 'हवेली',
+      mr: 'हवेली',
+      te: 'హవేలీ',
+      kn: 'ಹವೇಲಿ'
+    },
     displayName: 'Haveli Taluka',
     administrativeTerm: 'Taluka',
     villagesCount: 112,
@@ -720,6 +867,13 @@ export const OFFICIAL_LGD_SUB_DISTRICTS: LgdSubDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Baramati',
+    nameMap: {
+      en: 'Baramati',
+      hi: 'बारामती',
+      mr: 'बारामती',
+      te: 'బారామతి',
+      kn: 'ಬಾರಾಮತಿ'
+    },
     displayName: 'Baramati Taluka',
     administrativeTerm: 'Taluka',
     villagesCount: 116,
@@ -738,6 +892,13 @@ export const OFFICIAL_LGD_SUB_DISTRICTS: LgdSubDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Shirur',
+    nameMap: {
+      en: 'Shirur',
+      hi: 'शिरूर',
+      mr: 'शिरूर',
+      te: 'శిరూర్',
+      kn: 'ಶಿರೂರ್'
+    },
     displayName: 'Shirur Taluka',
     administrativeTerm: 'Taluka',
     villagesCount: 115,
@@ -756,6 +917,13 @@ export const OFFICIAL_LGD_SUB_DISTRICTS: LgdSubDistrict[] = [
     stateCode: 27,
     stateName: 'Maharashtra',
     name: 'Khed',
+    nameMap: {
+      en: 'Khed',
+      hi: 'खेड',
+      mr: 'खेड',
+      te: 'ఖేడ్',
+      kn: 'ಖೇಡ್'
+    },
     displayName: 'Khed (Rajgurunagar) Taluka',
     administrativeTerm: 'Taluka',
     villagesCount: 184,
@@ -870,6 +1038,13 @@ export const OFFICIAL_LGD_SUB_DISTRICTS: LgdSubDistrict[] = [
     stateCode: 36,
     stateName: 'Telangana',
     name: 'Shamshabad',
+    nameMap: {
+      en: 'Shamshabad',
+      hi: 'शमशाबाद',
+      mr: 'शमशाबाद',
+      te: 'శంషాబాద్',
+      kn: 'ಶಂಷಾಬಾದ್'
+    },
     displayName: 'Shamshabad Mandal',
     administrativeTerm: 'Mandal',
     villagesCount: 24,

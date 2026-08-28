@@ -21,6 +21,7 @@ export interface LgdState {
   id: string;
   lgdCode: number;
   name: string;
+  nameMap?: Record<string, string>;
   shortName: string;
   subDistrictTerm: LgdAdministrativeTerm;
   districtsCount: number;
@@ -37,6 +38,7 @@ export interface LgdDistrict {
   stateCode: number;
   stateName: string;
   name: string;
+  nameMap?: Record<string, string>;
   headquarters: string;
   subDistrictsCount: number;
   status: 'VERIFIED';
@@ -55,6 +57,7 @@ export interface LgdSubDistrict {
   stateCode: number;
   stateName: string;
   name: string;
+  nameMap?: Record<string, string>;
   displayName: string;
   administrativeTerm: LgdAdministrativeTerm;
   villagesCount: number;

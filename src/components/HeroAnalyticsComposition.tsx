@@ -21,11 +21,18 @@ import {
  * - Cohesive professional styling, subtle shadows, no clipping or erratic floating
  * - Perfectly vertically centered relative to hero content
  */
-export const HeroAnalyticsComposition: React.FC = () => {
+export interface HeroAnalyticsCompositionProps {
+  onClick?: () => void;
+}
+
+export const HeroAnalyticsComposition: React.FC<HeroAnalyticsCompositionProps> = ({ onClick }) => {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="relative w-full max-w-[480px] lg:max-w-[500px] mx-auto py-6 px-3 sm:px-5 select-none">
+    <div
+      onClick={onClick}
+      className={`relative w-full max-w-[480px] lg:max-w-[500px] mx-auto py-6 px-3 sm:px-5 select-none ${onClick ? 'cursor-pointer' : ''}`}
+    >
       {/* 1. Subtle Ambient Backlight Glow (Tied to composition) */}
       <div className="absolute inset-2 bg-gradient-to-tr from-blue-100/30 via-indigo-50/20 to-emerald-50/20 rounded-3xl blur-2xl pointer-events-none" />
 

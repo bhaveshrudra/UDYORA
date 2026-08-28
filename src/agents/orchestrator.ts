@@ -1,6 +1,7 @@
 import {
   CompleteAnalysisReport,
   UserBusinessInput,
+  LocationData,
   AgentStepStatus,
   EvidenceRecord,
   BusinessAgentData,
@@ -20,6 +21,7 @@ import { runRiskAgent } from './riskAgent';
 import { validateAndReconcileAgentOutputs } from '../services/aggregatorValidator';
 import { runFinalAdvisorAgent } from './finalAdvisor';
 import { compareBusinessDomains } from '../services/domainComparisonService';
+import { normalizeCoordinates } from '../services/coordinateNormalizer';
 
 /**
  * UDYORA MULTI-AGENT ORCHESTRATOR
@@ -36,6 +38,8 @@ export async function executeMultiAgentWorkflow(
 ): Promise<CompleteAnalysisReport> {
   const reqId = `REQ-${Date.now().toString(36).toUpperCase()}`;
   const isDev = process.env.NODE_ENV !== 'production';
+
+  console.log('[UDYORA ANALYZE] orchestrator started');
 
   if (isDev) {
     console.log(`[ORCHESTRATOR] [${reqId}] Input received:`, {
@@ -134,19 +138,52 @@ export async function executeMultiAgentWorkflow(
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  // 1. Resolve Location
-  const location = input.customLocationText
-    ? createCustomLocationData(input.customLocationText)
-    : getLocationById(input.locationId);
+  // 1. Resolve Canonical Location (Strict Priority: locationResolution > customLocationText > locationId)
+  let location: LocationData;
+  if (input.locationResolution) {
+    const res = input.locationResolution;
+    const base = createCustomLocationData(res.formattedAddress || 'Selected Location');
+    location = {
+      ...base,
+      id: `loc_canon_${res.subDistrictCode || res.districtCode || Date.now()}`,
+      village: res.localityName || res.villageName || 'Selected Location',
+      block: res.subDistrictName || base.block,
+      district: res.districtName || base.district,
+      state: res.stateName || base.state,
+      pincode: res.pincode || base.pincode,
+      latitude: res.latitude,
+      longitude: res.longitude,
+      areaType: res.areaType || 'Rural',
+      administrativeSource: res.administrativeSource || 'Local Government Directory (LGD), MoPR',
+      mappingSource: res.mappingSource || 'OpenStreetMap / Nominatim Spatial Engine'
+    };
+  } else if (input.customLocationText) {
+    location = createCustomLocationData(input.customLocationText);
+  } else if (input.locationId && input.locationId.startsWith('lgd_loc_')) {
+    location = getLocationById(input.locationId);
+  } else {
+    location = createCustomLocationData('Unspecified Rural Locality');
+  }
 
   if (input.latitude && input.longitude) {
     location.latitude = input.latitude;
     location.longitude = input.longitude;
   }
+  const normCoords = normalizeCoordinates(input.locationResolution) || normalizeCoordinates(input) || normalizeCoordinates(location) || { lat: 18.3517, lng: 73.8567 };
+  location.latitude = normCoords.lat;
+  location.longitude = normCoords.lng;
+
   if (input.locationResolution) {
     location.administrativeSource = input.locationResolution.administrativeSource;
     location.mappingSource = input.locationResolution.mappingSource;
   }
+
+  console.log('[ORCHESTRATOR INPUT]', {
+    location: location.village,
+    businessType: input.businessCategoryId,
+    availableCapital: input.availableCapital,
+    language: input.language
+  });
 
   // Step 1: Evidence Agent
   updateStep('evidence', 'RUNNING', 30, 'Retrieving ground truth parameters from Census and District GIS...');
@@ -368,6 +405,12 @@ export async function executeMultiAgentWorkflow(
     evidenceRecords: evidenceAuditLog,
     aggregatorValidation
   };
+
+  console.log('[UDYORA ANALYZE] orchestrator completed');
+  console.log('[UDYORA ANALYZE] results received', {
+    reportId: repId,
+    feasibilityScore: feasibilityVerdict.score
+  });
 
   return report;
 }

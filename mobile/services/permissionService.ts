@@ -1,5 +1,9 @@
 import * as Location from 'expo-location';
-import { Audio } from 'expo-av';
+import {
+  requestRecordingPermissionsAsync,
+  getRecordingPermissionsAsync,
+  PermissionStatus as AudioPermissionStatus
+} from 'expo-audio';
 import { PermissionStatus } from '../types';
 
 export const permissionService = {
@@ -38,12 +42,12 @@ export const permissionService = {
   },
 
   /**
-   * Request Microphone Audio Permission
+   * Request Microphone Audio Permission via expo-audio
    */
   async requestMicrophonePermission(): Promise<PermissionStatus> {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status === 'granted') {
+      const res = await requestRecordingPermissionsAsync();
+      if (res.granted || res.status === AudioPermissionStatus.GRANTED) {
         return 'granted';
       }
       return 'denied';
@@ -54,14 +58,14 @@ export const permissionService = {
   },
 
   /**
-   * Get Current Microphone Permission Status
+   * Get Current Microphone Permission Status via expo-audio
    */
   async getMicrophonePermissionStatus(): Promise<PermissionStatus> {
     try {
-      const { status } = await Audio.getPermissionsAsync();
-      if (status === 'granted') {
+      const res = await getRecordingPermissionsAsync();
+      if (res.granted || res.status === AudioPermissionStatus.GRANTED) {
         return 'granted';
-      } else if (status === 'denied') {
+      } else if (res.status === AudioPermissionStatus.DENIED) {
         return 'denied';
       }
       return 'unknown';
@@ -71,3 +75,5 @@ export const permissionService = {
     }
   }
 };
+
+

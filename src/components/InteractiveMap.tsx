@@ -1,521 +1,590 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import {
-  MapPin,
-  Sparkles,
-  ShieldCheck,
-  ChevronRight,
-  RotateCcw,
-  Building2,
-  Store,
-  Truck,
-  CheckCircle2,
-  X,
-  Compass
-} from 'lucide-react';
-import { LocationResolution, NearbyPlace, OpportunitySpot } from '../types/map';
-import { getNearbyPlacesForLocation } from '../services/mapService';
-import { findTopOpportunitySpots } from '../services/opportunitySpotService';
+import React, { useEffect, useRef, useState } from 'react';
+import { Compass, MapPin, Sparkles, Building2, Store, ExternalLink, Info, CheckCircle2, ChevronRight } from 'lucide-react';
+import { LocationResolution, OpportunitySpot } from '../types/map';
 import { useLanguage } from '../i18n/LanguageContext';
+import {
+  isApiKeyConfigured,
+  loadGoogleMapsScript,
+  isMapBillingError
+} from '../services/googleMapLoader';
+import { normalizeCoordinates, MapLocation } from '../services/coordinateNormalizer';
+import {
+  NearbyResourceItem,
+  fetchNearbyResourcesFromGoogle,
+  CATEGORY_SEARCH_PARAMS
+} from '../services/nearbyPlacesService';
+import { findTopOpportunitySpots } from '../services/opportunitySpotService';
 
-interface InteractiveMapProps {
-  location: LocationResolution;
-  businessCategory: string;
+export interface InteractiveMapProps {
+  location?: LocationResolution | null;
+  mapState?: 'india' | 'state' | 'district' | 'mandal' | 'confirmed';
+  centerCoords?: { lat: number; lng: number; zoom: number };
   radiusKm?: 5 | 10;
   onRadiusChange?: (radius: 5 | 10) => void;
-  onPlacesLoaded?: (places: NearbyPlace[]) => void;
-  onOpportunitySpotsLoaded?: (spots: OpportunitySpot[]) => void;
+  businessCategory?: string;
   className?: string;
 }
 
+export type MapTypeOption = 'roadmap' | 'satellite' | 'terrain' | 'hybrid';
+
+const UDYORA_MAP_ID = 'UDYORA_MAP_ID';
+
 export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   location,
-  businessCategory,
+  mapState = 'india',
+  centerCoords,
   radiusKm = 5,
   onRadiusChange,
-  onPlacesLoaded,
-  onOpportunitySpotsLoaded,
+  businessCategory = 'dairy',
   className = ''
 }) => {
   const { t } = useLanguage();
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const circleLayerRef = useRef<L.Circle | null>(null);
-  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+  const mapInstanceRef = useRef<google.maps.Map | null>(null);
+  const circleInstanceRef = useRef<google.maps.Circle | null>(null);
+  const markersRef = useRef<any[]>([]);
 
+  const [activeMapType, setActiveMapType] = useState<MapTypeOption>('roadmap');
   const [activeRadius, setActiveRadius] = useState<5 | 10>(radiusKm);
-  const [places, setPlaces] = useState<NearbyPlace[]>([]);
-  const [opportunitySpots, setOpportunitySpots] = useState<OpportunitySpot[]>([]);
-  const [selectedSpot, setSelectedSpot] = useState<OpportunitySpot | null>(null);
-  const [showAllSpotsModal, setShowAllSpotsModal] = useState<boolean>(false);
+  const [isMapLoaded, setIsMapLoaded] = useState<boolean>(false);
+  const [mapConfigured, setMapConfigured] = useState<boolean>(true);
+  const [hasBillingError, setHasBillingError] = useState<boolean>(false);
 
-  // Sync internal radius with prop
+  // Places API & Opportunity Spots Data State
+  const [nearbyResources, setNearbyResources] = useState<NearbyResourceItem[]>([]);
+  const [opportunitySpots, setOpportunitySpots] = useState<OpportunitySpot[]>([]);
+  const [isLoadingPlaces, setIsLoadingPlaces] = useState<boolean>(false);
+  const [selectedPoi, setSelectedPoi] = useState<{
+    title: string;
+    category: string;
+    distanceKm: number;
+    address: string;
+    source: string;
+    type: 'location' | 'opportunity' | 'resource';
+  } | null>(null);
+
+  // Sync radius prop
   useEffect(() => {
     setActiveRadius(radiusKm);
   }, [radiusKm]);
 
-  // Load and score Opportunity Spots deterministically
-  const loadLocationIntelligence = useCallback(async () => {
-    try {
-      const fetchedPlaces = await getNearbyPlacesForLocation(location, businessCategory, activeRadius);
-      setPlaces(fetchedPlaces);
-      if (onPlacesLoaded) {
-        onPlacesLoaded(fetchedPlaces);
-      }
+  // Coordinate Normalization (No undefined.lat)
+  const normalizedLocationCoords: MapLocation | null = normalizeCoordinates(location);
+  const normalizedCenterCoords: MapLocation | null = normalizeCoordinates(centerCoords) || { lat: 20.5937, lng: 78.9629 };
+  const currentZoom: number = centerCoords?.zoom || (mapState === 'confirmed' ? 13.0 : mapState === 'mandal' ? 11.5 : mapState === 'district' ? 9.5 : mapState === 'state' ? 7.0 : 4.5);
 
-      const spots = findTopOpportunitySpots(location, businessCategory, activeRadius, 6);
-      setOpportunitySpots(spots);
-      if (onOpportunitySpotsLoaded) {
-        onOpportunitySpotsLoaded(spots);
-      }
-    } catch (err) {
-      console.warn('Location intelligence loading warning:', err);
-    }
-  }, [location, businessCategory, activeRadius, onPlacesLoaded, onOpportunitySpotsLoaded]);
-
+  // 1. Listen for Google Maps Billing Errors
   useEffect(() => {
-    loadLocationIntelligence();
-  }, [loadLocationIntelligence]);
+    const handleBillingErr = () => {
+      setHasBillingError(true);
+    };
+    window.addEventListener('udyora_map_billing_error', handleBillingErr);
+    if (isMapBillingError()) setHasBillingError(true);
 
-  // Initialize or update Leaflet Map
+    return () => {
+      window.removeEventListener('udyora_map_billing_error', handleBillingErr);
+    };
+  }, []);
+
+  // 2. Load Google Maps JS API Asynchronously
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    let isSubscribed = true;
 
-    const centerLat = location.latitude;
-    const centerLng = location.longitude;
-
-    // 1. Initialize map if not created
-    if (!mapInstanceRef.current) {
-      const map = L.map(mapContainerRef.current, {
-        center: [centerLat, centerLng],
-        zoom: activeRadius === 5 ? 13 : 12,
-        zoomControl: true,
-        attributionControl: false,
-        scrollWheelZoom: false
-      });
-
-      // CartoDB Voyager Clean Vector/Raster Tiles (No commercial ads or cluttered labels)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
-        subdomains: 'abcd'
-      }).addTo(map);
-
-      mapInstanceRef.current = map;
-      markersLayerRef.current = L.layerGroup().addTo(map);
+    if (!isApiKeyConfigured()) {
+      setMapConfigured(false);
+      return;
     }
 
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    // Invalidate size in case of container layout changes
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-
-    // 2. Clear previous markers and circle
-    if (markersLayerRef.current) {
-      markersLayerRef.current.clearLayers();
-    }
-    if (circleLayerRef.current) {
-      map.removeLayer(circleLayerRef.current);
-    }
-
-    // 3. Draw Geographic Dotted Circle (True geographic radius: 5km or 10km)
-    const circle = L.circle([centerLat, centerLng], {
-      radius: activeRadius * 1000,
-      color: '#2563eb',
-      weight: 2,
-      dashArray: '6, 6',
-      fillColor: '#3b82f6',
-      fillOpacity: 0.05
-    }).addTo(map);
-    circleLayerRef.current = circle;
-
-    // Fit map bounds to geographic circle
-    map.fitBounds(circle.getBounds().pad(0.08));
-
-    // 4. Add Center Marker (● Selected Location)
-    const centerIcon = L.divIcon({
-      className: 'custom-center-marker',
-      html: `
-        <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; transform: translate(-50%, -50%);">
-          <span style="position: absolute; width: 28px; height: 28px; border-radius: 50%; background: rgba(37,99,235,0.25); animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;"></span>
-          <div style="position: relative; width: 22px; height: 22px; border-radius: 50%; background: #1e3a8a; border: 3px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: 900;">
-            ●
-          </div>
-        </div>
-      `,
-      iconSize: [0, 0]
-    });
-
-    const centerMarker = L.marker([centerLat, centerLng], { icon: centerIcon }).bindTooltip(
-      `<strong>${location.villageName || location.localityName}</strong><br/>Fixed Reference Center`,
-      { direction: 'top', offset: [0, -14], className: 'custom-map-tooltip' }
-    );
-    if (markersLayerRef.current) {
-      markersLayerRef.current.addLayer(centerMarker);
-    }
-
-    // 5. Add Top 3 Opportunity Spot Markers (◆)
-    const top3Spots = opportunitySpots.slice(0, 3);
-    top3Spots.forEach((spot) => {
-      const isSelected = selectedSpot?.id === spot.id;
-      const spotIcon = L.divIcon({
-        className: `custom-spot-marker-${spot.id}`,
-        html: `
-          <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; transform: translate(-50%, -50%); cursor: pointer;">
-            <div style="width: 22px; height: 22px; border-radius: 6px; background: ${
-              isSelected ? '#2563eb' : '#f59e0b'
-            }; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.25); display: flex; align-items: center; justify-content: center; transform: rotate(45deg); transition: all 0.2s ease;">
-              <span style="transform: rotate(-45deg); color: #ffffff; font-size: 9px; font-weight: 900;">
-                #${spot.rank}
-              </span>
-            </div>
-          </div>
-        `,
-        iconSize: [0, 0]
-      });
-
-      const spotMarker = L.marker([spot.latitude, spot.longitude], { icon: spotIcon })
-        .bindTooltip(
-          `<strong>#${spot.rank} ${spot.spotName}</strong><br/>Opportunity Score: ${spot.opportunityScore}/100 • ${spot.distanceKm} km`,
-          { direction: 'top', offset: [0, -14], className: 'custom-map-tooltip' }
-        )
-        .on('click', () => {
-          setSelectedSpot(spot);
-          map.flyTo([spot.latitude, spot.longitude], 14, { animate: true, duration: 0.6 });
-        });
-
-      if (markersLayerRef.current) {
-        markersLayerRef.current.addLayer(spotMarker);
+    loadGoogleMapsScript().then((success) => {
+      if (!isSubscribed) return;
+      if (success && window.google && window.google.maps) {
+        setIsMapLoaded(true);
+        setMapConfigured(true);
+      } else {
+        setMapConfigured(false);
       }
     });
 
     return () => {
-      // Clean up map instance on unmount
+      isSubscribed = false;
     };
-  }, [location, activeRadius, opportunitySpots, selectedSpot]);
+  }, []);
 
-  const handleRadiusToggle = (newRadius: 5 | 10) => {
-    setActiveRadius(newRadius);
-    if (onRadiusChange) {
-      onRadiusChange(newRadius);
+  // 3. Initialize Google Map Instance ONCE on mount (No Map Recreation)
+  useEffect(() => {
+    if (!isMapLoaded || !mapContainerRef.current || hasBillingError) return;
+    if (mapInstanceRef.current) return;
+
+    const initialCenter = mapState === 'confirmed' && normalizedLocationCoords
+      ? normalizedLocationCoords
+      : normalizedCenterCoords;
+
+    try {
+      const map = new google.maps.Map(mapContainerRef.current, {
+        center: initialCenter,
+        zoom: currentZoom,
+        mapId: UDYORA_MAP_ID,
+        mapTypeId: activeMapType,
+        disableDefaultUI: true,
+        zoomControl: true,
+        gestureHandling: 'cooperative'
+      });
+
+      mapInstanceRef.current = map;
+    } catch (err) {
+      console.warn('[UDYORA MAP Init Error]', err);
     }
-  };
+  }, [isMapLoaded, hasBillingError]);
 
-  const handleRecenter = () => {
-    setSelectedSpot(null);
-    if (mapInstanceRef.current && circleLayerRef.current) {
-      mapInstanceRef.current.fitBounds(circleLayerRef.current.getBounds().pad(0.08), { animate: true });
+  // 4. Fetch Real Google Places & UDYORA Opportunities ONLY when location, business, or radius changes
+  useEffect(() => {
+    if (mapState !== 'confirmed' || !location || !normalizedLocationCoords) {
+      setNearbyResources([]);
+      setOpportunitySpots([]);
+      return;
     }
-  };
 
-  const handleSelectSpot = (spot: OpportunitySpot) => {
-    setSelectedSpot(spot);
+    // A. Calculate UDYORA Analytical Opportunities
+    const opps = findTopOpportunitySpots(location, businessCategory, activeRadius, 3);
+    setOpportunitySpots(opps);
+
+    // B. Fetch Real Nearby Resources from Google Places API
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    setIsLoadingPlaces(true);
+    fetchNearbyResourcesFromGoogle(map, normalizedLocationCoords, businessCategory, activeRadius)
+      .then((items) => {
+        setNearbyResources(items);
+      })
+      .finally(() => {
+        setIsLoadingPlaces(false);
+      });
+  }, [mapState, location?.id, businessCategory, activeRadius]);
+
+  // 5. Render Map Center, Catchment Circle, and Distinct AdvancedMarkerElement Pins
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !isMapLoaded || hasBillingError || !window.google || !window.google.maps) return;
+
+    // Clear existing markers and circle
+    markersRef.current.forEach((m) => {
+      if (m.map !== undefined) m.map = null;
+      else if (m.setMap) m.setMap(null);
+    });
+    markersRef.current = [];
+
+    if (circleInstanceRef.current) {
+      circleInstanceRef.current.setMap(null);
+      circleInstanceRef.current = null;
+    }
+
+    if (mapState === 'india') {
+      map.setCenter({ lat: 20.5937, lng: 78.9629 });
+      map.setZoom(4.5);
+    } else if (mapState === 'state' && normalizedCenterCoords) {
+      map.setCenter(normalizedCenterCoords);
+      map.setZoom(7.0);
+    } else if (mapState === 'district' && normalizedCenterCoords) {
+      map.setCenter(normalizedCenterCoords);
+      map.setZoom(9.5);
+    } else if (mapState === 'mandal' && normalizedCenterCoords) {
+      map.setCenter(normalizedCenterCoords);
+      map.setZoom(11.5);
+    } else if (mapState === 'confirmed' && normalizedLocationCoords) {
+      const center = normalizedLocationCoords;
+      map.setCenter(center);
+      map.setZoom(activeRadius === 10 ? 12.0 : 13.0);
+
+      // A. Selected Location Marker (● Dark Blue Pin)
+      try {
+        const locPin = document.createElement('div');
+        locPin.className = 'w-7 h-7 rounded-full bg-blue-950 border-2 border-white shadow-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform';
+        locPin.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-white font-bold text-[8px]">●</div>';
+
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+          const locMarker = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: center,
+            title: location?.localityName || location?.villageName || 'Selected Location',
+            content: locPin
+          });
+          locMarker.addListener('click', () => {
+            setSelectedPoi({
+              title: location?.localityName || location?.villageName || 'Selected Center',
+              category: 'Confirmed Village / Locality Center',
+              distanceKm: 0,
+              address: location?.formattedAddress || 'Local Government Directory Center',
+              source: 'Local Government Directory (LGD)',
+              type: 'location'
+            });
+          });
+          markersRef.current.push(locMarker);
+        } else {
+          const legacyLocMarker = new google.maps.Marker({
+            position: center,
+            map,
+            title: location?.localityName || 'Selected Location'
+          });
+          markersRef.current.push(legacyLocMarker);
+        }
+      } catch (err) {
+        console.warn('[UDYORA MAP Marker Warning]', err);
+      }
+
+      // B. Recommended Opportunity Markers (◆ Amber Diamond Pins)
+      opportunitySpots.forEach((opp) => {
+        try {
+          const oppPin = document.createElement('div');
+          oppPin.className = 'w-6 h-6 rotate-45 bg-amber-500 border-2 border-white shadow-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform';
+          oppPin.innerHTML = `<span class="-rotate-45 text-[9px] font-black text-slate-950">${opp.rank}</span>`;
+
+          if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            const oppMarker = new google.maps.marker.AdvancedMarkerElement({
+              map,
+              position: { lat: opp.latitude, lng: opp.longitude },
+              title: opp.spotName,
+              content: oppPin
+            });
+            oppMarker.addListener('click', () => {
+              setSelectedPoi({
+                title: opp.spotName,
+                category: opp.categoryLabel,
+                distanceKm: opp.distanceKm,
+                address: opp.summaryReason,
+                source: 'UDYORA Location Intelligence Engine',
+                type: 'opportunity'
+              });
+            });
+            markersRef.current.push(oppMarker);
+          }
+        } catch (err) {}
+      });
+
+      // C. Nearby Resource Markers (○ Emerald Circle Pins)
+      nearbyResources.forEach((res) => {
+        try {
+          const resPin = document.createElement('div');
+          resPin.className = 'w-5 h-5 rounded-full bg-emerald-600 border-2 border-white shadow-xs flex items-center justify-center cursor-pointer hover:scale-110 transition-transform';
+          resPin.innerHTML = '<div class="w-1.5 h-1.5 rounded-full bg-white"></div>';
+
+          if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            const resMarker = new google.maps.marker.AdvancedMarkerElement({
+              map,
+              position: res.coords,
+              title: res.name,
+              content: resPin
+            });
+            resMarker.addListener('click', () => {
+              setSelectedPoi({
+                title: res.name,
+                category: res.categoryLabel,
+                distanceKm: res.distanceKm,
+                address: res.address,
+                source: res.dataSource,
+                type: 'resource'
+              });
+            });
+            markersRef.current.push(resMarker);
+          }
+        } catch (err) {}
+      });
+
+      // Real 5 km / 10 km Geographic Circle
+      const circle = new google.maps.Circle({
+        map,
+        center,
+        radius: activeRadius * 1000,
+        strokeColor: '#2563eb',
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: '#3b82f6',
+        fillOpacity: 0.06
+      });
+      circleInstanceRef.current = circle;
+    }
+  }, [mapState, normalizedCenterCoords?.lat, normalizedCenterCoords?.lng, normalizedLocationCoords?.lat, normalizedLocationCoords?.lng, activeRadius, opportunitySpots, nearbyResources, isMapLoaded, hasBillingError]);
+
+  // Map Type Switcher Handler (No Places search or map recreation)
+  const handleMapTypeChange = (type: MapTypeOption) => {
+    setActiveMapType(type);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([spot.latitude, spot.longitude], 14, { animate: true, duration: 0.6 });
+      mapInstanceRef.current.setMapTypeId(type);
     }
   };
 
-  const topSpots = opportunitySpots.slice(0, 3);
-  const hasMoreSpots = opportunitySpots.length > 3;
+  const handleRadiusToggle = (r: 5 | 10) => {
+    setActiveRadius(r);
+    if (onRadiusChange) {
+      onRadiusChange(r);
+    }
+  };
+
+  // Fallback for BillingNotEnabledMapError or Unconfigured API Key
+  if (!mapConfigured || hasBillingError) {
+    return (
+      <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs ${className}`}>
+        <div className="p-3.5 border-b border-slate-100 bg-slate-50/90 flex items-center justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider bg-slate-800 text-white px-2 py-0.5 rounded font-mono">
+            LOCALITY & CATCHMENT MAP
+          </span>
+        </div>
+        <div className="p-8 text-center space-y-3 bg-slate-50/50">
+          <Compass className="w-8 h-8 text-slate-400 mx-auto" />
+          <div className="space-y-1">
+            <h4 className="text-xs sm:text-sm font-black text-slate-800">
+              Map temporarily unavailable.
+            </h4>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const categoryLabel = (CATEGORY_SEARCH_PARAMS[businessCategory] || CATEGORY_SEARCH_PARAMS.custom).categoryLabel;
 
   return (
-    <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs space-y-0 ${className}`}>
-      {/* 1. Header Bar: Location identity & Radius Controls */}
-      <div className="p-3.5 sm:p-4 border-b border-slate-100 bg-slate-50/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+    <div className={`bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-xs space-y-0 ${className}`}>
+      {/* Header Bar */}
+      <div className="p-4 border-b border-slate-100 bg-slate-50/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase tracking-wider bg-blue-800 text-blue-100 px-2 py-0.5 rounded">
-              LOCALITY & BUSINESS CATCHMENT
-            </span>
-            <span className="text-xs font-bold text-slate-900">
-              {location.villageName || location.localityName}
+            <span className="text-[10px] font-black uppercase tracking-wider bg-blue-900 text-white px-2 py-0.5 rounded font-mono">
+              LOCALITY & CATCHMENT
             </span>
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            {location.districtName}, {location.stateName} •{' '}
-            <span className="font-mono text-slate-600">
-              {location.latitude.toFixed(4)}°N, {location.longitude.toFixed(4)}°E
-            </span>
+          <p className="text-xs font-bold text-slate-800 mt-1">
+            {mapState === 'confirmed' && location
+              ? `${location.localityName || location.villageName}, ${location.subDistrictName}, ${location.districtName}`
+              : mapState === 'mandal'
+              ? 'Sub-District / Mandal Level View'
+              : mapState === 'district'
+              ? 'District Level View'
+              : mapState === 'state'
+              ? 'State Level View'
+              : t('loc.mapInitialPrompt')}
           </p>
         </div>
 
-        {/* Radius controls */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="inline-flex rounded-lg bg-slate-200/80 p-0.5 border border-slate-300/60">
-            <button
-              type="button"
-              onClick={() => handleRadiusToggle(5)}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                activeRadius === 5
-                  ? 'bg-white text-blue-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              5 km
-            </button>
-            <button
-              type="button"
-              onClick={() => handleRadiusToggle(10)}
-              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                activeRadius === 10
-                  ? 'bg-white text-blue-900 shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              10 km
-            </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {/* Map Type Switcher */}
+          <div className="inline-flex rounded-xl bg-slate-200/80 p-0.5 border border-slate-300/60 text-[11px] font-bold">
+            {[
+              { id: 'roadmap' as const, label: 'Normal' },
+              { id: 'satellite' as const, label: 'Satellite' },
+              { id: 'terrain' as const, label: 'Terrain' },
+              { id: 'hybrid' as const, label: 'Hybrid' }
+            ].map((tOpt) => (
+              <button
+                key={tOpt.id}
+                type="button"
+                onClick={() => handleMapTypeChange(tOpt.id)}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeMapType === tOpt.id
+                    ? 'bg-slate-900 text-white shadow-2xs'
+                    : 'text-slate-700 hover:text-slate-950'
+                }`}
+              >
+                {tOpt.label}
+              </button>
+            ))}
           </div>
 
-          <button
-            type="button"
-            onClick={handleRecenter}
-            title="Recenter Map"
-            className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors shadow-xs cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Main 65/35 Balanced Grid: Leaflet Map Left (65%), Top 3 Opportunities Right (35%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 border-b border-slate-200">
-        {/* LEFT 65%: Fixed-Height Map (440px on Desktop, 340px on Mobile) */}
-        <div className="lg:col-span-7 xl:col-span-8 relative h-[340px] sm:h-[440px] bg-slate-100 border-b lg:border-b-0 lg:border-r border-slate-200">
-          <div ref={mapContainerRef} className="w-full h-full z-0 select-none" />
-
-          {/* Clean Small Legend Overlay at Bottom-Left */}
-          <div className="absolute bottom-3 left-3 z-[400] pointer-events-none">
-            <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/95 shadow-sm border border-slate-200 text-[10.5px] font-bold text-slate-800 backdrop-blur-xs">
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-900 inline-block border border-white shadow-2xs" />
-                <span>Selected Center</span>
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-xs bg-amber-500 inline-block rotate-45 border border-white shadow-2xs" />
-                <span>Opportunity Spot</span>
-              </span>
-              <span className="text-slate-300">•</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full border border-dashed border-blue-600 inline-block" />
-                <span>{activeRadius} km Catchment</span>
-              </span>
+          {/* 5 km / 10 km Radius Switcher */}
+          {mapState === 'confirmed' && (
+            <div className="inline-flex rounded-xl bg-slate-200/80 p-0.5 border border-slate-300/60 text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={() => handleRadiusToggle(5)}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeRadius === 5
+                    ? 'bg-blue-700 text-white shadow-2xs'
+                    : 'text-slate-700 hover:text-slate-950'
+                }`}
+              >
+                5 km
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRadiusToggle(10)}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                  activeRadius === 10
+                    ? 'bg-blue-700 text-white shadow-2xs'
+                    : 'text-slate-700 hover:text-slate-950'
+                }`}
+              >
+                10 km
+              </button>
             </div>
-          </div>
-        </div>
-
-        {/* RIGHT 35%: Top 3 Recommended Opportunity Areas (Matching 440px Height, Proper Width) */}
-        <div className="lg:col-span-5 xl:col-span-4 p-3.5 sm:p-4 h-auto lg:h-[440px] overflow-y-auto flex flex-col justify-between bg-white space-y-2.5">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Top Opportunities</span>
-              </span>
-              <span className="text-[10px] font-bold text-slate-500">
-                {topSpots.length} within {activeRadius} km
-              </span>
-            </div>
-
-            {/* Top 3 Opportunity Cards */}
-            <div className="space-y-2">
-              {topSpots.map((spot) => {
-                const isSelected = selectedSpot?.id === spot.id;
-                return (
-                  <div
-                    key={spot.id}
-                    onClick={() => handleSelectSpot(spot)}
-                    className={`p-3 rounded-xl border transition-all cursor-pointer text-left ${
-                      isSelected
-                        ? 'border-blue-600 bg-blue-50/70 shadow-xs ring-1 ring-blue-600'
-                        : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2 min-w-0">
-                        <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5 ${
-                          spot.rank === 1
-                            ? 'bg-amber-500 text-white'
-                            : spot.rank === 2
-                            ? 'bg-slate-700 text-white'
-                            : 'bg-slate-300 text-slate-800'
-                        }`}>
-                          #{spot.rank}
-                        </span>
-                        <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 leading-snug line-clamp-2">
-                            {spot.spotName}
-                          </h4>
-                          <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
-                            {spot.distanceKm} km from center
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Score Badge */}
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[11px] font-extrabold bg-amber-100 text-amber-900 shrink-0 font-mono">
-                        {spot.opportunityScore} / 100
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-600 mt-1.5 leading-snug line-clamp-2">
-                      {spot.summaryReason}
-                    </p>
-
-                    <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500">
-                      <span className="flex items-center gap-1 font-semibold text-emerald-700">
-                        <ShieldCheck className="w-3 h-3" />
-                        <span>Confidence: {spot.dataConfidence}%</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectSpot(spot);
-                        }}
-                        className="text-blue-700 font-bold hover:underline inline-flex items-center gap-0.5 cursor-pointer"
-                      >
-                        <span>View factors</span>
-                        <ChevronRight className="w-3 h-3" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* View all opportunity areas button if more exist */}
-          {hasMoreSpots && (
-            <button
-              type="button"
-              onClick={() => setShowAllSpotsModal(true)}
-              className="w-full mt-2 py-1.5 px-3 rounded-lg border border-slate-200 text-xs font-bold text-blue-700 hover:bg-blue-50 transition-colors cursor-pointer text-center"
-            >
-              View all {opportunitySpots.length} opportunity areas
-            </button>
           )}
         </div>
       </div>
 
-      {/* 3. Compact Infrastructure Summary Strip (Height ~80px) */}
-      <div className="p-3 sm:p-3.5 bg-slate-50/90 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-slate-500" />
-          <div>
-            <span className="text-[10px] text-slate-500 font-medium block">
-              {businessCategory === 'dairy' ? 'Nearest Dairy Co-op' : 'Wholesale Market'}
-            </span>
-            <span className="font-bold text-slate-900 font-mono">4.5 km</span>
-          </div>
-        </div>
+      {/* Google Maps Container */}
+      <div className="relative">
+        <div ref={mapContainerRef} className="w-full h-[360px] sm:h-[380px] bg-slate-100 z-0" />
 
-        <div className="flex items-center gap-2">
-          <Store className="w-4 h-4 text-slate-500" />
-          <div>
-            <span className="text-[10px] text-slate-500 font-medium block">Nearest APMC Mandi</span>
-            <span className="font-bold text-slate-900 font-mono">22 km</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Truck className="w-4 h-4 text-slate-500" />
-          <div>
-            <span className="text-[10px] text-slate-500 font-medium block">Highway Access</span>
-            <span className="font-bold text-emerald-700">Good (1.2 km)</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-slate-500" />
-          <div>
-            <span className="text-[10px] text-slate-500 font-medium block">Transport Route</span>
-            <span className="font-bold text-slate-900">Active Commercial</span>
-          </div>
-        </div>
-      </div>
-
-      {/* 4. Selected Spot Detail Drawer / Modal (Compact View Factors) */}
-      {selectedSpot && (
-        <div className="p-4 bg-blue-50/80 border-t border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300">
-                #{selectedSpot.rank} Recommended Spot • {selectedSpot.opportunityScore} / 100
-              </span>
-              <span className="text-xs text-slate-600 font-mono font-medium">
-                {selectedSpot.distanceKm} km from center
-              </span>
-            </div>
-            <h4 className="text-sm font-bold text-slate-900">
-              {selectedSpot.spotName}
-            </h4>
-            <p className="text-xs text-slate-700 max-w-2xl leading-relaxed">
-              {selectedSpot.summaryReason}
-            </p>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 pt-1">
-              <span>Population Reach: <strong className="text-slate-900 font-mono">3,800+</strong></span>
-              <span>•</span>
-              <span>Access: <strong className="text-emerald-700">Paved Transit Corridor</strong></span>
-              <span>•</span>
-              <span>Data Quality: <strong className="text-blue-900 font-bold">{selectedSpot.dataQuality}</strong></span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setSelectedSpot(null)}
-            className="self-start sm:self-center px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50 cursor-pointer shrink-0 shadow-xs"
-          >
-            Close
-          </button>
-        </div>
-      )}
-
-      {/* Modal for All Opportunity Areas */}
-      {showAllSpotsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-5 space-y-4 max-h-[85vh] overflow-y-auto shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>All Recommended Opportunity Areas ({opportunitySpots.length})</span>
-              </h3>
+        {/* Selected POI Modal Popover */}
+        {selectedPoi && (
+          <div className="absolute top-3 left-3 right-3 sm:right-auto sm:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3.5 shadow-xl z-20 space-y-2">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded font-mono ${
+                  selectedPoi.type === 'location'
+                    ? 'bg-blue-100 text-blue-900'
+                    : selectedPoi.type === 'opportunity'
+                    ? 'bg-amber-100 text-amber-900'
+                    : 'bg-emerald-100 text-emerald-900'
+                }`}>
+                  {selectedPoi.type === 'location'
+                    ? 'Selected Center'
+                    : selectedPoi.type === 'opportunity'
+                    ? 'Recommended Opportunity'
+                    : 'Nearby Resource'}
+                </span>
+                <h4 className="text-xs font-black text-slate-950 mt-1">{selectedPoi.title}</h4>
+              </div>
               <button
-                onClick={() => setShowAllSpotsModal(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                type="button"
+                onClick={() => setSelectedPoi(null)}
+                className="text-xs font-bold text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                ✕
               </button>
             </div>
-
-            <div className="space-y-2">
-              {opportunitySpots.map((spot) => (
-                <div
-                  key={spot.id}
-                  onClick={() => {
-                    handleSelectSpot(spot);
-                    setShowAllSpotsModal(false);
-                  }}
-                  className="p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:bg-blue-50/40 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-xs text-slate-900">
-                      #{spot.rank} {spot.spotName}
-                    </span>
-                    <span className="font-mono text-xs font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                      {spot.opportunityScore} / 100
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-600 mt-1">
-                    {spot.summaryReason}
-                  </p>
-                </div>
-              ))}
+            <div className="text-[11px] font-semibold text-slate-700 space-y-1">
+              <p><span className="text-slate-400">Category:</span> {selectedPoi.category}</p>
+              <p><span className="text-slate-400">Distance:</span> <strong className="text-blue-700 font-mono">{selectedPoi.distanceKm} km</strong></p>
+              <p><span className="text-slate-400">Address / Detail:</span> {selectedPoi.address}</p>
+              <p><span className="text-slate-400">Data Source:</span> <span className="text-slate-800 font-mono">{selectedPoi.source}</span></p>
             </div>
+          </div>
+        )}
+
+        {/* Map Legend Overlay */}
+        {mapState === 'confirmed' && (
+          <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs border border-slate-200 px-3 py-1.5 rounded-xl shadow-xs z-10 flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-800">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-950 border border-white inline-block"></span>
+              Selected Center
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rotate-45 bg-amber-500 border border-white inline-block"></span>
+              Recommended Opportunity
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 border border-white inline-block"></span>
+              Nearby Resource ({categoryLabel})
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* COMPACT NEARBY RESOURCES & ANALYTICAL OPPORTUNITY PANEL */}
+      {mapState === 'confirmed' && (
+        <div className="p-4 sm:p-5 bg-slate-50 border-t border-slate-200/80 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* 1. RECOMMENDED OPPORTUNITIES PANEL (UDYORA Analytical Engine) */}
+            <div className="bg-white border border-amber-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-amber-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                    RECOMMENDED OPPORTUNITIES
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-mono">
+                  {opportunitySpots.length} Ranked
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {opportunitySpots.map((opp) => (
+                  <div
+                    key={opp.id}
+                    onClick={() => setSelectedPoi({
+                      title: opp.spotName,
+                      category: opp.categoryLabel,
+                      distanceKm: opp.distanceKm,
+                      address: opp.summaryReason,
+                      source: 'UDYORA Location Intelligence Engine',
+                      type: 'opportunity'
+                    })}
+                    className="p-2.5 rounded-xl border border-slate-100 hover:border-amber-300 bg-amber-50/30 hover:bg-amber-50/80 transition-all cursor-pointer space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                        <span className="w-4 h-4 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[9px] font-black">
+                          {opp.rank}
+                        </span>
+                        {opp.spotName}
+                      </span>
+                      <span className="text-xs font-bold font-mono text-blue-700">{opp.distanceKm} km</span>
+                    </div>
+                    <p className="text-[11px] font-medium text-slate-600 line-clamp-1">{opp.summaryReason}</p>
+                    <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 pt-0.5">
+                      <span>{opp.categoryLabel}</span>
+                      <span className="text-emerald-700 font-mono">Score: {opp.opportunityScore}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2. NEARBY RESOURCES PANEL (Google Places Real POIs) */}
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-4 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <div className="flex items-center gap-2">
+                  <Store className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <h3 className="text-xs font-black text-slate-900 tracking-tight">
+                    NEARBY RESOURCES
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded-full font-mono">
+                  {isLoadingPlaces ? 'Searching...' : `${nearbyResources.length} Verified Places`}
+                </span>
+              </div>
+
+              {isLoadingPlaces ? (
+                <div className="p-4 text-center text-xs font-bold text-slate-500 animate-pulse">
+                  Querying Google Places API for nearby {categoryLabel}...
+                </div>
+              ) : nearbyResources.length === 0 ? (
+                <div className="p-4 bg-slate-50 border border-slate-200/60 rounded-xl text-center text-xs font-semibold text-slate-600">
+                  No verified nearby resources found for this business category within {activeRadius} km.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                  {nearbyResources.map((res) => (
+                    <div
+                      key={res.id}
+                      onClick={() => setSelectedPoi({
+                        title: res.name,
+                        category: res.categoryLabel,
+                        distanceKm: res.distanceKm,
+                        address: res.address,
+                        source: res.dataSource,
+                        type: 'resource'
+                      })}
+                      className="p-2.5 rounded-xl border border-slate-100 hover:border-emerald-300 bg-slate-50/60 hover:bg-emerald-50/40 transition-all cursor-pointer space-y-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 truncate max-w-[200px]">
+                          {res.name}
+                        </span>
+                        <span className="text-xs font-bold font-mono text-emerald-800 shrink-0">{res.distanceKm} km</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px] font-medium text-slate-500">
+                        <span className="truncate max-w-[180px]">{res.address}</span>
+                        <span className="text-slate-400 font-mono">Source: Google Places</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       )}

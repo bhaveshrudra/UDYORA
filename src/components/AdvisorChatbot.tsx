@@ -38,6 +38,7 @@ import {
 } from '../services/speechRecognition';
 import {
   isSpeechSynthesisAvailable,
+  speakLocalizedText,
   playVoiceOutput,
   stopVoiceOutput,
   pauseVoiceOutput,
@@ -264,7 +265,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     setSpeakingMessageId(msg.id);
     setIsSpeechPaused(false);
 
-    const success = playVoiceOutput({
+    speakLocalizedText({
       text: msg.text,
       language,
       onStart: () => {
@@ -275,17 +276,20 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
         setSpeakingMessageId(null);
         setIsSpeechPaused(false);
       },
-      onError: () => {
+      onError: (errMsg) => {
         setSpeakingMessageId(null);
         setIsSpeechPaused(false);
-        setVoiceNotice('Voice playback is unavailable for this language on this browser.');
-        setTimeout(() => setVoiceNotice(null), 3000);
+        setVoiceNotice(errMsg || 'Voice response unavailable. Try again.');
+        setTimeout(() => setVoiceNotice(null), 4000);
+      }
+    }).then((res) => {
+      if (!res.success && res.message) {
+        setSpeakingMessageId(null);
+        setIsSpeechPaused(false);
+        setVoiceNotice(res.message);
+        setTimeout(() => setVoiceNotice(null), 4000);
       }
     });
-
-    if (!success) {
-      setSpeakingMessageId(null);
-    }
   };
 
   const handleStopSpeaking = () => {

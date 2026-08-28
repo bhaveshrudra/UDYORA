@@ -64,7 +64,15 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   //   3. 'ready' → Show the app
   //
   // For /app route, App.tsx skips hero entry and goes straight to the app.
-  const [startupState, setStartupState] = useState<StartupState>('hero-entry');
+  const [startupState, setStartupState] = useState<StartupState>(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path === '/app' || path.startsWith('/app/') || path.startsWith('/admin')) {
+        return 'ready';
+      }
+    }
+    return 'hero-entry';
+  });
 
   // Boot log
   useEffect(() => {

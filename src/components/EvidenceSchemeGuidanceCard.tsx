@@ -397,7 +397,7 @@ export const EvidenceSchemeGuidanceCard: React.FC<EvidenceSchemeGuidanceCardProp
                 >
                   <div className="flex items-start justify-between gap-2">
                     <span className="font-bold text-slate-900 text-xs">
-                      {rec.parameterName || rec.metric || 'Local Ground Parameter'}
+                      {rec.metricName || (rec as any).parameterName || (rec as any).metric || 'Local Ground Parameter'}
                     </span>
                     <div className="shrink-0">
                       {renderEvidenceStatusBadge(rec.status)}
@@ -406,12 +406,12 @@ export const EvidenceSchemeGuidanceCard: React.FC<EvidenceSchemeGuidanceCardProp
 
                   <div className="bg-slate-50 p-2.5 rounded-xl font-mono font-bold text-slate-950 text-xs border border-slate-100">
                     <span className="text-[10px] text-slate-400 font-sans block uppercase">Observed Value</span>
-                    <span>{rec.value || rec.observedValue || '—'}</span>
+                    <span>{rec.value || (rec as any).observedValue || '—'}</span>
                   </div>
 
                   <div className="text-[11px] text-slate-500 flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
                     <span className="truncate">
-                      Source: {rec.source || rec.provenance || 'Official Directory (MoPR / LGD)'}
+                      Source: {rec.source || (rec as any).provenance || 'Official Directory (MoPR / LGD)'}
                     </span>
                     {rec.sourceUrl && (
                       <a
@@ -449,14 +449,14 @@ export const EvidenceSchemeGuidanceCard: React.FC<EvidenceSchemeGuidanceCardProp
                   filteredEvidence.map((rec, idx) => (
                     <tr key={rec.id || idx} className="hover:bg-slate-50/70 transition-colors">
                       <td className="p-3 font-bold text-slate-900">
-                        {rec.parameterName || rec.metric || 'Local Ground Parameter'}
+                        {rec.metricName || (rec as any).parameterName || (rec as any).metric || 'Local Ground Parameter'}
                       </td>
                       <td className="p-3 font-mono font-bold text-slate-950">
-                        {rec.value || rec.observedValue || '—'}
+                        {rec.value || (rec as any).observedValue || '—'}
                       </td>
                       <td className="p-3 text-slate-600 text-[11px]">
                         <div className="flex items-center gap-1.5">
-                          <span className="truncate">{rec.source || rec.provenance || 'Official Directory (MoPR / LGD)'}</span>
+                          <span className="truncate">{rec.source || (rec as any).provenance || 'Official Directory (MoPR / LGD)'}</span>
                           {rec.sourceUrl && (
                             <a
                               href={rec.sourceUrl}

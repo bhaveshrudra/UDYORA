@@ -1,34 +1,36 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   MapPin,
   Briefcase,
-  IndianRupee,
   Mic,
   MicOff,
-  CheckCircle2,
   ArrowRight,
-  ShieldCheck,
   Sparkles,
-  ChevronDown,
-  ChevronUp,
   Info,
-  HelpCircle,
-  Clock,
-  Award,
   Compass,
-  Layers,
-  Building2
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
 import { UserBusinessInput, LocationData } from '../types';
 import { LgdVillage } from '../types/lgd';
-import { LocationResolution, NearbyPlace } from '../types/map';
+import { LocationResolution } from '../types/map';
 import { OFFICIAL_LGD_VILLAGES } from '../data/lgdHierarchy';
-import { convertLgdToLocationData } from '../services/locationHierarchyService';
-import { resolveLocationFromLgdVillage } from '../services/geocodingService';
-import { LocationHierarchySelector } from './LocationHierarchySelector';
-import { LocalitySearchBar } from './LocalitySearchBar';
-import { LocationSummaryCard } from './LocationSummaryCard';
+import {
+  getLgdStates,
+  getLgdDistrictsByState,
+  getLgdSubDistrictsByDistrict,
+  getLocalizedLocationName,
+  convertLgdToLocationData
+} from '../services/locationHierarchyService';
+import {
+  getStateCoordinates,
+  getDistrictCoordinates,
+  getSubDistrictCoordinates,
+  validateAndResolvePincode,
+  INDIA_MAP_DEFAULT
+} from '../services/geocodingService';
 import { InteractiveMap } from './InteractiveMap';
+import { MapErrorBoundary } from './MapErrorBoundary';
 import { useLanguage } from '../i18n/LanguageContext';
 import {
   startVoiceRecognition,
@@ -49,19 +51,186 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
 }) => {
   const { t, language } = useLanguage();
 
-  // Location Resolution State
-  const defaultVillage = OFFICIAL_LGD_VILLAGES[0];
-  const [selectedVillage, setSelectedVillage] = useState<LgdVillage>(defaultVillage);
-  const [locationResolution, setLocationResolution] = useState<LocationResolution>(() =>
-    resolveLocationFromLgdVillage(defaultVillage)
-  );
+  // Phase 1 Location State (Dependent Dropdowns)
+  const statesList = getLgdStates();
+  const [selectedStateCode, setSelectedStateCode] = useState<number | undefined>(undefined);
+  const [selectedDistrictCode, setSelectedDistrictCode] = useState<number | undefined>(undefined);
+  const [selectedSubDistrictCode, setSelectedSubDistrictCode] = useState<number | undefined>(undefined);
+  const [pincode, setPincode] = useState<string>('');
+  const [locationConfirmed, setLocationConfirmed] = useState<boolean>(false);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
+  const [locationResolution, setLocationResolution] = useState<LocationResolution | null>(null);
 
-  // Map & Spatial Catchment State
+  // Map Catchment Radius State
   const [analysisRadius, setAnalysisRadius] = useState<5 | 10>(5);
-  const [observedPlaces, setObservedPlaces] = useState<NearbyPlace[]>([]);
-  const [showCascadeSelector, setShowCascadeSelector] = useState<boolean>(false);
 
-  // Business Category & Idea
+  const handleRadiusChange = useCallback((r: 5 | 10) => {
+    setAnalysisRadius(r);
+  }, []);
+
+  // Derived dropdown options
+  const availableDistricts = selectedStateCode ? getLgdDistrictsByState(selectedStateCode) : [];
+  const availableSubDistricts = selectedDistrictCode ? getLgdSubDistrictsByDistrict(selectedDistrictCode) : [];
+  const currentStateObj = statesList.find((s) => s.lgdCode === selectedStateCode);
+  const dynamicSubDistrictTerm = currentStateObj?.subDistrictTerm || 'Mandal / Block';
+
+  // Derived Progressive Map State & Centroid
+  const mapState: 'india' | 'state' | 'district' | 'mandal' | 'confirmed' = locationConfirmed
+    ? 'confirmed'
+    : selectedSubDistrictCode
+    ? 'mandal'
+    : selectedDistrictCode
+    ? 'district'
+    : selectedStateCode
+    ? 'state'
+    : 'india';
+
+  const mapCenterCoords = locationConfirmed && locationResolution
+    ? { lat: locationResolution.latitude, lng: locationResolution.longitude, zoom: 13 }
+    : selectedSubDistrictCode
+    ? getSubDistrictCoordinates(selectedSubDistrictCode, selectedDistrictCode, selectedStateCode)
+    : selectedDistrictCode
+    ? getDistrictCoordinates(selectedDistrictCode, selectedStateCode)
+    : selectedStateCode
+    ? getStateCoordinates(selectedStateCode)
+    : INDIA_MAP_DEFAULT;
+
+  const locationRequestIdRef = useRef<number>(0);
+
+  // Dropdown Handlers
+  const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    locationRequestIdRef.current += 1;
+    const code = Number(e.target.value) || undefined;
+    setSelectedStateCode(code);
+    setSelectedDistrictCode(undefined);
+    setSelectedSubDistrictCode(undefined);
+    setPincode('');
+    setLocationConfirmed(false);
+    setPincodeError(null);
+    setLocationResolution(null);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    locationRequestIdRef.current += 1;
+    const code = Number(e.target.value) || undefined;
+    setSelectedDistrictCode(code);
+    setSelectedSubDistrictCode(undefined);
+    setPincode('');
+    setLocationConfirmed(false);
+    setPincodeError(null);
+    setLocationResolution(null);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleSubDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    locationRequestIdRef.current += 1;
+    const code = Number(e.target.value) || undefined;
+    setSelectedSubDistrictCode(code);
+    setPincode('');
+    setLocationConfirmed(false);
+    setPincodeError(null);
+    setLocationResolution(null);
+    if (validationError) setValidationError(null);
+  };
+
+  const handlePincodeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.replace(/[^0-9]/g, '').slice(0, 6);
+    setPincode(val);
+
+    if (val.length === 6) {
+      locationRequestIdRef.current += 1;
+      const currentReqId = locationRequestIdRef.current;
+
+      const res = validateAndResolvePincode(val, selectedStateCode, selectedDistrictCode, selectedSubDistrictCode);
+      if (res.isValid && res.coords) {
+        setPincodeError(null);
+
+        const stateObj = statesList.find((s) => s.lgdCode === selectedStateCode);
+        const distObj = availableDistricts.find((d) => d.lgdCode === selectedDistrictCode);
+        const subObj = availableSubDistricts.find((s) => s.lgdCode === selectedSubDistrictCode);
+
+        const newResolution: LocationResolution = {
+          id: `res_p1_${val}`,
+          localityName: res.localityName || subObj?.name || 'Local Area',
+          villageName: res.localityName || subObj?.name || 'Local Area',
+          subDistrictName: subObj?.name || 'Mandal',
+          districtName: distObj?.name || 'District',
+          stateName: stateObj?.name || 'State',
+          stateCode: selectedStateCode || 27,
+          districtCode: selectedDistrictCode || 490,
+          subDistrictCode: selectedSubDistrictCode || 270101,
+          pincode: val,
+          latitude: res.coords.lat,
+          longitude: res.coords.lng,
+          administrativeSource: 'Local Government Directory (LGD), MoPR',
+          mappingSource: 'OpenStreetMap / Nominatim Spatial Engine',
+          confidence: 0.96,
+          formattedAddress: `${res.localityName || subObj?.name}, ${subObj?.name} ${dynamicSubDistrictTerm}, ${distObj?.name} District, ${stateObj?.name} - ${val}`,
+          areaType: 'Rural'
+        };
+
+        if (currentReqId !== locationRequestIdRef.current) return;
+
+        setLocationResolution(newResolution);
+        setLocationConfirmed(true);
+
+        if (import.meta.env?.DEV) {
+          console.log(`[LOCATION] User selected: ${newResolution.localityName}`);
+          console.log(`[LOCATION STATE] Canonical location updated: ${newResolution.localityName}`);
+          console.log(`[MAP] Using location: ${newResolution.localityName}`);
+        }
+
+        if (validationError) setValidationError(null);
+      } else {
+        setLocationConfirmed(false);
+        setLocationResolution(null);
+        setPincodeError(res.errorMsg || t('loc.pincodeError'));
+      }
+    } else {
+      setLocationConfirmed(false);
+      setLocationResolution(null);
+      setPincodeError(null);
+    }
+  };
+
+  const handleUseDemoScenario = () => {
+    setSelectedStateCode(27); // Maharashtra
+    setSelectedDistrictCode(490); // Pune
+    setSelectedSubDistrictCode(270101); // Haveli
+    setPincode('412801');
+    setPincodeError(null);
+    setLocationConfirmed(true);
+
+    const demoRes: LocationResolution = {
+      id: 'res_demo_khed',
+      localityName: 'Khed Shivapur',
+      villageName: 'Khed Shivapur',
+      subDistrictName: 'Haveli',
+      districtName: 'Pune',
+      stateName: 'Maharashtra',
+      stateCode: 27,
+      districtCode: 490,
+      subDistrictCode: 270101,
+      pincode: '412801',
+      latitude: 18.3517,
+      longitude: 73.8567,
+      administrativeSource: 'Local Government Directory (LGD), MoPR',
+      mappingSource: 'OpenStreetMap / Nominatim Spatial Engine',
+      confidence: 0.98,
+      formattedAddress: 'Khed Shivapur, Haveli Taluka, Pune District, Maharashtra - 412801',
+      areaType: 'Rural'
+    };
+    setLocationResolution(demoRes);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleChangeLocation = () => {
+    setLocationConfirmed(false);
+    setPincodeError(null);
+  };
+
+  // Business Category & Idea State
   const [businessCategory, setBusinessCategory] = useState<'dairy' | 'tailoring' | 'retail' | 'poultry' | 'custom'>(
     initialValues?.businessCategoryId || 'dairy'
   );
@@ -75,7 +244,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
   const [rawCapitalString, setRawCapitalString] = useState<string>('100000');
   const [isEditingCapital, setIsEditingCapital] = useState<boolean>(false);
 
-  // Optional Advanced Details Accordion
+  // Optional Advanced Profile State
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [experienceYears, setExperienceYears] = useState<number>(initialValues?.experienceYears || 2);
   const [existingBusiness, setExistingBusiness] = useState<boolean>(initialValues?.existingBusiness || false);
@@ -84,6 +253,9 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
   // Speech Recognition State
   const [isListening, setIsListening] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
+
+  // Form Validation Error State
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     setSpeechSupported(isSpeechRecognitionAvailable());
@@ -104,6 +276,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
         language,
         onResult: (transcript) => {
           setBusinessIdea((prev) => (prev ? `${prev} ${transcript}` : transcript));
+          if (validationError) setValidationError(null);
         },
         onEnd: () => {
           setIsListening(false);
@@ -116,12 +289,10 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
     }
   };
 
-  // Capital quick presets
-  const capitalPresets = [50000, 100000, 150000, 200000, 500000];
-
   const handlePresetCapital = (amount: number) => {
     setAvailableCapital(amount);
     setRawCapitalString(String(amount));
+    if (validationError) setValidationError(null);
   };
 
   const handleRawCapitalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,72 +300,37 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
     setRawCapitalString(val);
     const num = Number(val) || 0;
     setAvailableCapital(num);
+    if (validationError) setValidationError(null);
   };
 
-  // Handle Demo Scenario shortcut updates
-  const handleScenarioChange = (scenario: 'dairy' | 'tailoring' | 'retail') => {
-    if (scenario === 'dairy') {
-      setBusinessCategory('dairy');
-      setBusinessIdea('Commercial Micro Dairy Farming with 8-10 high-yield milch cows, hygienic shed and local chilling center connectivity.');
-      setAvailableCapital(100000);
-      setRawCapitalString('100000');
-    } else if (scenario === 'tailoring') {
-      setBusinessCategory('tailoring');
-      setBusinessIdea('Custom Garment & Boutique Tailoring Workshop with 4 industrial sewing machines and bridal embroidery.');
-      setAvailableCapital(50000);
-      setRawCapitalString('50000');
-    } else if (scenario === 'retail') {
-      setBusinessCategory('retail');
-      setBusinessIdea('Rural Kirana & Essential Provisions Retail Store with packaged goods, dairy distribution and digital UPI billing.');
-      setAvailableCapital(75000);
-      setRawCapitalString('75000');
-    }
-  };
-
-  // Handle Locality Resolution from Search Bar
-  const handleLocationResolved = (resolution: LocationResolution) => {
-    setLocationResolution(resolution);
-    // Also find or approximate LGD village
-    const matchedLgd = resolution.villageCode
-      ? OFFICIAL_LGD_VILLAGES.find((v) => v.lgdCode === resolution.villageCode)
-      : OFFICIAL_LGD_VILLAGES.find(
-          (v) => v.name.toLowerCase() === resolution.localityName.toLowerCase()
-        );
-    if (matchedLgd) {
-      setSelectedVillage(matchedLgd);
-    }
-  };
-
-  // Handle Selection from Cascade Selector
-  const handleSelectVillageFromCascade = (vil: LgdVillage) => {
-    setSelectedVillage(vil);
-    setLocationResolution(resolveLocationFromLgdVillage(vil));
-  };
-
-  // Handle Form Submission
+  // Form Submission Handler
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!locationResolution) {
-      alert('Please select or search your target location.');
+    if (!locationConfirmed || !locationResolution) {
+      setValidationError('Please select your State, District, Mandal/Block, and enter a valid 6-digit pincode.');
       return;
     }
     if (!businessIdea.trim()) {
-      alert('Please describe your business plan or idea.');
+      setValidationError('Please enter a description for your business plan or idea.');
       return;
     }
     if (availableCapital < 10000) {
-      alert('Minimum own equity capital for feasibility assessment is ₹10,000.');
+      setValidationError('Minimum own equity capital for feasibility assessment is ₹10,000.');
       return;
     }
 
-    const locationData: LocationData = convertLgdToLocationData(selectedVillage);
-    // Attach exact coordinates and map resolution
+    setValidationError(null);
+
+    const matchedVillage = OFFICIAL_LGD_VILLAGES[0];
+    const locationData: LocationData = convertLgdToLocationData(matchedVillage);
+    locationData.village = locationResolution.villageName || locationResolution.localityName;
+    locationData.block = `${locationResolution.subDistrictName} (${dynamicSubDistrictTerm})`;
+    locationData.district = locationResolution.districtName;
+    locationData.state = locationResolution.stateName;
+    locationData.pincode = locationResolution.pincode;
     locationData.latitude = locationResolution.latitude;
     locationData.longitude = locationResolution.longitude;
-    locationData.administrativeSource = locationResolution.administrativeSource;
-    locationData.mappingSource = locationResolution.mappingSource;
-    locationData.observedNearbyPlaces = observedPlaces;
 
     const inputData: UserBusinessInput = {
       locationId: locationData.id,
@@ -215,67 +351,199 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
     onSubmit(inputData);
   };
 
-  // Indicative Project Cost & Financing Math Preview
   const indicativeProjectCost = Math.round(availableCapital / 0.10);
   const indicativeFinancing = Math.round(indicativeProjectCost - availableCapital);
-  const indicativeEMI = Math.round((indicativeFinancing * (9.5 / 1200) * Math.pow(1 + 9.5 / 1200, 60)) / (Math.pow(1 + 9.5 / 1200, 60) - 1));
+  const capitalPresets = [50000, 100000, 150000, 200000, 500000];
 
   return (
-    <form onSubmit={handleSubmit} className="select-none max-w-7xl mx-auto">
+    <form onSubmit={handleSubmit} className="select-none max-w-7xl mx-auto space-y-4">
+      {/* Inline Validation Banner */}
+      {validationError && (
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-sm font-semibold shadow-xs">
+          <Info className="w-5 h-5 text-rose-600 shrink-0" />
+          <span>{validationError}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* =========================================================================
-            LEFT COLUMN: BUSINESS INPUTS & LOCALITY SEARCH (~60% width)
+            LEFT COLUMN: MANUAL LOCATION INPUTS & BUSINESS FORM (~60% width)
             ========================================================================= */}
         <div className="lg:col-span-7 space-y-6">
 
-          {/* 1. LOCALITY SEARCH & CONFIRMED LOCATION */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
+          {/* 1. LOCATION SELECTION SECTION */}
+          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <span className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center text-xs font-black">
                   01
                 </span>
                 <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-950">
-                  Where is your business located?
+                  Target Business Location
                 </h2>
               </div>
               <button
                 type="button"
-                onClick={() => setShowCascadeSelector(!showCascadeSelector)}
-                className="text-[11px] font-bold text-slate-500 hover:text-blue-700 transition-colors cursor-pointer flex items-center gap-1"
+                onClick={handleUseDemoScenario}
+                className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
               >
-                <span>{showCascadeSelector ? 'Use Search Bar' : 'Administrative LGD Explorer'}</span>
-                {showCascadeSelector ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {t('loc.useDemoBtn')}
               </button>
             </div>
 
-            {/* Practical Locality Search Bar */}
-            {!showCascadeSelector && (
-              <div className="space-y-3">
-                <LocalitySearchBar
-                  onLocationResolved={handleLocationResolved}
-                  currentResolution={locationResolution}
-                />
-                <LocationSummaryCard
-                  location={locationResolution}
-                  onEditLocation={() => {}}
-                />
-              </div>
-            )}
+            {/* UNCONFIRMED FORM: Dependent Dropdowns */}
+            {!locationConfirmed ? (
+              <div className="space-y-4 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* State Select */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {t('loc.stateLabel')}
+                    </label>
+                    <select
+                      value={selectedStateCode || ''}
+                      onChange={handleStateChange}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-hidden cursor-pointer"
+                    >
+                      <option value="">{t('loc.selectState')}</option>
+                      {statesList.map((st) => (
+                        <option key={st.lgdCode} value={st.lgdCode}>
+                          {getLocalizedLocationName(st, language)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            {/* Optional Administrative Cascade Selector */}
-            {showCascadeSelector && (
-              <div className="pt-2 space-y-3 border-t border-slate-100">
-                <LocationHierarchySelector
-                  selectedVillage={selectedVillage}
-                  onSelectVillage={handleSelectVillageFromCascade}
-                  onSelectDemoScenario={handleScenarioChange}
-                />
+                  {/* District Select */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {t('loc.districtLabel')}
+                    </label>
+                    <select
+                      disabled={!selectedStateCode}
+                      value={selectedDistrictCode || ''}
+                      onChange={handleDistrictChange}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-hidden disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <option value="">{t('loc.selectDistrict')}</option>
+                      {availableDistricts.map((d) => (
+                        <option key={d.lgdCode} value={d.lgdCode}>
+                          {getLocalizedLocationName(d, language)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Mandal / Sub-District Select */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {dynamicSubDistrictTerm} *
+                    </label>
+                    <select
+                      disabled={!selectedDistrictCode}
+                      value={selectedSubDistrictCode || ''}
+                      onChange={handleSubDistrictChange}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900 focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-hidden disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      <option value="">{t('loc.selectMandal')}</option>
+                      {availableSubDistricts.map((sd) => (
+                        <option key={sd.lgdCode} value={sd.lgdCode}>
+                          {getLocalizedLocationName(sd, language)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Pincode Input */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-slate-700">
+                      {t('loc.pincodeLabel')}
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      disabled={!selectedSubDistrictCode}
+                      value={pincode}
+                      onChange={handlePincodeInputChange}
+                      placeholder={t('loc.enterPincode')}
+                      className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-700 focus:ring-2 focus:ring-blue-100 outline-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                {/* Inline Pincode Error Banner */}
+                {pincodeError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-center gap-2">
+                    <Info className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{pincodeError}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* LOCATION CONFIRMED CARD */
+              <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase font-mono text-emerald-900 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    {t('loc.confirmedTitle')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleChangeLocation}
+                    className="text-xs font-bold text-blue-700 hover:text-blue-900 underline cursor-pointer"
+                  >
+                    {t('loc.changeLocationBtn')}
+                  </button>
+                </div>
+
+                {locationResolution && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-semibold text-slate-800">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">State:</span>
+                      <span>
+                        {getLocalizedLocationName(
+                          statesList.find((s) => s.lgdCode === selectedStateCode),
+                          language
+                        ) || locationResolution.stateName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">District:</span>
+                      <span>
+                        {getLocalizedLocationName(
+                          availableDistricts.find((d) => d.lgdCode === selectedDistrictCode),
+                          language
+                        ) || locationResolution.districtName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">{dynamicSubDistrictTerm}:</span>
+                      <span>
+                        {getLocalizedLocationName(
+                          availableSubDistricts.find((sd) => sd.lgdCode === selectedSubDistrictCode),
+                          language
+                        ) || locationResolution.subDistrictName}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Pincode:</span>
+                      <span className="font-mono font-bold">{locationResolution.pincode}</span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-2">
+                      <span className="text-[10px] text-slate-500 block">Geographic Coordinates:</span>
+                      <span className="font-mono text-blue-800">
+                        {locationResolution.latitude.toFixed(4)}° N, {locationResolution.longitude.toFixed(4)}° E
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* 2. BUSINESS PLANNING */}
+          {/* 2. BUSINESS PLANNING SECTION */}
           <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs space-y-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -286,10 +554,9 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   What are you planning to build?
                 </h2>
               </div>
-              <span className="text-xs font-medium text-slate-400 font-mono">Step 2 of 3</span>
             </div>
 
-            {/* Business Category Selection Pills */}
+            {/* Category Pills */}
             <div className="space-y-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
                 Business Sector Category
@@ -306,10 +573,13 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                     type="button"
                     onClick={() => {
                       setBusinessCategory(cat.id);
-                      if (cat.id === 'dairy') handleScenarioChange('dairy');
-                      else if (cat.id === 'tailoring') handleScenarioChange('tailoring');
-                      else if (cat.id === 'retail') handleScenarioChange('retail');
-                      else {
+                      if (cat.id === 'dairy') {
+                        setBusinessIdea('Commercial Micro Dairy Farming with 8-10 high-yield milch cows, hygienic shed and local chilling center connectivity.');
+                      } else if (cat.id === 'tailoring') {
+                        setBusinessIdea('Custom Garment & Boutique Tailoring Workshop with 4 industrial sewing machines and bridal embroidery.');
+                      } else if (cat.id === 'retail') {
+                        setBusinessIdea('Rural Kirana & Essential Provisions Retail Store with packaged goods, dairy distribution and digital UPI billing.');
+                      } else {
                         setBusinessIdea('Commercial poultry broiler rearing unit with automated feeder & biocontrol shed.');
                       }
                     }}
@@ -326,7 +596,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               </div>
             </div>
 
-            {/* Business Description Textarea with Voice Dictation */}
+            {/* Business Description */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -348,19 +618,17 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 )}
               </div>
 
-              <div className="relative">
-                <textarea
-                  rows={3}
-                  value={businessIdea}
-                  onChange={(e) => setBusinessIdea(e.target.value)}
-                  placeholder="Describe your micro-enterprise plan, capacity, machinery, and market..."
-                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-700 focus:ring-3 focus:ring-blue-100 transition-all outline-hidden resize-none"
-                />
-              </div>
+              <textarea
+                rows={3}
+                value={businessIdea}
+                onChange={(e) => setBusinessIdea(e.target.value)}
+                placeholder="Describe your micro-enterprise plan..."
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-700 focus:ring-3 focus:ring-blue-100 transition-all outline-hidden resize-none"
+              />
             </div>
           </div>
 
-          {/* 3. OWN EQUITY CAPITAL */}
+          {/* 3. CAPITAL SECTION */}
           <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-7 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -376,7 +644,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               </span>
             </div>
 
-            {/* Quick Touch Capital Presets */}
+            {/* Quick Presets */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
               {capitalPresets.map((amount) => (
                 <button
@@ -394,7 +662,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               ))}
             </div>
 
-            {/* Capital Input Field */}
+            {/* Input Field */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-bold text-sm">
                 ₹
@@ -412,79 +680,9 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 className="w-full pl-8 pr-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-100 rounded-2xl text-base sm:text-lg font-mono font-black text-slate-950 transition-all outline-hidden"
               />
             </div>
-
-            {/* Real-time Math Preview Bar */}
-            <div className="grid grid-cols-3 gap-2 p-3 bg-blue-50/60 border border-blue-200/80 rounded-2xl text-xs font-mono">
-              <div>
-                <span className="text-[10px] text-slate-500 block uppercase">Project Cost</span>
-                <span className="font-black text-slate-950">₹{indicativeProjectCost.toLocaleString('en-IN')}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-500 block uppercase">Bank Loan</span>
-                <span className="font-black text-blue-900">₹{indicativeFinancing.toLocaleString('en-IN')}</span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-500 block uppercase">Est. EMI (60m)</span>
-                <span className="font-black text-slate-950">₹{indicativeEMI.toLocaleString('en-IN')}/m</span>
-              </div>
-            </div>
           </div>
 
-          {/* 4. OPTIONAL ADVANCED PARAMETERS ACCORDION */}
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-5 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="w-full flex items-center justify-between text-left cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-blue-700" />
-                <span className="text-xs sm:text-sm font-bold text-slate-900">
-                  Optional Entrepreneur & Subsidy Profile
-                </span>
-              </div>
-              <span className="text-xs font-bold text-blue-700 flex items-center gap-1">
-                {showAdvanced ? 'Hide' : 'Add Details'}
-                {showAdvanced ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </span>
-            </button>
-
-            {showAdvanced && (
-              <div className="pt-4 mt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">Beneficiary Category (For Subsidies)</label>
-                  <select
-                    value={beneficiaryCategory}
-                    onChange={(e) => setBeneficiaryCategory(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-hidden focus:border-blue-700"
-                  >
-                    <option value="General">General Category (25% Rural Subsidy)</option>
-                    <option value="Women">Women Entrepreneur (35% Special Rural Subsidy)</option>
-                    <option value="SC/ST">SC / ST Category (35% Special Rural Subsidy)</option>
-                    <option value="OBC">OBC Category (35% Special Rural Subsidy)</option>
-                    <option value="Minority">Minority Category (35% Special Rural Subsidy)</option>
-                    <option value="Ex-Servicemen">Ex-Servicemen / PwD (35% Special Subsidy)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block font-bold text-slate-700">Relevant Domain Experience</label>
-                  <select
-                    value={experienceYears}
-                    onChange={(e) => setExperienceYears(Number(e.target.value))}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-hidden focus:border-blue-700"
-                  >
-                    <option value={0}>First-time Entrepreneur (0 Years)</option>
-                    <option value={2}>1 - 2 Years Family / Practical Experience</option>
-                    <option value={5}>3 - 5 Years Operating Experience</option>
-                    <option value={10}>5+ Years Experienced Enterprise</option>
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* SUBMIT BUTTON (Desktop View) */}
+          {/* SUBMIT BUTTON (Desktop) */}
           <div className="hidden lg:block pt-2">
             <button
               type="submit"
@@ -507,44 +705,22 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
         </div>
 
         {/* =========================================================================
-            RIGHT COLUMN: INTERACTIVE MAP & SPATIAL CATCHMENT (~40% width)
+            RIGHT COLUMN: PROGRESSIVE MAP DISPLAY (~40% width)
+            Mobile Ordering: Location fields -> Map -> Confirmation
             ========================================================================= */}
         <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
-          <div className="bg-white border border-slate-200/90 rounded-3xl p-4 sm:p-5 shadow-xs space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase text-blue-900 font-mono tracking-wider flex items-center gap-1.5">
-                  <Compass className="w-3.5 h-3.5 text-blue-700" />
-                  Locality & Catchment Map
-                </span>
-              </div>
-              <span className="text-[10px] font-bold text-slate-600 font-mono bg-slate-100 px-2 py-0.5 rounded">
-                📍 {locationResolution.localityName}
-              </span>
-            </div>
-
-            {/* Interactive Google Map with Radius & POI Overlay */}
+          <MapErrorBoundary>
             <InteractiveMap
-              key={`${locationResolution.latitude}-${locationResolution.longitude}-${analysisRadius}`}
               location={locationResolution}
-              businessCategory={businessCategory}
+              mapState={mapState}
+              centerCoords={mapCenterCoords}
               radiusKm={analysisRadius}
-              onRadiusChange={(r) => setAnalysisRadius(r)}
-              onPlacesLoaded={(p) => setObservedPlaces(p)}
+              onRadiusChange={handleRadiusChange}
+              businessCategory={businessCategory}
             />
+          </MapErrorBoundary>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1 text-xs">
-              <div className="flex items-center justify-between font-bold text-slate-800">
-                <span>Spatial Catchment Proximity</span>
-                <span className="font-mono text-blue-700">{analysisRadius} km Analysis Zone</span>
-              </div>
-              <p className="text-[11px] text-slate-500 leading-tight">
-                Map overlays observed infrastructure nodes (Banks, BMC Chilling Units, APMC Mandis, Transport) to evaluate supply chain feasibility.
-              </p>
-            </div>
-          </div>
-
-          {/* SUBMIT BUTTON (Mobile only) */}
+          {/* SUBMIT BUTTON (Mobile) */}
           <div className="block lg:hidden pt-2">
             <button
               type="submit"

@@ -26,6 +26,8 @@ export interface TranslationDictionary {
   'nav.startAnalysis': string;
   'nav.printReport': string;
   'nav.newAnalysis': string;
+  'nav.app': string;
+  'nav.reset': string;
   'nav.newSearch': string;
   'brand.name': string;
   'brand.tagline': string;
@@ -106,6 +108,26 @@ export interface TranslationDictionary {
   'form.location.customPlaceholder': string;
   'form.location.customNote': string;
   'form.location.useVerified': string;
+
+  // Phase 1 Location Input & Progressive Map Keys
+  'loc.stateLabel': string;
+  'loc.districtLabel': string;
+  'loc.mandalLabel': string;
+  'loc.pincodeLabel': string;
+  'loc.selectState': string;
+  'loc.selectDistrict': string;
+  'loc.selectMandal': string;
+  'loc.enterPincode': string;
+  'loc.confirmedTitle': string;
+  'loc.changeLocationBtn': string;
+  'loc.useDemoBtn': string;
+  'loc.mapInitialPrompt': string;
+  'loc.pincodeError': string;
+  'loc.pincodeUnavailable': string;
+  'loc.radius5km': string;
+  'loc.radius10km': string;
+  'loc.legendSelected': string;
+  'loc.legendCatchment': string;
   'form.sector.label': string;
   'form.title.label': string;
   'form.capital.label': string;
@@ -169,6 +191,64 @@ export interface TranslationDictionary {
   'dash.tab.market': string;
   'dash.tab.risks': string;
   'dash.tab.evidence': string;
+  'dash.tab.evidenceSchemes'?: string;
+
+  // App Section Sticky Subnav
+  'nav.sec.overview': string;
+  'nav.sec.location': string;
+  'nav.sec.finance': string;
+  'nav.sec.guidance': string;
+  'nav.sec.market': string;
+  'nav.sec.risks': string;
+  'nav.sec.evidence': string;
+
+  // Visual Decision Dashboard Keys
+  'dash.snapshot.business': string;
+  'dash.snapshot.location': string;
+  'dash.snapshot.capital': string;
+  'dash.snapshot.status': string;
+  'dash.snapshot.completed': string;
+
+  'dash.metric.feasibility': string;
+  'dash.metric.confidence': string;
+  'dash.metric.market': string;
+  'dash.metric.financial': string;
+
+  'dash.chart.feasibilityTitle': string;
+  'dash.chart.capitalTitle': string;
+  'dash.chart.riskTitle': string;
+  'dash.chart.ownCapital': string;
+  'dash.chart.financing': string;
+  'dash.chart.marketFactor': string;
+  'dash.chart.competitionFactor': string;
+  'dash.chart.businessFactor': string;
+  'dash.chart.financialFactor': string;
+
+  'dash.location.title': string;
+  'dash.location.subtitle': string;
+  'dash.location.viewFactors': string;
+  'dash.location.coopDist': string;
+  'dash.location.apmcDist': string;
+  'dash.location.highwayAccess': string;
+  'dash.location.transportStatus': string;
+
+  'dash.fin.title': string;
+  'dash.fin.viewDetails': string;
+
+  'dash.scheme.title': string;
+  'dash.scheme.whyMatches': string;
+  'dash.scheme.viewEvidence': string;
+
+  'dash.risk.title': string;
+  'dash.risk.viewAll': string;
+
+  'dash.advisory.title': string;
+  'dash.advisory.action': string;
+  'dash.advisory.opportunity': string;
+  'dash.advisory.mainRisk': string;
+  'dash.advisory.gap': string;
+  'dash.advisory.nextStep': string;
+  'dash.advisory.closeModal': string;
 
   // Feasibility Gauge
   'feasibility.statusBadge': string;

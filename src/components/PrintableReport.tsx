@@ -716,10 +716,8 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
         </div>
       </div>
 
-      {/* =========================================================================
-          PAGE BREAK
-          ========================================================================= */}
-      <div className="print-page-break my-6 print:my-0" style={{ pageBreakAfter: 'always', breakAfter: 'page' }} />
+      {/* Visual Screen Spacer (Hidden during printing to prevent double page breaks) */}
+      <div className="my-6 print:hidden" />
 
       {/* =========================================================================
           PAGE 2 CONTAINER (STRICT EXACT 1-PAGE BUDGET)

@@ -74,19 +74,23 @@ export function App() {
 
   // Entrepreneur App state
   const [currentScreen, setCurrentScreen] = useState<'form' | 'executing' | 'result'>('form');
+  const [analysisState, setAnalysisState] = useState<'idle' | 'validating' | 'running' | 'completed' | 'error'>('idle');
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [currentInput, setCurrentInput] = useState<UserBusinessInput | undefined>(undefined);
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
 
-  // Multi-agent execution steps
-  const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>([
-    { id: 'evidence', name: 'Evidence & Data Agent', role: 'Census & Market Data Verification', status: 'PENDING', progressPct: 0, message: 'Ready to query localized datasets' },
-    { id: 'business', name: 'Business Analysis Agent', role: 'Unit Economics & Capacity Sizing', status: 'PENDING', progressPct: 0, message: 'Waiting for evidence layer' },
-    { id: 'market', name: 'Market Intelligence Agent', role: 'Local Demand & Infrastructure Proximity', status: 'PENDING', progressPct: 0, message: 'Waiting for business model' },
-    { id: 'finance', name: 'Financial Advisor Agent', role: 'CapEx, OpEx & Debt Service Math', status: 'PENDING', progressPct: 0, message: 'Waiting for unit economics' },
-    { id: 'schemes', name: 'Scheme Guidance Agent', role: 'Government Schemes Rule-Matching', status: 'PENDING', progressPct: 0, message: 'Waiting for financial sizing' },
-    { id: 'risks', name: 'Risk Analysis Agent', role: 'Risk Scoring & Mitigation Planning', status: 'PENDING', progressPct: 0, message: 'Waiting for scheme & market data' },
-    { id: 'aggregator', name: 'Aggregator & Validator', role: 'Synthesis & Consistency Auditing', status: 'PENDING', progressPct: 0, message: 'Waiting for all agent outputs' }
-  ]);
+  // Multi-agent execution steps (all 8 official agents)
+  const INITIAL_AGENT_STEPS: AgentStepStatus[] = [
+    { id: 'evidence', name: 'Evidence & Data Agent', role: 'Ground Truth Verification & Census Data', status: 'PENDING', progressPct: 0, message: 'Ready to query localized datasets' },
+    { id: 'business', name: 'Business Analysis Agent', role: 'Operating Scale, Capacity & Resource Requirements', status: 'PENDING', progressPct: 0, message: 'Waiting for evidence layer' },
+    { id: 'market', name: 'Market Intelligence Agent', role: 'Catchment Demographics & Competitor Analysis', status: 'PENDING', progressPct: 0, message: 'Waiting for business model' },
+    { id: 'finance', name: 'Financial Advisor Agent', role: 'Deterministic Unit Economics & Repayment Formulas', status: 'PENDING', progressPct: 0, message: 'Waiting for unit economics' },
+    { id: 'scheme', name: 'Scheme Guidance Agent', role: 'Official Government Scheme Rules & Subsidies', status: 'PENDING', progressPct: 0, message: 'Waiting for financial sizing' },
+    { id: 'risk', name: 'Risk Analysis Agent', role: 'Multi-Dimensional Vulnerability Assessment', status: 'PENDING', progressPct: 0, message: 'Waiting for scheme & market data' },
+    { id: 'validator', name: 'Aggregator & Validator', role: 'Cross-Agent Mathematical & Quality Audit', status: 'PENDING', progressPct: 0, message: 'Waiting for all agent outputs' },
+    { id: 'final', name: 'Final Advisor & Report', role: 'Synthesized Feasibility Score & Advisory Report', status: 'PENDING', progressPct: 0, message: 'Waiting for validation' }
+  ];
+  const [agentSteps, setAgentSteps] = useState<AgentStepStatus[]>(INITIAL_AGENT_STEPS);
   const [activeStepId, setActiveStepId] = useState<string>('evidence');
 
   // Sync browser popstate
@@ -131,13 +135,20 @@ export function App() {
   };
 
   const handleNavigateToApp = (_scenario?: 'dairy' | 'tailoring' | 'retail') => {
+    console.log('[UDYORA ROUTING] handleNavigateToApp triggered', { _scenario });
     navigateTo('app');
     setCurrentScreen('form');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleNavigateHome = () => {
     navigateTo('landing');
     setCurrentScreen('form');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleNavigateToAdmin = () => {
@@ -148,17 +159,26 @@ export function App() {
     } else {
       navigateTo('admin_login');
     }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleAdminLoginSuccess = (user: AdminUser) => {
     setCurrentAdminUser(user);
     navigateTo('admin', 'dashboard');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleAdminLogout = () => {
     logoutAdmin();
     setCurrentAdminUser(null);
     navigateTo('admin_login');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleAdminSubNavigate = (sub: AdminSubRoute) => {
@@ -167,22 +187,34 @@ export function App() {
     if (window.location.pathname !== targetPath) {
       window.history.pushState({}, '', targetPath);
     }
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handleFormSubmit = async (input: UserBusinessInput) => {
+    // In-flight double submission prevention
+    if (analysisState === 'running') {
+      console.log('[UDYORA ANALYZE] Duplicate trigger ignored: Analysis already in progress.');
+      return;
+    }
+
+    setAnalysisState('running');
+    setAnalysisError(null);
     setCurrentInput(input);
     setCurrentScreen('executing');
     setAnalysisReport(null);
 
     // Reset steps
-    setAgentSteps((prev) =>
-      prev.map((s) => ({
+    setAgentSteps(
+      INITIAL_AGENT_STEPS.map((s) => ({
         ...s,
         status: 'PENDING',
         progressPct: 0,
         message: 'Queued...'
       }))
     );
+    setActiveStepId('evidence');
 
     try {
       const report = await executeMultiAgentWorkflow(input, (updatedSteps, activeId) => {
@@ -191,20 +223,32 @@ export function App() {
       });
 
       setAnalysisReport(report);
+      setAnalysisState('completed');
       setCurrentScreen('result');
+      console.log('[UDYORA ANALYZE] navigation complete');
 
       // Record in Admin Assessments repository
-      recordAssessment(report);
-    } catch (err) {
-      console.error('Multi-agent analysis execution failed:', err);
-      alert('An error occurred during analysis. Please try again.');
+      try {
+        recordAssessment(report);
+      } catch (recErr) {
+        console.warn('Failed to record assessment in admin store:', recErr);
+      }
+    } catch (err: any) {
+      console.error('[UDYORA ANALYZE ERROR]', err);
+      setAnalysisState('error');
+      setAnalysisError(err?.message || 'Unable to complete the analysis.');
       setCurrentScreen('form');
     }
   };
 
   const handleReset = () => {
+    setAnalysisState('idle');
+    setAnalysisError(null);
     setCurrentScreen('form');
     setAnalysisReport(null);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
   };
 
   const handlePrint = () => {
@@ -233,9 +277,10 @@ export function App() {
     startupState === 'hero-entry' &&
     currentRoute === 'landing';
 
-  // Show language selection gate for first-time users (no stored language)
+  // Show language selection gate for first-time users on the landing route only
   const shouldShowLanguageGate =
-    startupState === 'select-language';
+    startupState === 'select-language' &&
+    currentRoute === 'landing';
 
   // =========================================================================
   // 1. HERO ENTRY ANIMATION (landing route only)
@@ -268,12 +313,10 @@ export function App() {
   // 3. READY → ROUTE TO DESTINATION
   // =========================================================================
 
-  // For /app route that was opened directly while startupState was hero-entry,
-  // we need to skip to ready
-  if (startupState === 'hero-entry' && currentRoute !== 'landing') {
-    // Auto-advance past hero entry for non-landing routes
+  // For non-landing routes opened directly while startupState was hero-entry or select-language,
+  // we auto-advance directly to ready
+  if (startupState !== 'ready' && currentRoute !== 'landing') {
     completeHeroEntry();
-    return null;
   }
 
   // ROUTE: ADMIN LOGIN (/admin/login)
@@ -380,10 +423,47 @@ export function App() {
                     </p>
                   </div>
 
+                  {/* Analysis Error Alert UI */}
+                  {analysisError && (
+                    <div className="max-w-3xl mx-auto p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-sm space-y-3 animate-fadeIn">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-700 shrink-0 font-bold text-sm">
+                          ⚠️
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-black text-rose-950">Unable to complete the analysis.</h3>
+                          <p className="text-xs text-rose-700 mt-0.5">{analysisError}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        {currentInput && (
+                          <button
+                            type="button"
+                            onClick={() => handleFormSubmit(currentInput)}
+                            className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                          >
+                            Try Again
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAnalysisError(null);
+                            setAnalysisState('idle');
+                          }}
+                          className="px-4 py-2 bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        >
+                          Back to Inputs
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Input Form with Guided 3-Numbered Sequence */}
                   <BusinessInputForm
                     onSubmit={handleFormSubmit}
-                    isLoading={false}
+                    isLoading={analysisState === 'running'}
+                    initialValues={currentInput}
                   />
                 </div>
               )}

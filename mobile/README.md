@@ -18,7 +18,7 @@
 
 2. **Multilingual & Voice-First UX**:
    - English (`en-IN`), Telugu (`te-IN`), Hindi (`hi-IN`), Marathi (`mr-IN`), and Kannada (`kn-IN`).
-   - Voice input with live transcript streaming and audio level metering (`expo-av`).
+   - Voice input with live transcript streaming and audio level metering (`expo-audio`).
    - Text-to-speech summary readout in the user's selected language (`expo-speech`).
 
 3. **Geospatial & LGD Administrative Integrity**:

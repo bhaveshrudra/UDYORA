@@ -413,7 +413,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
           {/* Step 6: RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
           <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center w-full">
-            <HeroAnalyticsComposition />
+            <HeroAnalyticsComposition onClick={() => onNavigateToApp()} />
           </div>
         </div>
       </section>

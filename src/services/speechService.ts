@@ -1,4 +1,5 @@
 import { SupportedLanguage } from '../i18n/types';
+import { speakLocalizedText, stopSpeaking } from './speechSynthesis';
 
 // Web Speech API interface declarations for TypeScript compatibility
 interface IWindow extends Window {
@@ -121,6 +122,8 @@ export function stopSpeechRecognition(): void {
   }
 }
 
+
+
 export interface SpeechSynthesisOptions {
   text: string;
   language: SupportedLanguage;
@@ -129,78 +132,13 @@ export interface SpeechSynthesisOptions {
   onError?: (err: any) => void;
 }
 
-export function speakText({
-  text,
-  language,
-  onStart,
-  onEnd,
-  onError
-}: SpeechSynthesisOptions): boolean {
-  if (!isSpeechSynthesisSupported()) {
-    if (onError) onError('Voice output is unavailable. You can read the response instead.');
-    return false;
-  }
-
-  try {
-    stopSpeechSynthesis();
-
-    // Clean markdown symbols for natural speech reading
-    const cleanText = text
-      .replace(/[*#_`~[\]]/g, '')
-      .replace(/₹\s?/g, 'Rupees ')
-      .replace(/%/g, ' percent')
-      .replace(/https?:\/\/\S+/g, '')
-      .trim();
-
-    if (!cleanText) return false;
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    const targetLocale = LANGUAGE_LOCALE_MAP[language] || 'en-IN';
-    utterance.lang = targetLocale;
-    utterance.rate = 0.95; // Clear and accessible pace
-    utterance.pitch = 1.0;
-
-    // Pick best matching voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const matchedVoice = voices.find(
-      (v) => v.lang === targetLocale || v.lang.replace('_', '-').startsWith(language)
-    );
-    if (matchedVoice) {
-      utterance.voice = matchedVoice;
-    }
-
-    utterance.onstart = () => {
-      if (onStart) onStart();
-    };
-
-    utterance.onend = () => {
-      currentUtterance = null;
-      if (onEnd) onEnd();
-    };
-
-    utterance.onerror = (err) => {
-      currentUtterance = null;
-      console.warn('Speech synthesis error:', err);
-      if (onError) onError(err);
-    };
-
-    currentUtterance = utterance;
-    window.speechSynthesis.speak(utterance);
-    return true;
-  } catch (err) {
-    console.error('Speech synthesis failure:', err);
-    if (onError) onError(err);
-    return false;
-  }
+export function speakText(options: SpeechSynthesisOptions): boolean {
+  speakLocalizedText(options);
+  return true;
 }
 
 export function stopSpeechSynthesis(): void {
-  if (typeof window !== 'undefined' && window.speechSynthesis) {
-    try {
-      window.speechSynthesis.cancel();
-    } catch {}
-    currentUtterance = null;
-  }
+  stopSpeaking();
 }
 
 export function pauseSpeechSynthesis(): void {

@@ -2,6 +2,7 @@ import { DEMO_LOCATIONS } from '../data/locations';
 import { VERIFIED_SCHEMES } from '../data/schemes';
 import { TRANSLATIONS } from '../i18n/translations';
 import { SupportedLanguage } from '../i18n/types';
+import { getRegisteredUsers, getSavedAssessments } from './userAuthService';
 
 /* =========================================================================
    POSTGRESQL-READY DATA MODEL ENTITIES
@@ -708,7 +709,30 @@ export function saveFinancialRule(rule: FinancialRuleEntity, actor?: string): vo
 
 // 6. Users
 export function getUsers(): UserEntity[] {
-  return getStorageData(STORAGE_KEYS.USERS, SEED_USERS);
+  const adminUsers = getStorageData(STORAGE_KEYS.USERS, SEED_USERS);
+  const realUsers = getRegisteredUsers();
+
+  const convertedReal: UserEntity[] = realUsers.map((ru) => ({
+    id: ru.userId,
+    maskedName: ru.name,
+    maskedPhone: ru.mobile.length === 10 ? `${ru.mobile.slice(0, 3)}****${ru.mobile.slice(7)}` : ru.mobile,
+    language: ru.preferredLanguage,
+    location: `${ru.mandal || 'Haveli'}, ${ru.district || 'Pune'}, ${ru.state || 'Maharashtra'}`,
+    preferredBusiness: 'Micro-Enterprise',
+    createdAt: ru.createdAt.split('T')[0],
+    lastActive: ru.updatedAt.split('T')[0],
+    assessmentsCount: getSavedAssessments().filter((a) => a.userId === ru.userId).length,
+    status: 'ACTIVE'
+  }));
+
+  const combined = [...convertedReal];
+  adminUsers.forEach((au) => {
+    if (!combined.some((c) => c.id === au.id)) {
+      combined.push(au);
+    }
+  });
+
+  return combined;
 }
 
 export function updateUserStatus(userId: string, status: 'ACTIVE' | 'SUSPENDED', actor?: string): void {
@@ -723,7 +747,34 @@ export function updateUserStatus(userId: string, status: 'ACTIVE' | 'SUSPENDED',
 
 // 7. Assessments
 export function getAssessments(): AssessmentEntity[] {
-  return getStorageData(STORAGE_KEYS.ASSESSMENTS, SEED_ASSESSMENTS);
+  const adminAss = getStorageData(STORAGE_KEYS.ASSESSMENTS, SEED_ASSESSMENTS);
+  const realAss = getSavedAssessments();
+
+  const convertedReal: AssessmentEntity[] = realAss.map((ra) => ({
+    id: ra.assessmentId,
+    createdAt: ra.createdAt,
+    locationName: `${ra.mandal}, ${ra.district}, ${ra.state}`,
+    businessName: ra.businessDescription || ra.businessType,
+    ownCapital: ra.availableCapital,
+    projectCost: Math.round(ra.availableCapital / 0.10),
+    feasibilityScore: ra.feasibilityScore,
+    feasibilityCategory: ra.feasibilityScore >= 80 ? 'HIGH' : ra.feasibilityScore >= 60 ? 'MODERATE' : 'CONDITIONAL',
+    confidenceScore: ra.dataConfidence / 100,
+    dataQuality: 'VERIFIED',
+    matchedScheme: 'PMEGP / Mudra Scheme',
+    monthlyEMI: Math.round(ra.availableCapital * 0.19),
+    dscr: 2.2,
+    status: 'COMPLETED'
+  }));
+
+  const combined = [...convertedReal];
+  adminAss.forEach((aa) => {
+    if (!combined.some((c) => c.id === aa.id)) {
+      combined.push(aa);
+    }
+  });
+
+  return combined;
 }
 
 export function recordAssessment(report: any): void {

@@ -235,6 +235,200 @@ export function getApproximateCoordinatesForLgdVillage(village: LgdVillage): { l
   };
 }
 
+/* =========================================================================
+   PHASE 1: PROGRESSIVE MAP GEOGRAPHIC BOUNDS & CENTROIDS
+   ========================================================================= */
+
+export const INDIA_MAP_DEFAULT = {
+  lat: 20.5937,
+  lng: 78.9629,
+  zoom: 4.5
+};
+
+export const STATE_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
+  27: { lat: 19.7515, lng: 75.7139, zoom: 7.0 }, // Maharashtra
+  36: { lat: 17.8495, lng: 79.1151, zoom: 7.5 }, // Telangana
+  28: { lat: 15.9129, lng: 79.7400, zoom: 7.0 }, // Andhra Pradesh
+  29: { lat: 15.3173, lng: 75.7139, zoom: 7.0 }, // Karnataka
+  33: { lat: 11.1271, lng: 78.6569, zoom: 7.0 }, // Tamil Nadu
+  24: { lat: 22.2587, lng: 71.1924, zoom: 7.0 }, // Gujarat
+  9: { lat: 26.8467, lng: 80.9462, zoom: 7.0 },  // Uttar Pradesh
+  10: { lat: 25.0961, lng: 85.3131, zoom: 7.5 }, // Bihar
+  8: { lat: 27.0238, lng: 74.2179, zoom: 6.8 },  // Rajasthan
+  23: { lat: 22.9734, lng: 78.6569, zoom: 6.8 }, // Madhya Pradesh
+  32: { lat: 10.8505, lng: 76.2711, zoom: 8.0 }, // Kerala
+  3: { lat: 31.1471, lng: 75.3412, zoom: 8.0 },  // Punjab
+  6: { lat: 29.0588, lng: 76.0856, zoom: 8.0 },  // Haryana
+  21: { lat: 20.9517, lng: 85.0985, zoom: 7.2 }, // Odisha
+  19: { lat: 22.9868, lng: 87.8550, zoom: 7.2 }, // West Bengal
+  18: { lat: 26.2006, lng: 92.9376, zoom: 7.5 }  // Assam
+};
+
+export const DISTRICT_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
+  490: { lat: 18.5204, lng: 73.8567, zoom: 9.5 }, // Pune
+  486: { lat: 20.0059, lng: 73.7898, zoom: 9.5 }, // Nashik
+  492: { lat: 17.6805, lng: 74.0183, zoom: 9.5 }, // Satara
+  493: { lat: 17.6599, lng: 75.9064, zoom: 9.5 }, // Solapur
+  3601: { lat: 17.2608, lng: 78.3965, zoom: 9.5 }, // Rangareddy
+  3602: { lat: 17.4475, lng: 78.5302, zoom: 9.5 }  // Medchal-Malkajgiri
+};
+
+export const SUBDISTRICT_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
+  4177: { lat: 18.3517, lng: 73.8567, zoom: 11.5 },   // Haveli (LGD 4177)
+  270101: { lat: 18.3517, lng: 73.8567, zoom: 11.5 }, // Haveli (Legacy Syn 270101)
+  4178: { lat: 18.1517, lng: 74.5775, zoom: 11.5 },   // Baramati (LGD 4178)
+  270102: { lat: 18.1517, lng: 74.5775, zoom: 11.5 }, // Baramati (Legacy Syn 270102)
+  360101: { lat: 17.2608, lng: 78.3965, zoom: 11.5 }, // Shamshabad
+  360201: { lat: 17.4475, lng: 78.5302, zoom: 11.5 }  // Malkajgiri
+};
+
+export function getStateCoordinates(stateCode?: number): { lat: number; lng: number; zoom: number } {
+  if (!stateCode) return INDIA_MAP_DEFAULT;
+  return STATE_CENTROIDS[stateCode] || { lat: 20.5937, lng: 78.9629, zoom: 7.0 };
+}
+
+export function getDistrictCoordinates(districtCode?: number, stateCode?: number): { lat: number; lng: number; zoom: number } {
+  if (!districtCode) return getStateCoordinates(stateCode);
+  if (DISTRICT_CENTROIDS[districtCode]) return DISTRICT_CENTROIDS[districtCode];
+
+  const stateCoords = getStateCoordinates(stateCode);
+  const offsetLat = ((districtCode % 10) - 5) * 0.08;
+  const offsetLng = (((districtCode * 2) % 10) - 5) * 0.08;
+  return {
+    lat: Number((stateCoords.lat + offsetLat).toFixed(4)),
+    lng: Number((stateCoords.lng + offsetLng).toFixed(4)),
+    zoom: 9.5
+  };
+}
+
+export function getSubDistrictCoordinates(subDistrictCode?: number, districtCode?: number, stateCode?: number): { lat: number; lng: number; zoom: number } {
+  if (!subDistrictCode) return getDistrictCoordinates(districtCode, stateCode);
+  if (SUBDISTRICT_CENTROIDS[subDistrictCode]) return SUBDISTRICT_CENTROIDS[subDistrictCode];
+
+  const distCoords = getDistrictCoordinates(districtCode, stateCode);
+  const offsetLat = ((subDistrictCode % 10) - 5) * 0.03;
+  const offsetLng = (((subDistrictCode * 3) % 10) - 5) * 0.03;
+  return {
+    lat: Number((distCoords.lat + offsetLat).toFixed(4)),
+    lng: Number((distCoords.lng + offsetLng).toFixed(4)),
+    zoom: 11.5
+  };
+}
+
+/* =========================================================================
+   PHASE 1: PINCODE VALIDATION & EXACT LOCATION RESOLUTION
+   ========================================================================= */
+
+export interface PincodeValidationResult {
+  isValid: boolean;
+  isUnavailable?: boolean;
+  errorMsg?: string;
+  coords?: { lat: number; lng: number };
+  localityName?: string;
+  pincode: string;
+}
+
+// Canonical Postal PIN region prefixes per Indian State
+export const STATE_PINCODE_PREFIXES: Record<number, string[]> = {
+  27: ['40', '41', '42', '43', '44'], // Maharashtra
+  36: ['50'],                        // Telangana
+  28: ['51', '52', '53'],            // Andhra Pradesh
+  29: ['56', '57', '58', '59'],      // Karnataka
+  33: ['60', '61', '62', '63', '64'],// Tamil Nadu
+  24: ['36', '37', '38', '39'],      // Gujarat
+  9:  ['20', '21', '22', '23', '24', '25', '26', '27', '28'], // Uttar Pradesh
+  8:  ['30', '31', '32', '33', '34'],// Rajasthan
+  23: ['45', '46', '47', '48'],      // Madhya Pradesh
+  10: ['80', '81', '82', '83', '84', '85'], // Bihar
+  32: ['67', '68', '69'],            // Kerala
+  3:  ['14', '15', '16'],            // Punjab
+  6:  ['12', '13']                   // Haryana
+};
+
+export function validateAndResolvePincode(
+  pincode: string,
+  stateCode?: number,
+  districtCode?: number,
+  subDistrictCode?: number
+): PincodeValidationResult {
+  const trimmed = pincode.trim();
+  if (!trimmed || !/^\d{6}$/.test(trimmed)) {
+    return {
+      isValid: false,
+      pincode: trimmed,
+      errorMsg: 'Please enter a valid 6-digit pincode.'
+    };
+  }
+
+  // Validate state postal prefix compatibility if state is selected
+  if (stateCode && STATE_PINCODE_PREFIXES[stateCode]) {
+    const validPrefixes = STATE_PINCODE_PREFIXES[stateCode];
+    const pinPrefix = trimmed.slice(0, 2);
+    if (!validPrefixes.includes(pinPrefix)) {
+      return {
+        isValid: false,
+        pincode: trimmed,
+        errorMsg: 'Please enter a valid pincode for the selected location.'
+      };
+    }
+  }
+
+  // Check known seed localities
+  const seedMatch = KNOWN_LOCALITIES.find((k) => k.pincode === trimmed);
+  if (seedMatch) {
+    if (stateCode && seedMatch.stateCode !== stateCode) {
+      return {
+        isValid: false,
+        pincode: trimmed,
+        errorMsg: 'Please enter a valid pincode for the selected location.'
+      };
+    }
+    return {
+      isValid: true,
+      pincode: trimmed,
+      coords: { lat: seedMatch.latitude, lng: seedMatch.longitude },
+      localityName: seedMatch.locality
+    };
+  }
+
+  // Check LGD Village database
+  const villageMatch = OFFICIAL_LGD_VILLAGES.find((v) => v.pincode === trimmed);
+  if (villageMatch) {
+    if (stateCode && villageMatch.stateCode !== stateCode) {
+      return {
+        isValid: false,
+        pincode: trimmed,
+        errorMsg: 'Please enter a valid pincode for the selected location.'
+      };
+    }
+    const coords = getApproximateCoordinatesForLgdVillage(villageMatch);
+    return {
+      isValid: true,
+      pincode: trimmed,
+      coords,
+      localityName: villageMatch.name
+    };
+  }
+
+  // Fallback: If subdistrict is selected and prefix matches, derive center within subdistrict
+  if (subDistrictCode) {
+    const subCoords = getSubDistrictCoordinates(subDistrictCode, districtCode, stateCode);
+    return {
+      isValid: true,
+      pincode: trimmed,
+      coords: { lat: subCoords.lat, lng: subCoords.lng },
+      localityName: 'Sub-District Center'
+    };
+  }
+
+  return {
+    isValid: false,
+    isUnavailable: true,
+    pincode: trimmed,
+    errorMsg: 'PINCODE VERIFICATION UNAVAILABLE'
+  };
+}
+
 export async function searchLocalities(query: string, limit: number = 8): Promise<MapSearchResult[]> {
   if (!query || query.trim().length < 2) return [];
   const q = query.toLowerCase().trim();
