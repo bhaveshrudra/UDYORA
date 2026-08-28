@@ -31,7 +31,7 @@ export const HeaderLanguageSelector: React.FC<HeaderLanguageSelectorProps> = ({
   showCodeOnlyOnMobile = true
 }) => {
   const shouldReduceMotion = useReducedMotion();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, resetLanguagePreference } = useLanguage();
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
 
@@ -272,13 +272,24 @@ export const HeaderLanguageSelector: React.FC<HeaderLanguageSelectorProps> = ({
                       {opt.shortCode}
                     </span>
 
-                    {isSelected && (
-                      <Check className="w-3.5 h-3.5 text-blue-700 stroke-[2.5]" />
-                    )}
                   </div>
                 </button>
               );
             })}
+
+            {/* Dev Reset Action to easily test First-Visit Language Gate */}
+            <div className="pt-1.5 mt-1 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  resetLanguagePreference();
+                }}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 transition-colors cursor-pointer border border-amber-200/80"
+              >
+                <span>Reset Language (Test First Visit)</span>
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

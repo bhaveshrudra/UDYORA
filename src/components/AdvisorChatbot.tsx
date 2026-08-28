@@ -310,24 +310,11 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          aria-label="Open UDYORA AI Advisor Chatbot"
+          aria-label="Open UDYORA AI Advisor"
+          className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer border border-slate-700/80 text-xs font-bold"
         >
-          {/* Subtle Ambient Pulse Ring */}
-          <span className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 opacity-30 group-hover:opacity-60 blur-xs transition-opacity" />
-
-          <div className="relative z-10 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-xs">
-              <Sparkles className="w-4 h-4 text-white" />
-            </div>
-            <div className="text-left hidden sm:block">
-              <span className="text-xs font-black tracking-tight block text-white leading-tight">
-                UDYORA Advisor
-              </span>
-              <span className="text-[10px] text-blue-200 block font-medium">
-                Ask EMI, Schemes & Risks
-              </span>
-            </div>
-          </div>
+          <Sparkles className="w-3.5 h-3.5 text-blue-400 group-hover:rotate-12 transition-transform" />
+          <span>Ask UDYORA</span>
         </button>
       )}
 
@@ -462,6 +449,21 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                           );
                         })}
                       </div>
+
+                      {/* Quick Action Suggestions for Out of Scope / Unclear */}
+                      {msg.suggestedQuickActions && msg.suggestedQuickActions.length > 0 && (
+                        <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap gap-1.5">
+                          {msg.suggestedQuickActions.map((actionLabel, aIdx) => (
+                            <button
+                              key={aIdx}
+                              onClick={() => handleSend(actionLabel)}
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 transition-colors cursor-pointer"
+                            >
+                              {actionLabel}
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Action trigger button if suggested by agent */}
                       {msg.suggestedAction === 'TRIGGER_ANALYSIS' && onTriggerAnalysis && (

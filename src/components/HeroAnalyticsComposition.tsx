@@ -6,339 +6,241 @@ import {
   IndianRupee,
   ShieldCheck,
   CheckCircle2,
-  Sparkles,
   Bot,
-  ArrowUpRight
+  ArrowUpRight,
+  Sparkles
 } from 'lucide-react';
 
+/**
+ * HeroAnalyticsComposition — Refined Right-Side Visual for Landing Hero
+ *
+ * Features:
+ * - One unified, balanced business-intelligence composition
+ * - Centered main dashboard panel occupying ~80-85% width
+ * - 3 tightly attached floating cards (Top-Right Advisor, Bottom-Left Catchment, Bottom-Right Scheme)
+ * - Cohesive professional styling, subtle shadows, no clipping or erratic floating
+ * - Perfectly vertically centered relative to hero content
+ */
 export const HeroAnalyticsComposition: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="relative w-full max-w-lg lg:max-w-xl mx-auto select-none">
-      {/* Ambient Radial Backlight Glow */}
-      <div className="absolute -inset-4 bg-radial from-blue-100/60 via-indigo-50/30 to-transparent rounded-3xl blur-2xl pointer-events-none" />
+    <div className="relative w-full max-w-[480px] lg:max-w-[500px] mx-auto py-6 px-3 sm:px-5 select-none">
+      {/* 1. Subtle Ambient Backlight Glow (Tied to composition) */}
+      <div className="absolute inset-2 bg-gradient-to-tr from-blue-100/30 via-indigo-50/20 to-emerald-50/20 rounded-3xl blur-2xl pointer-events-none" />
 
-      {/* Decorative Corner Sparkles & Nodes */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className="absolute -top-3 -left-3 w-6 h-6 rounded-full bg-blue-100/80 flex items-center justify-center text-blue-600 shadow-xs pointer-events-none"
+      {/* 2. Single Subtle Connecting Geometry */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-30 overflow-visible"
+        viewBox="0 0 500 400"
+        fill="none"
       >
-        <Sparkles className="w-3.5 h-3.5" />
-      </motion.div>
+        <path
+          d="M 50 340 C 120 340, 180 300, 260 200 C 340 100, 420 70, 470 60"
+          stroke="#cbd5e1"
+          strokeWidth="1"
+          strokeDasharray="4 4"
+        />
+      </svg>
 
-      <div className="relative z-10 space-y-4">
+      {/* 3. Main Dashboard Wrapper */}
+      <div className="relative">
         {/* =========================================================================
-            1. MAIN ANALYTICS DASHBOARD CARD
+            MAIN DASHBOARD PANEL (80-85% Visual Core)
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24, scale: 0.96 }}
+          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 20, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.75, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-5 sm:p-6 space-y-4 relative overflow-hidden"
+          transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          className="relative z-10 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 p-4 sm:p-5 space-y-3.5 overflow-hidden"
         >
-          {/* Card Top Accent Line with Gradient Animation */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.6, ease: 'easeOut' }}
-            className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500 origin-left"
-          />
+          {/* Card Top Accent Indicator Line */}
+          <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-emerald-500" />
 
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs">
+          {/* Panel Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs shadow-xs">
                 U
               </div>
               <div>
                 <h3 className="text-xs font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-                  <span>Enterprise Intelligence Suite</span>
+                  <span>Local Enterprise Assessment</span>
                 </h3>
                 <p className="text-[10px] text-slate-500 font-medium">
-                  Hyper-Local Rural Market Analytics
+                  Commercial Dairy • Khed Shivapur
                 </p>
               </div>
             </div>
 
-            <motion.span
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200"
-            >
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Multi-Agent Live</span>
-            </motion.span>
+              <span>Score: 86 / 100</span>
+            </span>
           </div>
 
-          {/* Mini Revenue / Demand Growth Spline Chart */}
-          <div className="space-y-1.5 bg-slate-50/80 rounded-xl p-3.5 border border-slate-100">
+          {/* Mini Revenue / Yield Spline Chart */}
+          <div className="space-y-1 bg-slate-50/80 rounded-xl p-3 border border-slate-100/90">
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700 flex items-center gap-1 text-[11px]">
                 <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
                 <span>Unit Economics & Revenue Curve</span>
               </span>
-              <motion.span
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 1.2 }}
-                className="font-mono font-bold text-emerald-700 flex items-center text-[11px]"
-              >
+              <span className="font-mono font-bold text-emerald-700 flex items-center text-[11px]">
                 <ArrowUpRight className="w-3 h-3" />
                 <span>+28.4% Net Yield</span>
-              </motion.span>
+              </span>
             </div>
 
-            {/* SVG Interactive Line Spline with Progressive Stroke Animation */}
-            <div className="w-full h-24 pt-1">
-              <svg viewBox="0 0 320 80" className="w-full h-full overflow-visible">
+            {/* SVG Spline Chart */}
+            <div className="w-full h-20 pt-0.5">
+              <svg viewBox="0 0 320 70" className="w-full h-full overflow-visible">
                 <defs>
-                  <linearGradient id="heroSplineGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.22" />
+                  <linearGradient id="heroSplineGradNew" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.18" />
                     <stop offset="100%" stopColor="#2563eb" stopOpacity="0.0" />
                   </linearGradient>
-                  <linearGradient id="heroLineGrad" x1="0" y1="0" x2="1" y2="0">
+                  <linearGradient id="heroLineGradNew" x1="0" y1="0" x2="1" y2="0">
                     <stop offset="0%" stopColor="#3b82f6" />
-                    <stop offset="50%" stopColor="#2563eb" />
+                    <stop offset="60%" stopColor="#2563eb" />
                     <stop offset="100%" stopColor="#059669" />
                   </linearGradient>
                 </defs>
 
                 {/* Grid guidelines */}
-                <line x1="0" y1="20" x2="320" y2="20" stroke="#e2e8f0" strokeDasharray="3 3" />
-                <line x1="0" y1="50" x2="320" y2="50" stroke="#e2e8f0" strokeDasharray="3 3" />
+                <line x1="0" y1="18" x2="320" y2="18" stroke="#e2e8f0" strokeDasharray="3 3" />
+                <line x1="0" y1="45" x2="320" y2="45" stroke="#e2e8f0" strokeDasharray="3 3" />
 
                 {/* Area Fill */}
-                <motion.path
-                  d="M 10 70 C 60 65, 110 52, 160 38 C 210 24, 260 18, 310 8 L 310 75 L 10 75 Z"
-                  fill="url(#heroSplineGrad)"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 1.0, delay: 0.8 }}
+                <path
+                  d="M 10 60 C 60 55, 110 44, 160 32 C 210 20, 260 14, 310 6 L 310 65 L 10 65 Z"
+                  fill="url(#heroSplineGradNew)"
                 />
 
-                {/* Growth Stroke Line - Draws Smoothly from Left to Right */}
+                {/* Growth Stroke Line */}
                 <motion.path
-                  d="M 10 70 C 60 65, 110 52, 160 38 C 210 24, 260 18, 310 8"
+                  d="M 10 60 C 60 55, 110 44, 160 32 C 210 20, 260 14, 310 6"
                   fill="none"
-                  stroke="url(#heroLineGrad)"
-                  strokeWidth="2.5"
+                  stroke="url(#heroLineGradNew)"
+                  strokeWidth="2.2"
                   strokeLinecap="round"
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
-                  transition={{ duration: shouldReduceMotion ? 0 : 1.3, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 />
 
-                {/* Sequential Staggered Data Points Pop */}
+                {/* Data Points */}
                 {[
-                  { x: 10, y: 70, delay: 0.75 },
-                  { x: 110, y: 52, delay: 1.0 },
-                  { x: 210, y: 24, delay: 1.25 },
-                  { x: 310, y: 8, delay: 1.5 }
+                  { x: 10, y: 60 },
+                  { x: 110, y: 44 },
+                  { x: 210, y: 20 },
+                  { x: 310, y: 6 }
                 ].map((pt, idx) => (
-                  <motion.g
+                  <circle
                     key={idx}
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{
-                      duration: shouldReduceMotion ? 0 : 0.4,
-                      delay: shouldReduceMotion ? 0 : pt.delay,
-                      type: 'spring',
-                      stiffness: 300,
-                      damping: 15
-                    }}
-                    style={{ transformOrigin: `${pt.x}px ${pt.y}px` }}
-                  >
-                    <circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r={3.5}
-                      fill="#ffffff"
-                      stroke="#2563eb"
-                      strokeWidth={2}
-                    />
-                  </motion.g>
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={3}
+                    fill="#ffffff"
+                    stroke="#2563eb"
+                    strokeWidth={1.8}
+                  />
                 ))}
               </svg>
             </div>
           </div>
 
-          {/* Metric Capacity Comparison Bars Growing Upward/Across */}
-          <div className="space-y-2 pt-0.5">
-            <div className="flex items-center justify-between text-[11px]">
-              <span className="text-slate-600 font-medium">Local Catchment Consumption</span>
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.3 }}
-                className="font-bold text-slate-900 font-mono"
-              >
-                88%
-              </motion.span>
+          {/* Dual Metrics Row */}
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
+            <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100">
+              <span className="text-[10px] text-slate-500 font-medium block">Promoter Margin (10%)</span>
+              <span className="text-xs font-black text-slate-900 font-mono">₹1,00,000</span>
             </div>
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '88%' }}
-                transition={{ duration: shouldReduceMotion ? 0 : 1.0, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                className="h-full bg-emerald-600 rounded-full"
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] pt-1">
-              <span className="text-slate-600 font-medium">Cooperative Hub Off-take</span>
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.4 }}
-                className="font-bold text-slate-900 font-mono"
-              >
-                94%
-              </motion.span>
-            </div>
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: '94%' }}
-                transition={{ duration: shouldReduceMotion ? 0 : 1.0, delay: 1.05, ease: [0.22, 1, 0.36, 1] }}
-                className="h-full bg-blue-600 rounded-full"
-              />
+            <div className="bg-slate-50/60 rounded-lg p-2 border border-slate-100">
+              <span className="text-[10px] text-slate-500 font-medium block">Bank Loan Financing</span>
+              <span className="text-xs font-black text-blue-900 font-mono">₹9,00,000</span>
             </div>
           </div>
 
           {/* Quick Benchmark Footnotes */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 1.4 }}
-            className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium"
-          >
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium">
             <span className="flex items-center gap-1 font-bold text-slate-800">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>DSCR 2.3x (Bank Viable)</span>
+              <span>DSCR 2.3x (Viable)</span>
             </span>
-            <span className="text-slate-400">10% Promoter Margin</span>
-          </motion.div>
+            <span className="text-slate-500 font-mono">Est. EMI: ₹19,680/mo</span>
+          </div>
         </motion.div>
 
         {/* =========================================================================
-            2. FLOATING CARD: AGENT INTELLIGENCE BUBBLE (TOP RIGHT)
+            1. FLOATING CARD: TOP-RIGHT (ADVISOR INSIGHT)
+            Partially overlaps top-right of panel, compact & fully visible
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, x: 24, y: -10 }}
-          animate={
-            shouldReduceMotion
-              ? { opacity: 1, x: 0, y: 0 }
-              : {
-                  opacity: 1,
-                  x: 0,
-                  y: [0, -6, 0]
-                }
-          }
-          transition={{
-            opacity: { duration: 0.6, delay: 1.1 },
-            x: { duration: 0.6, delay: 1.1 },
-            y: {
-              duration: 5.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1.7
-            }
-          }}
-          className="hidden sm:block absolute -top-6 -right-3 sm:-right-6 bg-slate-900 text-white rounded-2xl p-3 sm:p-3.5 shadow-xl border border-slate-800 max-w-[240px] space-y-1 z-20"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute -top-3.5 -right-2 sm:-top-4 sm:-right-4 z-20 bg-slate-900 text-white rounded-xl p-2.5 sm:p-3 shadow-lg border border-slate-800 max-w-[210px] sm:max-w-[230px] space-y-0.5"
         >
           <div className="flex items-center gap-1.5">
-            <div className="w-5 h-5 rounded bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">
-              <Bot className="w-3 h-3" />
+            <div className="w-4 h-4 rounded bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">
+              <Bot className="w-2.5 h-2.5" />
             </div>
-            <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider">
+            <span className="text-[9px] font-bold text-blue-300 uppercase tracking-wider">
               UDYORA Advisor
             </span>
           </div>
-          <p className="text-[11px] text-slate-200 leading-snug font-medium">
-            ₹1,00,000 equity supports ₹10,00,000 unit @ ₹19,124/mo EMI.
+          <p className="text-[10px] text-slate-200 leading-snug font-medium">
+            ₹1,00,000 equity supports ₹10,00,000 unit with 35% subsidy match.
           </p>
         </motion.div>
 
         {/* =========================================================================
-            3. FLOATING CARD: HYPER-LOCAL CATCHMENT PILL WITH RADAR PULSE (BOTTOM LEFT)
+            2. FLOATING CARD: BOTTOM-LEFT (LOCATION / CATCHMENT NODE)
+            Partially overlaps lower-left of panel, aligned to lower third
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, x: -24, y: 15 }}
-          animate={
-            shouldReduceMotion
-              ? { opacity: 1, x: 0, y: 0 }
-              : {
-                  opacity: 1,
-                  x: 0,
-                  y: [0, 6, 0]
-                }
-          }
-          transition={{
-            opacity: { duration: 0.6, delay: 1.3 },
-            x: { duration: 0.6, delay: 1.3 },
-            y: {
-              duration: 6.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1.9
-            }
-          }}
-          className="hidden sm:block absolute -bottom-6 -left-3 sm:-left-6 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-lg border border-slate-200 max-w-[220px] space-y-1 z-20"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute -bottom-3.5 -left-2 sm:-bottom-4 sm:-left-4 z-20 bg-white/95 backdrop-blur-md rounded-xl p-2.5 sm:p-3 shadow-lg border border-slate-200 max-w-[190px] sm:max-w-[210px] space-y-0.5"
         >
           <div className="flex items-center gap-1.5">
-            <div className="relative flex h-3.5 w-3.5 items-center justify-center">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-70" />
-              <MapPin className="relative w-3.5 h-3.5 text-blue-700" />
+            <div className="relative flex h-3 w-3 items-center justify-center">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-60" />
+              <MapPin className="relative w-3 h-3 text-blue-700" />
             </div>
-            <span className="text-[11px] font-bold text-slate-900">
+            <span className="text-[10px] font-bold text-slate-900">
               Catchment Node
             </span>
           </div>
-          <p className="text-[10px] text-slate-600 font-medium">
-            4.5 km to Dairy Cooperative • Mandi 22 km
+          <p className="text-[9.5px] text-slate-600 font-medium leading-tight">
+            4.5 km to Dairy Co-op • Mandi 22 km
           </p>
-          <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-700 pt-0.5">
-            <CheckCircle2 className="w-3 h-3" />
-            <span>Verified APMC Reference</span>
+          <div className="flex items-center gap-1 text-[8.5px] font-bold text-emerald-700 pt-0.5">
+            <CheckCircle2 className="w-2.5 h-2.5" />
+            <span>Verified Census Location</span>
           </div>
         </motion.div>
 
         {/* =========================================================================
-            4. FLOATING CARD: FINANCIAL / SCHEME BADGE (BOTTOM RIGHT)
+            3. FLOATING CARD: BOTTOM-RIGHT (SCHEME INDICATOR BADGE)
+            Close to panel lower-right edge
             ========================================================================= */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={
-            shouldReduceMotion
-              ? { opacity: 1, scale: 1 }
-              : {
-                  opacity: 1,
-                  scale: [1, 1.04, 1]
-                }
-          }
-          transition={{
-            opacity: { duration: 0.5, delay: 1.5 },
-            scale: {
-              duration: 4.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 2.0
-            }
-          }}
-          className="hidden sm:flex absolute -bottom-3 right-4 bg-emerald-50 border border-emerald-300 rounded-xl px-3 py-1.5 shadow-md items-center gap-2 z-20"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.45, delay: 0.65, ease: [0.22, 1, 0.36, 1] }}
+          className="absolute -bottom-2 right-2 sm:right-4 z-20 bg-emerald-50 border border-emerald-300 rounded-lg px-2.5 py-1.5 shadow-md flex items-center gap-1.5"
         >
-          <div className="w-5 h-5 rounded-md bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
-            <IndianRupee className="w-3 h-3" />
+          <div className="w-4 h-4 rounded bg-emerald-700 text-white flex items-center justify-center font-bold text-[9px]">
+            <IndianRupee className="w-2.5 h-2.5" />
           </div>
           <div>
-            <span className="text-[10px] font-extrabold text-emerald-950 block leading-tight">
+            <span className="text-[9.5px] font-extrabold text-emerald-950 block leading-tight">
               PMEGP Eligible
             </span>
-            <span className="text-[9px] font-semibold text-emerald-700">
+            <span className="text-[8.5px] font-semibold text-emerald-700 block leading-none">
               Up to 35% Subsidy
             </span>
           </div>

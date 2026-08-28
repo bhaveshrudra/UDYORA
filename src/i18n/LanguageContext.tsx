@@ -2,14 +2,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { SupportedLanguage, TranslationDictionary, SUPPORTED_LANGUAGES, LanguageOption } from './types';
 import { TRANSLATIONS } from './translations';
 
-export type StartupState = 'checking' | 'select-language' | 'ready';
+export type StartupState = 'hero-entry' | 'select-language' | 'ready';
 
 export interface LanguageContextType {
   language: SupportedLanguage;
   startupState: StartupState;
   setLanguage: (lang: SupportedLanguage) => void;
   selectLanguageAndProceed: (lang: SupportedLanguage) => void;
-  completeIntro: () => void;
+  completeHeroEntry: () => void;
   resetLanguagePreference: () => void;
   t: (key: keyof TranslationDictionary, params?: Record<string, string | number>) => string;
   supportedLanguages: LanguageOption[];
@@ -35,54 +35,62 @@ export function toStorageLanguageCode(lang: SupportedLanguage): string {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Synchronous initial state reading from localStorage (zero flash of wrong language on load)
+  // Read stored language synchronously
   const [language, setLanguageState] = useState<SupportedLanguage>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
         const normalized = normalizeLanguageCode(saved);
         if (normalized) return normalized;
-      } catch (e) {
-        // Fallback to English if localStorage is unavailable
-      }
+      } catch (e) { /* fallback */ }
     }
     return 'en';
   });
 
-  const [startupState, setStartupState] = useState<StartupState>(() => {
+  // Determine if language is already stored
+  const [hasStoredLanguage] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(STORAGE_KEY);
-        const normalized = normalizeLanguageCode(saved);
-        if (normalized) {
-          return 'ready'; // Returning user: Home page directly in saved language
-        }
-      } catch (e) {
-        // Fallback
-      }
-      return 'select-language'; // First-time user: Language Selection screen first
+        return !!normalizeLanguageCode(saved);
+      } catch (e) { /* fallback */ }
     }
-    return 'checking';
+    return false;
   });
 
-  // Verify storage on mount (handling cross-tab changes)
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      const normalized = normalizeLanguageCode(saved);
+  // New startup flow:
+  //   1. 'hero-entry' → Show the HeroEntry animation FIRST (always on fresh page load for / route)
+  //   2. 'select-language' → Show language selection (only if no stored language)
+  //   3. 'ready' → Show the app
+  //
+  // For /app route, App.tsx skips hero entry and goes straight to the app.
+  const [startupState, setStartupState] = useState<StartupState>('hero-entry');
 
-      if (normalized) {
-        setLanguageState(normalized);
-        setStartupState('ready');
-      } else {
-        setStartupState('select-language');
-      }
-    } catch (err) {
-      setStartupState('select-language');
-    }
+  // Boot log
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const normalized = normalizeLanguageCode(saved);
+    console.log('[UDYORA BOOT]', {
+      startupState: 'hero-entry',
+      hasStoredLanguage: !!normalized,
+      storedLanguage: saved || 'none',
+    });
   }, []);
 
-  // Update language at any time (e.g. from header selector)
+  // Called when HeroEntry animation completes
+  const completeHeroEntry = () => {
+    if (hasStoredLanguage) {
+      // Returning user → go directly to Home
+      setStartupState('ready');
+      console.log('[UDYORA BOOT] Hero entry complete → Ready (returning user)');
+    } else {
+      // First-time user → show language selection
+      setStartupState('select-language');
+      console.log('[UDYORA BOOT] Hero entry complete → Language selection (first visit)');
+    }
+  };
+
+  // Update language at any time
   const setLanguage = (lang: SupportedLanguage) => {
     setLanguageState(lang);
     if (typeof window !== 'undefined') {
@@ -97,19 +105,17 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   // Called when first-time user selects language and clicks Continue
   const selectLanguageAndProceed = (lang: SupportedLanguage) => {
     setLanguage(lang);
-    setStartupState('ready'); // Navigate straight to UDYORA Home in chosen language
-  };
-
-  const completeIntro = () => {
     setStartupState('ready');
+    console.log('[UDYORA BOOT] Language confirmed:', lang, '→ Ready');
   };
 
-  // Helper to clear language preference (triggers language screen on next load)
+  // Helper to clear language preference and replay first-visit experience
   const resetLanguagePreference = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     }
-    setStartupState('select-language');
+    setStartupState('hero-entry');
+    console.log('[UDYORA BOOT] Language preference reset → Replaying Hero Entry');
   };
 
   // Translation lookup with fallback and parameter interpolation
@@ -138,7 +144,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         startupState,
         setLanguage,
         selectLanguageAndProceed,
-        completeIntro,
+        completeHeroEntry,
         resetLanguagePreference,
         t,
         supportedLanguages: SUPPORTED_LANGUAGES

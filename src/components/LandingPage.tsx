@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { AnimatedBusinessBackground } from './AnimatedBusinessBackground';
 import { HeroAnalyticsComposition } from './HeroAnalyticsComposition';
+import { UdyoraWatermark } from './UdyoraWatermark';
 import { useLanguage } from '../i18n/LanguageContext';
 import { BrandLogo } from './BrandLogo';
 import { PublicFooter } from './PublicFooter';
@@ -341,8 +342,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* =========================================================================
           TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION (CHOREOGRAPHED BUILD)
           ========================================================================= */}
-      <section className="relative pt-8 pb-14 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 flex items-center min-h-[560px]">
-        <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+      <section className="relative pt-8 pb-14 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 flex items-center min-h-[560px] overflow-hidden">
+        {/* SIGNATURE UDYORA LETTER-BY-LETTER WATERMARK ANIMATION */}
+        <UdyoraWatermark />
+
+        <div className="relative z-10 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           {/* LEFT COLUMN: HIGH-IMPACT HEADLINE & PRIMARY CTA (SEQUENTIAL STAGGER) */}
           <div className="lg:col-span-6 xl:col-span-6 space-y-5 sm:space-y-6 text-left">
             {/* Step 2: Hero Tagline Badge */}
@@ -408,7 +412,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Step 6: RIGHT COLUMN: SOPHISTICATED FLOATING ANALYTICS COMPOSITION */}
-          <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center w-full overflow-hidden">
+          <div className="lg:col-span-6 xl:col-span-6 flex items-center justify-center w-full">
             <HeroAnalyticsComposition />
           </div>
         </div>

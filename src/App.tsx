@@ -11,7 +11,7 @@ import { AdvisorChatbot } from './components/AdvisorChatbot';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AnimatedBusinessBackground } from './components/AnimatedBusinessBackground';
 import { StartupLanguageGate } from './components/StartupLanguageGate';
-import { ProductIntroSplash } from './components/ProductIntroSplash';
+import { HeroEntry } from './components/HeroEntry';
 import { PublicFooter } from './components/PublicFooter';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { useLanguage } from './i18n/LanguageContext';
@@ -43,13 +43,13 @@ export function App() {
     language,
     startupState,
     selectLanguageAndProceed,
-    completeIntro,
+    completeHeroEntry,
     resetLanguagePreference
   } = useLanguage();
 
   const appContainerRef = useRef<HTMLDivElement>(null);
 
-  // Client-side path router (preserves target path across startup language gate)
+  // Client-side path router
   const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
@@ -212,21 +212,48 @@ export function App() {
   };
 
   // =========================================================================
-  // 1. STARTUP STATE: CHECKING SAVED LANGUAGE
+  // STARTUP FLOW GATE
   // =========================================================================
-  if (startupState === 'checking') {
+  //
+  // For / (landing) route:
+  //   1. hero-entry     → Show HeroEntry animation
+  //   2. select-language → Show language selection (first visit only)
+  //   3. ready           → Show landing page
+  //
+  // For /app route:
+  //   Skip hero entry entirely — go straight to business app.
+  //   (Users navigating to /app already know what UDYORA is.)
+  //
+  // For /admin routes:
+  //   Skip hero entry — go straight to admin.
+  // =========================================================================
+
+  // Only show hero entry for the landing route
+  const shouldShowHeroEntry =
+    startupState === 'hero-entry' &&
+    currentRoute === 'landing';
+
+  // Show language selection gate for first-time users (no stored language)
+  const shouldShowLanguageGate =
+    startupState === 'select-language';
+
+  // =========================================================================
+  // 1. HERO ENTRY ANIMATION (landing route only)
+  // =========================================================================
+  if (shouldShowHeroEntry) {
     return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center select-none">
-        <div className="w-8 h-8 rounded-full border-3 border-blue-700 border-t-transparent animate-spin" />
-      </div>
+      <HeroEntry
+        onComplete={() => {
+          completeHeroEntry();
+        }}
+      />
     );
   }
 
   // =========================================================================
-  // 2. STARTUP STATE: FIRST-TIME VISITOR LANGUAGE SELECTION GATE
-  // (NO LANDING / APP / ADMIN FLASH BEFORE SELECTION)
+  // 2. FIRST-TIME LANGUAGE SELECTION GATE
   // =========================================================================
-  if (startupState === 'select-language') {
+  if (shouldShowLanguageGate) {
     return (
       <StartupLanguageGate
         initialLanguage={language}
@@ -238,8 +265,16 @@ export function App() {
   }
 
   // =========================================================================
-  // 4. STARTUP STATE: READY -> ROUTE TO INTENDED APPLICATION DESTINATION
+  // 3. READY → ROUTE TO DESTINATION
   // =========================================================================
+
+  // For /app route that was opened directly while startupState was hero-entry,
+  // we need to skip to ready
+  if (startupState === 'hero-entry' && currentRoute !== 'landing') {
+    // Auto-advance past hero entry for non-landing routes
+    completeHeroEntry();
+    return null;
+  }
 
   // ROUTE: ADMIN LOGIN (/admin/login)
   if (currentRoute === 'admin_login') {
@@ -327,7 +362,7 @@ export function App() {
               isAppRoute={true}
             />
 
-            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
               {/* SCREEN 1: GUIDED INPUT & WORKSPACE */}
               {currentScreen === 'form' && (
                 <div className="space-y-6 animate-fadeIn">

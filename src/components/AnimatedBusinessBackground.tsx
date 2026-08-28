@@ -14,49 +14,8 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
 
   // Multi-layer scroll parallax
   const bgArtworkY = useTransform(scrollY, [0, 2500], [0, -180]);
-  const watermarkY = useTransform(scrollY, [0, 2500], [0, -100]);
   const networkY = useTransform(scrollY, [0, 3000], [0, -220]);
   const floatIconsY = useTransform(scrollY, [0, 3000], [0, -320]);
-
-  // Watermark sequential letter animation (U -> UD -> UDY -> UDYO -> UDYOR -> UDYORA)
-  const letters = ['U', 'D', 'Y', 'O', 'R', 'A'];
-  const [activeLetterCount, setActiveLetterCount] = useState<number>(0);
-  const [watermarkOpacity, setWatermarkOpacity] = useState<number>(0.04);
-
-  useEffect(() => {
-    if (shouldReduceMotion) {
-      setActiveLetterCount(letters.length);
-      setWatermarkOpacity(0.035);
-      return;
-    }
-
-    let intervalId: NodeJS.Timeout;
-    let step = 0;
-
-    const runCycle = () => {
-      step = 0;
-      setActiveLetterCount(0);
-      setWatermarkOpacity(0.042);
-
-      intervalId = setInterval(() => {
-        step++;
-        if (step <= letters.length) {
-          setActiveLetterCount(step);
-        } else if (step === letters.length + 1) {
-          // Hold for 2.8s
-        } else if (step === letters.length + 2) {
-          // Fade out
-          setWatermarkOpacity(0);
-        } else if (step >= letters.length + 3) {
-          clearInterval(intervalId);
-          setTimeout(runCycle, 600);
-        }
-      }, 340);
-    };
-
-    runCycle();
-    return () => clearInterval(intervalId);
-  }, [shouldReduceMotion, letters.length]);
 
   return (
     <div
@@ -67,12 +26,12 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
       {/* LAYER 1: Deep Ambient Radial Gradient & Subtle Artwork Blend */}
       <motion.div
         style={{ y: shouldReduceMotion ? 0 : bgArtworkY }}
-        className="absolute inset-0 w-full h-full opacity-60"
+        className="absolute inset-0 w-full h-full opacity-25"
       >
         {/* Soft Radial Backlights */}
-        <div className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[750px] bg-radial from-blue-50/70 via-slate-50/40 to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-[35%] right-[5%] w-[650px] h-[650px] bg-radial from-indigo-50/40 via-transparent to-transparent rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-[65%] left-[5%] w-[700px] h-[700px] bg-radial from-emerald-50/35 via-transparent to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[900px] h-[750px] bg-radial from-blue-50/50 via-slate-50/20 to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[35%] right-[5%] w-[650px] h-[650px] bg-radial from-indigo-50/30 via-transparent to-transparent rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-[65%] left-[5%] w-[700px] h-[700px] bg-radial from-emerald-50/25 via-transparent to-transparent rounded-full blur-3xl pointer-events-none" />
 
         {/* Ambient Integrated Artwork Texture (Radial Masked & Floating) */}
         <motion.div
@@ -82,41 +41,17 @@ export const AnimatedBusinessBackground: React.FC<AnimatedBusinessBackgroundProp
               : {
                   y: [0, -12, 0],
                   scale: [1, 1.015, 1],
-                  opacity: [0.03, 0.045, 0.03]
+                  opacity: [0.02, 0.03, 0.02]
                 }
           }
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-12 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[800px] bg-no-repeat bg-contain bg-center opacity-[0.035] mix-blend-multiply"
+          className="absolute top-12 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[800px] bg-no-repeat bg-contain bg-center opacity-[0.025] mix-blend-multiply"
           style={{
             backgroundImage: `url(${heroBgArtwork})`,
             maskImage: 'radial-gradient(ellipse 65% 55% at 50% 45%, black 25%, transparent 75%)',
             WebkitMaskImage: 'radial-gradient(ellipse 65% 55% at 50% 45%, black 25%, transparent 75%)'
           }}
         />
-      </motion.div>
-
-      {/* LAYER 2: Global Background Watermark with Letter-by-Letter Reveal */}
-      <motion.div
-        style={{ y: shouldReduceMotion ? 0 : watermarkY }}
-        className="absolute top-24 left-0 right-0 flex justify-center items-center pointer-events-none"
-      >
-        <div
-          className="font-mono font-black text-[56px] xs:text-[76px] sm:text-[160px] md:text-[220px] lg:text-[280px] tracking-[0.08em] sm:tracking-[0.14em] text-slate-900 select-none transition-opacity duration-1000 ease-in-out text-center max-w-full px-2"
-          style={{ opacity: watermarkOpacity }}
-        >
-          {letters.map((letter, idx) => (
-            <span
-              key={idx}
-              className={`inline-block transition-all duration-500 ease-out ${
-                idx < activeLetterCount
-                  ? 'opacity-100 translate-y-0 scale-100'
-                  : 'opacity-0 translate-y-4 scale-95'
-              }`}
-            >
-              {letter}
-            </span>
-          ))}
-        </div>
       </motion.div>
 
       {/* LAYER 3: Continuous SVG Data Network, Analytics Curves & Catchment Nodes */}
