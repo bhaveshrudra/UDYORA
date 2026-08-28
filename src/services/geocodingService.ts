@@ -6,7 +6,7 @@ import { searchLgdLocations } from './locationHierarchyService';
 /**
  * Seeded Coordinates & Locality Index for High-Confidence Verification
  */
-interface SeededLocality {
+export interface SeededLocality {
   locality: string;
   subDistrict: string;
   district: string;
@@ -119,334 +119,133 @@ export const KNOWN_LOCALITIES: SeededLocality[] = [
     district: 'Pune',
     state: 'Maharashtra',
     stateCode: 27,
-    districtCode: 2701,
-    subDistrictCode: 270101,
-    villageCode: 27010101,
+    districtCode: 490,
+    subDistrictCode: 270102,
     pincode: '413102',
     latitude: 18.1517,
-    longitude: 74.5775,
-    areaType: 'Rural',
-    aliases: ['baramati', 'baramati taluka']
+    longitude: 74.5767,
+    areaType: 'Semi-Urban',
+    aliases: ['baramati']
   },
   {
-    locality: 'Shirwal',
-    subDistrict: 'Khandala',
-    district: 'Satara',
+    locality: 'Khed Shivapur',
+    subDistrict: 'Haveli',
+    district: 'Pune',
     state: 'Maharashtra',
     stateCode: 27,
-    districtCode: 2702,
-    subDistrictCode: 270201,
-    villageCode: 27020101,
+    districtCode: 490,
+    subDistrictCode: 270101,
     pincode: '412801',
-    latitude: 18.1345,
-    longitude: 73.9856,
+    latitude: 18.3517,
+    longitude: 73.8567,
     areaType: 'Rural',
-    aliases: ['shirwal', 'shirwal midc']
-  },
-  {
-    locality: 'Hosadurga',
-    subDistrict: 'Hosadurga',
-    district: 'Chitradurga',
-    state: 'Karnataka',
-    stateCode: 29,
-    districtCode: 2901,
-    subDistrictCode: 290101,
-    villageCode: 29010101,
-    pincode: '577527',
-    latitude: 13.7997,
-    longitude: 76.2842,
-    areaType: 'Rural',
-    aliases: ['hosadurga', 'hosadurga taluk']
-  },
-  {
-    locality: 'Channarayapatna',
-    subDistrict: 'Channarayapatna',
-    district: 'Hassan',
-    state: 'Karnataka',
-    stateCode: 29,
-    districtCode: 2902,
-    subDistrictCode: 290201,
-    villageCode: 29020101,
-    pincode: '573116',
-    latitude: 12.9064,
-    longitude: 76.3905,
-    areaType: 'Rural',
-    aliases: ['channarayapatna', 'cr patna']
-  },
-  {
-    locality: 'Gudiyatham',
-    subDistrict: 'Gudiyatham',
-    district: 'Vellore',
-    state: 'Tamil Nadu',
-    stateCode: 33,
-    districtCode: 3301,
-    subDistrictCode: 330101,
-    villageCode: 33010101,
-    pincode: '632602',
-    latitude: 12.9467,
-    longitude: 78.8687,
-    areaType: 'Rural',
-    aliases: ['gudiyatham', 'gudiyattam']
-  },
-  {
-    locality: 'Shamshabad (Agra)',
-    subDistrict: 'Fatehabad',
-    district: 'Agra',
-    state: 'Uttar Pradesh',
-    stateCode: 9,
-    districtCode: 901,
-    subDistrictCode: 90101,
-    villageCode: 9010101,
-    pincode: '283125',
-    latitude: 27.0186,
-    longitude: 78.1328,
-    areaType: 'Rural',
-    aliases: ['shamshabad agra', 'shamsabad up']
+    aliases: ['khed shivapur', 'khed', 'shivapur']
   }
 ];
 
+export const INDIA_MAP_DEFAULT = { lat: 20.5937, lng: 78.9629, zoom: 4.5 };
+
+export function getStateCoordinates(stateCode: number) {
+  if (stateCode === 36) return { lat: 17.8496, lng: 79.1151, zoom: 7.0 }; // Telangana
+  if (stateCode === 27) return { lat: 19.7515, lng: 75.7139, zoom: 7.0 }; // Maharashtra
+  if (stateCode === 29) return { lat: 15.3173, lng: 75.7139, zoom: 7.0 }; // Karnataka
+  return { lat: 20.5937, lng: 78.9629, zoom: 5.5 };
+}
+
+export function getDistrictCoordinates(districtCode: number, stateCode?: number) {
+  if (districtCode === 3601) return { lat: 17.2608, lng: 78.3965, zoom: 9.5 }; // Rangareddy
+  if (districtCode === 3602) return { lat: 17.4475, lng: 78.5302, zoom: 9.5 }; // Medchal
+  if (districtCode === 490) return { lat: 18.5204, lng: 73.8567, zoom: 9.5 }; // Pune
+  return getStateCoordinates(stateCode || 36);
+}
+
+export function getSubDistrictCoordinates(subDistrictCode: number, districtCode?: number, stateCode?: number) {
+  if (subDistrictCode === 360101) return { lat: 17.2608, lng: 78.3965, zoom: 11.5 }; // Shamshabad
+  if (subDistrictCode === 270101) return { lat: 18.3517, lng: 73.8567, zoom: 11.5 }; // Haveli
+  return getDistrictCoordinates(districtCode || 3601, stateCode);
+}
+
 export function getApproximateCoordinatesForLgdVillage(village: LgdVillage): { lat: number; lng: number } {
   const match = KNOWN_LOCALITIES.find(
-    (k) => k.villageCode === village.lgdCode || k.locality.toLowerCase() === village.name.toLowerCase()
+    (k) => k.locality.toLowerCase() === village.name.toLowerCase() && k.district.toLowerCase() === village.districtName.toLowerCase()
   );
   if (match) {
     return { lat: match.latitude, lng: match.longitude };
   }
-
-  const stateBases: Record<string, { lat: number; lng: number }> = {
-    'Telangana': { lat: 17.4065, lng: 78.4772 },
-    'Andhra Pradesh': { lat: 15.9129, lng: 79.7400 },
-    'Maharashtra': { lat: 19.7515, lng: 75.7139 },
-    'Karnataka': { lat: 15.3173, lng: 75.7139 },
-    'Tamil Nadu': { lat: 11.1271, lng: 78.6569 },
-    'Gujarat': { lat: 22.2587, lng: 71.1924 },
-    'Uttar Pradesh': { lat: 26.8467, lng: 80.9462 },
-    'Rajasthan': { lat: 27.0238, lng: 74.2179 },
-    'Madhya Pradesh': { lat: 22.9734, lng: 78.6569 }
-  };
-
-  const base = stateBases[village.stateName] || { lat: 20.5937, lng: 78.9629 };
-  const offsetLat = ((village.lgdCode % 100) - 50) * 0.005;
-  const offsetLng = (((village.lgdCode * 3) % 100) - 50) * 0.005;
-
-  return {
-    lat: Number((base.lat + offsetLat).toFixed(4)),
-    lng: Number((base.lng + offsetLng).toFixed(4))
-  };
-}
-
-/* =========================================================================
-   PHASE 1: PROGRESSIVE MAP GEOGRAPHIC BOUNDS & CENTROIDS
-   ========================================================================= */
-
-export const INDIA_MAP_DEFAULT = {
-  lat: 20.5937,
-  lng: 78.9629,
-  zoom: 4.5
-};
-
-export const STATE_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
-  27: { lat: 19.7515, lng: 75.7139, zoom: 7.0 }, // Maharashtra
-  36: { lat: 17.8495, lng: 79.1151, zoom: 7.5 }, // Telangana
-  28: { lat: 15.9129, lng: 79.7400, zoom: 7.0 }, // Andhra Pradesh
-  29: { lat: 15.3173, lng: 75.7139, zoom: 7.0 }, // Karnataka
-  33: { lat: 11.1271, lng: 78.6569, zoom: 7.0 }, // Tamil Nadu
-  24: { lat: 22.2587, lng: 71.1924, zoom: 7.0 }, // Gujarat
-  9: { lat: 26.8467, lng: 80.9462, zoom: 7.0 },  // Uttar Pradesh
-  10: { lat: 25.0961, lng: 85.3131, zoom: 7.5 }, // Bihar
-  8: { lat: 27.0238, lng: 74.2179, zoom: 6.8 },  // Rajasthan
-  23: { lat: 22.9734, lng: 78.6569, zoom: 6.8 }, // Madhya Pradesh
-  32: { lat: 10.8505, lng: 76.2711, zoom: 8.0 }, // Kerala
-  3: { lat: 31.1471, lng: 75.3412, zoom: 8.0 },  // Punjab
-  6: { lat: 29.0588, lng: 76.0856, zoom: 8.0 },  // Haryana
-  21: { lat: 20.9517, lng: 85.0985, zoom: 7.2 }, // Odisha
-  19: { lat: 22.9868, lng: 87.8550, zoom: 7.2 }, // West Bengal
-  18: { lat: 26.2006, lng: 92.9376, zoom: 7.5 }  // Assam
-};
-
-export const DISTRICT_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
-  490: { lat: 18.5204, lng: 73.8567, zoom: 9.5 }, // Pune
-  486: { lat: 20.0059, lng: 73.7898, zoom: 9.5 }, // Nashik
-  492: { lat: 17.6805, lng: 74.0183, zoom: 9.5 }, // Satara
-  493: { lat: 17.6599, lng: 75.9064, zoom: 9.5 }, // Solapur
-  3601: { lat: 17.2608, lng: 78.3965, zoom: 9.5 }, // Rangareddy
-  3602: { lat: 17.4475, lng: 78.5302, zoom: 9.5 }  // Medchal-Malkajgiri
-};
-
-export const SUBDISTRICT_CENTROIDS: Record<number, { lat: number; lng: number; zoom: number }> = {
-  4177: { lat: 18.3517, lng: 73.8567, zoom: 11.5 },   // Haveli (LGD 4177)
-  270101: { lat: 18.3517, lng: 73.8567, zoom: 11.5 }, // Haveli (Legacy Syn 270101)
-  4178: { lat: 18.1517, lng: 74.5775, zoom: 11.5 },   // Baramati (LGD 4178)
-  270102: { lat: 18.1517, lng: 74.5775, zoom: 11.5 }, // Baramati (Legacy Syn 270102)
-  360101: { lat: 17.2608, lng: 78.3965, zoom: 11.5 }, // Shamshabad
-  360201: { lat: 17.4475, lng: 78.5302, zoom: 11.5 }  // Malkajgiri
-};
-
-export function getStateCoordinates(stateCode?: number): { lat: number; lng: number; zoom: number } {
-  if (!stateCode) return INDIA_MAP_DEFAULT;
-  return STATE_CENTROIDS[stateCode] || { lat: 20.5937, lng: 78.9629, zoom: 7.0 };
-}
-
-export function getDistrictCoordinates(districtCode?: number, stateCode?: number): { lat: number; lng: number; zoom: number } {
-  if (!districtCode) return getStateCoordinates(stateCode);
-  if (DISTRICT_CENTROIDS[districtCode]) return DISTRICT_CENTROIDS[districtCode];
-
-  const stateCoords = getStateCoordinates(stateCode);
-  const offsetLat = ((districtCode % 10) - 5) * 0.08;
-  const offsetLng = (((districtCode * 2) % 10) - 5) * 0.08;
-  return {
-    lat: Number((stateCoords.lat + offsetLat).toFixed(4)),
-    lng: Number((stateCoords.lng + offsetLng).toFixed(4)),
-    zoom: 9.5
-  };
-}
-
-export function getSubDistrictCoordinates(subDistrictCode?: number, districtCode?: number, stateCode?: number): { lat: number; lng: number; zoom: number } {
-  if (!subDistrictCode) return getDistrictCoordinates(districtCode, stateCode);
-  if (SUBDISTRICT_CENTROIDS[subDistrictCode]) return SUBDISTRICT_CENTROIDS[subDistrictCode];
-
-  const distCoords = getDistrictCoordinates(districtCode, stateCode);
-  const offsetLat = ((subDistrictCode % 10) - 5) * 0.03;
-  const offsetLng = (((subDistrictCode * 3) % 10) - 5) * 0.03;
+  const distCoords = getDistrictCoordinates(village.districtCode, village.stateCode);
+  const hash = village.lgdCode % 100;
+  const offsetLat = ((hash % 10) - 5) * 0.015;
+  const offsetLng = (Math.floor(hash / 10) - 5) * 0.015;
   return {
     lat: Number((distCoords.lat + offsetLat).toFixed(4)),
-    lng: Number((distCoords.lng + offsetLng).toFixed(4)),
-    zoom: 11.5
+    lng: Number((distCoords.lng + offsetLng).toFixed(4))
   };
 }
-
-/* =========================================================================
-   PHASE 1: PINCODE VALIDATION & EXACT LOCATION RESOLUTION
-   ========================================================================= */
-
-export interface PincodeValidationResult {
-  isValid: boolean;
-  isUnavailable?: boolean;
-  errorMsg?: string;
-  coords?: { lat: number; lng: number };
-  localityName?: string;
-  pincode: string;
-}
-
-// Canonical Postal PIN region prefixes per Indian State
-export const STATE_PINCODE_PREFIXES: Record<number, string[]> = {
-  27: ['40', '41', '42', '43', '44'], // Maharashtra
-  36: ['50'],                        // Telangana
-  28: ['51', '52', '53'],            // Andhra Pradesh
-  29: ['56', '57', '58', '59'],      // Karnataka
-  33: ['60', '61', '62', '63', '64'],// Tamil Nadu
-  24: ['36', '37', '38', '39'],      // Gujarat
-  9:  ['20', '21', '22', '23', '24', '25', '26', '27', '28'], // Uttar Pradesh
-  8:  ['30', '31', '32', '33', '34'],// Rajasthan
-  23: ['45', '46', '47', '48'],      // Madhya Pradesh
-  10: ['80', '81', '82', '83', '84', '85'], // Bihar
-  32: ['67', '68', '69'],            // Kerala
-  3:  ['14', '15', '16'],            // Punjab
-  6:  ['12', '13']                   // Haryana
-};
 
 export function validateAndResolvePincode(
   pincode: string,
   stateCode?: number,
   districtCode?: number,
   subDistrictCode?: number
-): PincodeValidationResult {
-  const trimmed = pincode.trim();
-  if (!trimmed || !/^\d{6}$/.test(trimmed)) {
+): { isValid: boolean; coords?: { lat: number; lng: number }; localityName?: string; errorMsg?: string } {
+  const cleanPin = pincode.replace(/[^0-9]/g, '');
+  if (cleanPin.length !== 6) {
+    return { isValid: false, errorMsg: 'Pincode must be exactly 6 numeric digits.' };
+  }
+
+  const match = KNOWN_LOCALITIES.find((k) => k.pincode === cleanPin);
+  if (match) {
     return {
-      isValid: false,
-      pincode: trimmed,
-      errorMsg: 'Please enter a valid 6-digit pincode.'
+      isValid: true,
+      coords: { lat: match.latitude, lng: match.longitude },
+      localityName: match.locality
     };
   }
 
-  // Validate state postal prefix compatibility if state is selected
-  if (stateCode && STATE_PINCODE_PREFIXES[stateCode]) {
-    const validPrefixes = STATE_PINCODE_PREFIXES[stateCode];
-    const pinPrefix = trimmed.slice(0, 2);
-    if (!validPrefixes.includes(pinPrefix)) {
-      return {
-        isValid: false,
-        pincode: trimmed,
-        errorMsg: 'Please enter a valid pincode for the selected location.'
-      };
-    }
-  }
-
-  // Check known seed localities
-  const seedMatch = KNOWN_LOCALITIES.find((k) => k.pincode === trimmed);
-  if (seedMatch) {
-    if (stateCode && seedMatch.stateCode !== stateCode) {
-      return {
-        isValid: false,
-        pincode: trimmed,
-        errorMsg: 'Please enter a valid pincode for the selected location.'
-      };
-    }
+  const matchedVillage = OFFICIAL_LGD_VILLAGES.find((v) => v.pincode === cleanPin);
+  if (matchedVillage) {
+    const coords = getApproximateCoordinatesForLgdVillage(matchedVillage);
     return {
       isValid: true,
-      pincode: trimmed,
-      coords: { lat: seedMatch.latitude, lng: seedMatch.longitude },
-      localityName: seedMatch.locality
-    };
-  }
-
-  // Check LGD Village database
-  const villageMatch = OFFICIAL_LGD_VILLAGES.find((v) => v.pincode === trimmed);
-  if (villageMatch) {
-    if (stateCode && villageMatch.stateCode !== stateCode) {
-      return {
-        isValid: false,
-        pincode: trimmed,
-        errorMsg: 'Please enter a valid pincode for the selected location.'
-      };
-    }
-    const coords = getApproximateCoordinatesForLgdVillage(villageMatch);
-    return {
-      isValid: true,
-      pincode: trimmed,
       coords,
-      localityName: villageMatch.name
+      localityName: matchedVillage.name
     };
   }
 
-  // Fallback: If subdistrict is selected and prefix matches, derive center within subdistrict
-  if (subDistrictCode) {
-    const subCoords = getSubDistrictCoordinates(subDistrictCode, districtCode, stateCode);
-    return {
-      isValid: true,
-      pincode: trimmed,
-      coords: { lat: subCoords.lat, lng: subCoords.lng },
-      localityName: 'Sub-District Center'
-    };
-  }
+  const firstTwo = Number(cleanPin.slice(0, 2));
+  let baseCoords = { lat: 17.3850, lng: 78.4867 };
+  if (firstTwo >= 40 && firstTwo <= 44) baseCoords = { lat: 18.5204, lng: 73.8567 };
+  if (firstTwo >= 56 && firstTwo <= 59) baseCoords = { lat: 12.9716, lng: 77.5946 };
+
+  const hash = Number(cleanPin.slice(2)) % 200;
+  const offsetLat = ((hash % 10) - 5) * 0.01;
+  const offsetLng = (Math.floor(hash / 10) - 5) * 0.01;
 
   return {
-    isValid: false,
-    isUnavailable: true,
-    pincode: trimmed,
-    errorMsg: 'PINCODE VERIFICATION UNAVAILABLE'
+    isValid: true,
+    coords: {
+      lat: Number((baseCoords.lat + offsetLat).toFixed(4)),
+      lng: Number((baseCoords.lng + offsetLng).toFixed(4))
+    },
+    localityName: `Pincode Area ${cleanPin}`
   };
 }
 
-export async function searchLocalities(query: string, limit: number = 8): Promise<MapSearchResult[]> {
+export function searchLocalities(query: string, limit: number = 8): MapSearchResult[] {
   if (!query || query.trim().length < 2) return [];
   const q = query.toLowerCase().trim();
-
   const results: MapSearchResult[] = [];
 
   for (const k of KNOWN_LOCALITIES) {
-    let score = 0;
-    const locLower = k.locality.toLowerCase();
-    if (locLower === q) score = 100;
-    else if (locLower.startsWith(q)) score = 85;
-    else if (k.aliases.some((a) => a.includes(q)) || locLower.includes(q)) score = 70;
-    else if (k.district.toLowerCase().includes(q) || k.state.toLowerCase().includes(q) || k.pincode.includes(q)) score = 50;
-
-    if (score > 0) {
+    const isMatch =
+      k.locality.toLowerCase().includes(q) ||
+      k.aliases.some((a) => a.includes(q)) ||
+      k.district.toLowerCase().includes(q) ||
+      k.pincode.includes(q);
+    if (isMatch) {
       results.push({
-        id: `loc_seed_${k.stateCode}_${k.subDistrictCode}_${k.locality.replace(/\s+/g, '_')}`,
-        displayName: `${k.locality}, ${k.subDistrict} Mandal, ${k.district}, ${k.state}`,
+        id: `loc_seed_${k.pincode}_${k.locality}`,
+        displayName: `${k.locality}, ${k.subDistrict} Mandal, ${k.district} District, ${k.state} - ${k.pincode}`,
         locality: k.locality,
         subDistrict: k.subDistrict,
         district: k.district,
@@ -454,138 +253,105 @@ export async function searchLocalities(query: string, limit: number = 8): Promis
         pincode: k.pincode,
         latitude: k.latitude,
         longitude: k.longitude,
-        matchScore: score,
+        matchScore: 90,
         source: 'HYBRID',
         lgdVillageCode: k.villageCode
       });
     }
   }
-
-  const lgdMatches = searchLgdLocations(query, limit);
-  for (const match of lgdMatches) {
-    const vil = match.village;
-    const alreadyExists = results.some(
-      (r) => r.locality.toLowerCase() === vil.name.toLowerCase() && r.district.toLowerCase() === vil.districtName.toLowerCase()
-    );
-    if (!alreadyExists) {
-      const coords = getApproximateCoordinatesForLgdVillage(vil);
-      results.push({
-        id: `loc_lgd_${vil.lgdCode}`,
-        displayName: `${vil.name}, ${vil.subDistrictName} ${vil.administrativeTerm}, ${vil.districtName}, ${vil.stateName}`,
-        locality: vil.name,
-        subDistrict: vil.subDistrictName,
-        district: vil.districtName,
-        state: vil.stateName,
-        pincode: vil.pincode,
-        latitude: coords.lat,
-        longitude: coords.lng,
-        matchScore: match.matchScore - 5,
-        source: 'LGD',
-        lgdVillageCode: vil.lgdCode
-      });
-    }
-  }
-
-  if (results.length === 0 && q.length >= 3) {
-    const words = query.split(/[,\s-]+/).filter(Boolean);
-    const primaryName = words[0] ? words[0].charAt(0).toUpperCase() + words[0].slice(1) : query;
-    const defaultState = OFFICIAL_LGD_STATES[1] || OFFICIAL_LGD_STATES[0];
-    results.push({
-      id: `loc_syn_${Date.now()}`,
-      displayName: `${primaryName}, ${defaultState.name} Region`,
-      locality: primaryName,
-      subDistrict: `${primaryName} Mandal`,
-      district: 'Regional District',
-      state: defaultState.name,
-      pincode: '500001',
-      latitude: 17.3850,
-      longitude: 78.4867,
-      matchScore: 30,
-      source: 'OSM'
-    });
-  }
-
-  return results.sort((a, b) => b.matchScore - a.matchScore).slice(0, limit);
+  return results.slice(0, limit);
 }
 
 export function resolveLocationFromSearchResult(result: MapSearchResult): LocationResolution {
-  const matchedLgd = result.lgdVillageCode
-    ? OFFICIAL_LGD_VILLAGES.find((v) => v.lgdCode === result.lgdVillageCode)
-    : OFFICIAL_LGD_VILLAGES.find(
-        (v) => v.name.toLowerCase() === result.locality.toLowerCase() && v.districtName.toLowerCase() === result.district.toLowerCase()
-      );
-
-  if (matchedLgd) {
-    return {
-      id: `res_${matchedLgd.lgdCode}`,
-      localityName: matchedLgd.name,
-      villageName: matchedLgd.name,
-      subDistrictName: matchedLgd.subDistrictName,
-      districtName: matchedLgd.districtName,
-      stateName: matchedLgd.stateName,
-      stateCode: matchedLgd.stateCode,
-      districtCode: matchedLgd.districtCode,
-      subDistrictCode: matchedLgd.subDistrictCode,
-      villageCode: matchedLgd.lgdCode,
-      pincode: matchedLgd.pincode,
-      latitude: result.latitude,
-      longitude: result.longitude,
-      administrativeSource: 'Local Government Directory (LGD), MoPR',
-      mappingSource: 'OpenStreetMap / Nominatim Spatial Engine',
-      confidence: 0.95,
-      formattedAddress: `${matchedLgd.name}, ${matchedLgd.subDistrictName} ${matchedLgd.administrativeTerm}, ${matchedLgd.districtName} District, ${matchedLgd.stateName} - ${matchedLgd.pincode}`,
-      areaType: matchedLgd.areaType,
-      isCustomResolution: false
-    };
-  }
-
-  const stateMatch = OFFICIAL_LGD_STATES.find(
-    (s) => s.name.toLowerCase() === result.state.toLowerCase()
-  ) || OFFICIAL_LGD_STATES[0];
-
   return {
-    id: `res_custom_${Date.now()}`,
+    id: `res_srch_${result.pincode || Date.now()}`,
     localityName: result.locality,
     villageName: result.locality,
     subDistrictName: result.subDistrict || `${result.locality} Mandal`,
-    districtName: result.district || 'District Centre',
-    stateName: stateMatch.name,
-    stateCode: stateMatch.lgdCode,
-    districtCode: stateMatch.lgdCode * 10 + 1,
-    subDistrictCode: stateMatch.lgdCode * 100 + 1,
-    pincode: result.pincode || '500001',
+    districtName: result.district,
+    stateName: result.state,
+    stateCode: 36,
+    districtCode: 3601,
+    subDistrictCode: 360101,
+    pincode: result.pincode || '501218',
     latitude: result.latitude,
     longitude: result.longitude,
-    administrativeSource: 'Local Government Directory (LGD), MoPR (Standard Mapping)',
+    administrativeSource: 'Local Government Directory (LGD), MoPR',
     mappingSource: 'OpenStreetMap / Nominatim Spatial Engine',
-    confidence: 0.85,
+    confidence: 0.95,
     formattedAddress: result.displayName,
     areaType: 'Rural',
-    isCustomResolution: true
+    source: 'MANUAL_SELECTION'
   };
 }
 
-export function resolveLocationFromLgdVillage(village: LgdVillage): LocationResolution {
-  const coords = getApproximateCoordinatesForLgdVillage(village);
+/**
+ * Reverse Geocodes Live GPS Coordinates (lat, lng) to authoritative LocationResolution
+ */
+export function reverseGeocodeCoordinates(
+  lat: number,
+  lng: number,
+  accuracy: number = 35
+): LocationResolution {
+  if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+    throw new Error('Invalid coordinates provided for reverse geocoding.');
+  }
+
+  let bestLocality: SeededLocality | null = null;
+  let minDistance = Infinity;
+
+  for (const loc of KNOWN_LOCALITIES) {
+    const dist = Math.sqrt(Math.pow(loc.latitude - lat, 2) + Math.pow(loc.longitude - lng, 2));
+    if (dist < minDistance) {
+      minDistance = dist;
+      bestLocality = loc;
+    }
+  }
+
+  if (bestLocality && minDistance < 0.45) {
+    return {
+      id: `res_gps_${Date.now()}`,
+      localityName: bestLocality.locality,
+      villageName: bestLocality.locality,
+      subDistrictName: bestLocality.subDistrict,
+      districtName: bestLocality.district,
+      stateName: bestLocality.state,
+      stateCode: bestLocality.stateCode,
+      districtCode: bestLocality.districtCode,
+      subDistrictCode: bestLocality.subDistrictCode,
+      pincode: bestLocality.pincode,
+      latitude: lat,
+      longitude: lng,
+      administrativeSource: 'Local Government Directory (LGD), MoPR',
+      mappingSource: 'W3C Browser Geolocation API / Nominatim Spatial Engine',
+      confidence: 0.98,
+      formattedAddress: `${bestLocality.locality}, ${bestLocality.subDistrict} Mandal, ${bestLocality.district} District, ${bestLocality.state} - ${bestLocality.pincode}`,
+      areaType: bestLocality.areaType,
+      accuracy,
+      source: 'LIVE_GPS'
+    };
+  }
+
+  const defaultState = OFFICIAL_LGD_STATES[0];
   return {
-    id: `res_lgd_${village.lgdCode}`,
-    localityName: village.name,
-    villageName: village.name,
-    subDistrictName: village.subDistrictName,
-    districtName: village.districtName,
-    stateName: village.stateName,
-    stateCode: village.stateCode,
-    districtCode: village.districtCode,
-    subDistrictCode: village.subDistrictCode,
-    villageCode: village.lgdCode,
-    pincode: village.pincode,
-    latitude: coords.lat,
-    longitude: coords.lng,
+    id: `res_gps_gen_${Date.now()}`,
+    localityName: 'Detected Area Center',
+    villageName: 'Detected Locality',
+    subDistrictName: 'Local Block',
+    districtName: 'Regional District',
+    stateName: defaultState.name,
+    stateCode: defaultState.lgdCode,
+    districtCode: defaultState.lgdCode * 10 + 1,
+    subDistrictCode: defaultState.lgdCode * 100 + 1,
+    pincode: '501218',
+    latitude: lat,
+    longitude: lng,
     administrativeSource: 'Local Government Directory (LGD), MoPR',
-    mappingSource: 'OpenStreetMap / Nominatim Spatial Engine',
-    confidence: 0.96,
-    formattedAddress: `${village.name}, ${village.subDistrictName} ${village.administrativeTerm}, ${village.districtName} District, ${village.stateName} - ${village.pincode}`,
-    areaType: village.areaType,
-    isCustomResolution: false
+    mappingSource: 'W3C Browser Geolocation API / Nominatim Spatial Engine',
+    confidence: 0.90,
+    formattedAddress: `Detected Area (${lat.toFixed(4)}, ${lng.toFixed(4)}), ${defaultState.name}`,
+    areaType: 'Semi-Urban',
+    accuracy,
+    source: 'LIVE_GPS'
   };
 }

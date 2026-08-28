@@ -15,7 +15,7 @@ if (typeof window !== 'undefined') {
   (window as any).gm_authFailure = () => {
     isBillingError = true;
     if (import.meta.env?.DEV) {
-      console.warn('[UDYORA MAP] Billing is not enabled for the configured Google Cloud project.');
+      console.warn('[UDYORA MAP ERROR] Google Maps authentication/configuration failure');
     }
     const event = new CustomEvent('udyora_map_billing_error');
     window.dispatchEvent(event);
@@ -23,7 +23,12 @@ if (typeof window !== 'undefined') {
 }
 
 export function getGoogleMapsApiKey(): string | undefined {
-  const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const key = (typeof import.meta !== 'undefined' && import.meta.env)
+    ? import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+    : (typeof process !== 'undefined' && process.env)
+    ? process.env.VITE_GOOGLE_MAPS_API_KEY
+    : undefined;
+
   if (!key || key.trim() === '' || key.includes('your_google_maps_api_key')) {
     return undefined;
   }
@@ -38,6 +43,12 @@ export function isMapBillingError(): boolean {
   return isBillingError;
 }
 
+export function resetGoogleMapLoader(): void {
+  isOptionsSet = false;
+  loadPromise = null;
+  isBillingError = false;
+}
+
 export function loadGoogleMapsScript(): Promise<boolean> {
   if (typeof window === 'undefined') return Promise.resolve(false);
   if (window.google && window.google.maps && window.google.maps.marker) return Promise.resolve(true);
@@ -47,7 +58,7 @@ export function loadGoogleMapsScript(): Promise<boolean> {
   const apiKey = getGoogleMapsApiKey();
   if (!apiKey) {
     if (import.meta.env?.DEV) {
-      console.warn('[UDYORA MAP] Google Maps API key is not configured.');
+      console.warn('[UDYORA MAP] Missing VITE_GOOGLE_MAPS_API_KEY');
     }
     return Promise.resolve(false);
   }
@@ -61,6 +72,10 @@ export function loadGoogleMapsScript(): Promise<boolean> {
       isOptionsSet = true;
     }
 
+    if (import.meta.env?.DEV) {
+      console.log('[UDYORA MAP] Loading Google Maps JS API async loader...');
+    }
+
     loadPromise = importLibrary('maps')
       .then(async () => {
         try {
@@ -70,18 +85,27 @@ export function loadGoogleMapsScript(): Promise<boolean> {
         } catch (mErr) {
           console.warn('[UDYORA MAP] Could not pre-load auxiliary libraries:', mErr);
         }
+
+        if (import.meta.env?.DEV) {
+          console.log('[UDYORA MAP] Ready');
+        }
+
         return true;
       })
       .catch((err) => {
+        isBillingError = true;
         if (import.meta.env?.DEV) {
-          console.warn('[UDYORA MAP] Failed to load Google Maps JS API:', err);
+          console.warn('[UDYORA MAP ERROR] Failed to load Google Maps JS API:', err);
         }
         return false;
       });
 
     return loadPromise;
   } catch (err) {
-    console.warn('[UDYORA MAP] Exception during map loader initialization:', err);
+    isBillingError = true;
+    if (import.meta.env?.DEV) {
+      console.warn('[UDYORA MAP ERROR] Exception during map loader initialization:', err);
+    }
     return Promise.resolve(false);
   }
 }

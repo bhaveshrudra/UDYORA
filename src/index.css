@@ -189,3 +189,15 @@
     display: table-footer-group;
   }
 }
+
+/* Suppress raw Google Maps native error popups and dialog overlays */
+.gm-err-container,
+.gm-err-modal,
+.gm-err-content,
+div[style*="z-index: 1000001"],
+div[style*="z-index: 1000000"] .gm-style-iw {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

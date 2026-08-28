@@ -1,112 +1,63 @@
-﻿import {
-  AgentPayload,
-  BusinessAgentData,
-  EvidenceRecord,
-  FeasibilityCategory,
-  FeasibilityDimension,
-  FinalFeasibilityVerdict,
-  FinancialPlan,
-  GovernmentScheme,
-  LocationData,
-  MarketAgentData,
-  RiskProfile,
-  SchemeMatchResult,
-  UserBusinessInput
-} from '../types';
-
 /**
- * FINAL ADVISOR / DETERMINISTIC FEASIBILITY SCORING ENGINE
- * 
- * Computes a deterministic, explainable Feasibility Score (0-100) across 6 weighted dimensions:
- * 1. Market Opportunity (25%)
- * 2. Competition Dynamics (15%)
- * 3. Business Unit Economics (20%)
- * 4. Financial Debt Readiness / DSCR (15%)
- * 5. Operational Risk Buffers (15%)
- * 6. Data Grounding Confidence (10%)
+ * UDYORA Agent 7: Final Advisor / Report Agent
+ * Synthesizes outputs from specialized agents into the executive feasibility report.
+ * Uses the Centralized Deterministic Feasibility Engine (feasibilityEngine.ts)
+ * as the single source of truth for feasibility scoring, hard constraints, and location sensitivity.
  */
+
+import { UserBusinessInput, LocationData, EvidenceRecord, FeasibilityDimension, DataQualityStatus } from '../types';
+import {
+  calculateDeterministicFeasibility,
+  FeasibilityAssessmentResult
+} from '../services/feasibilityEngine';
+
+export interface FinalAdvisorOutput {
+  score: number;
+  feasibilityScore: number;
+  dataConfidenceScore: number;
+  category: 'VERY_HIGH' | 'HIGH' | 'MODERATE' | 'CONDITIONAL' | 'LOW';
+  status?: 'RECOMMENDED' | 'CONDITIONAL' | 'NOT RECOMMENDED';
+  statusLabel?: string;
+  headline: string;
+  explanation: string;
+  counterfactualRecommendation?: string;
+  appliedConstraints?: string[];
+  limitingFactors?: string[];
+  positiveFactors?: string[];
+  dimensions: FeasibilityDimension[];
+  readinessFactors: any[];
+  criticalCaveat: string;
+  disclaimer: string;
+}
+
 export function runFinalAdvisorAgent(
   input: UserBusinessInput,
   location: LocationData,
-  businessData: BusinessAgentData | AgentPayload<BusinessAgentData>,
-  marketData: MarketAgentData | AgentPayload<MarketAgentData>,
-  financialPlan: FinancialPlan | AgentPayload<FinancialPlan>,
-  schemeMatches: SchemeMatchResult[] | AgentPayload<SchemeMatchResult[]>,
-  riskProfile: RiskProfile | AgentPayload<RiskProfile>,
+  businessAgentRes: any,
+  marketAgentRes: any,
+  financeAgentRes: any,
+  schemeAgentRes: any,
+  riskAgentRes: any,
   evidenceRecords: EvidenceRecord[] = []
-): FinalFeasibilityVerdict {
-  const lang = input.language || 'en';
-  const bizCategory = input.businessCategoryId || 'dairy';
+): FinalAdvisorOutput {
+  const finData = financeAgentRes?.data || {};
+  const dscr = finData.debtServiceCoverageRatio ?? 2.29;
+  const availableOwnCapital = finData.availableOwnCapital ?? input.availableCapital ?? 100000;
+  const indicativeProjectCost = finData.indicativeProjectCost ?? 1000000;
+  const risks = riskAgentRes?.data || {};
+  const overallRiskLevel = risks.overallRiskLevel || 'MEDIUM';
 
-  // Safely extract payloads if wrapped in AgentPayload<T>
-  const plan: FinancialPlan = (financialPlan as any)?.data || financialPlan || {};
-  const market: MarketAgentData = (marketData as any)?.data || marketData || {};
-  const risks: RiskProfile = (riskProfile as any)?.data || riskProfile || {};
-  const schemes: SchemeMatchResult[] = Array.isArray(schemeMatches)
-    ? schemeMatches
-    : (schemeMatches as any)?.data || [];
-
-  const monthlyNetProfit = typeof plan.estimatedMonthlyNetProfit === 'number' ? plan.estimatedMonthlyNetProfit : 25000;
-  const monthlyEMI = typeof plan.monthlyEMI === 'number' ? plan.monthlyEMI : 19680;
-  const dscr = typeof plan.debtServiceCoverageRatio === 'number' ? plan.debtServiceCoverageRatio : 2.38;
-  const ownCapital = typeof plan.availableOwnCapital === 'number' ? plan.availableOwnCapital : (input.availableCapital || 100000);
-  const loanReq = typeof plan.indicativeFinancingRequirement === 'number' ? plan.indicativeFinancingRequirement : (ownCapital * 9);
-
-  // 1. Calculate Dimension 1: Market Opportunity (Weight: 25%)
-  let marketOppScore = 78;
-  const popVal = typeof location.population?.value === 'number' ? location.population.value : 3500;
-  if (popVal >= 5000) marketOppScore = 88;
-  else if (popVal >= 2500) marketOppScore = 80;
-  else marketOppScore = 70;
-
-  if (market.potentialDemandIndicators && market.potentialDemandIndicators.length > 0) {
-    const hasHighDemand = market.potentialDemandIndicators.some((d: any) => d.level === 'HIGH');
-    if (hasHighDemand) marketOppScore = Math.min(95, marketOppScore + 7);
-  }
-
-  // 2. Calculate Dimension 2: Competition Dynamics (Weight: 15%)
-  let competitionScore = 75;
-  const compLevel = market.competitionLevel || 'MODERATE';
-  if (compLevel === 'LOW') competitionScore = 88;
-  else if (compLevel === 'MODERATE') competitionScore = 75;
-  else if (compLevel === 'HIGH') competitionScore = 60;
-  else competitionScore = 70;
-
-  // 3. Calculate Dimension 3: Business Unit Economics (Weight: 20%)
-  let econScore = 75;
-  const rev = plan.estimatedMonthlyRevenue || 120000;
-  const netMargin = rev > 0 ? (monthlyNetProfit / rev) * 100 : 15;
-  if (netMargin >= 25) econScore = 90;
-  else if (netMargin >= 15) econScore = 80;
-  else if (netMargin >= 8) econScore = 70;
-  else econScore = 55;
-
-  // 4. Calculate Dimension 4: Financial Readiness / DSCR (Weight: 15%)
-  let finReadinessScore = 75;
-  if (dscr >= 2.0) finReadinessScore = 92;
-  else if (dscr >= 1.5) finReadinessScore = 82;
-  else if (dscr >= 1.2) finReadinessScore = 68;
-  else finReadinessScore = 45;
-
-  const topScheme = schemes.length > 0 ? schemes[0] : null;
-  if (topScheme && (topScheme.qualificationStatus === 'ELIGIBLE' || topScheme.status === 'ELIGIBLE')) {
-    finReadinessScore = Math.min(98, finReadinessScore + 6);
-  }
-
-  // 5. Calculate Dimension 5: Operational Risk Buffers (Weight: 15%)
-  let riskScore = 75;
-  const overallRisk = risks.overallRiskLevel || 'MEDIUM';
-  if (overallRisk === 'LOW') riskScore = 88;
-  else if (overallRisk === 'MEDIUM') riskScore = 75;
-  else riskScore = 55;
-
-  // 6. Calculate Dimension 6: Data Grounding Confidence (Weight: 10%)
-  let dataConfidenceScore = 85;
-  const verifiedCount = evidenceRecords.filter((e) => e.status === 'VERIFIED').length;
-  const totalEvidence = Math.max(1, evidenceRecords.length);
-  const verifiedRatio = verifiedCount / totalEvidence;
-  dataConfidenceScore = Math.round(verifiedRatio * 100);
-  if (dataConfidenceScore < 40) dataConfidenceScore = 40;
+  // 1. Run Centralized Single Source of Truth Deterministic Feasibility Engine
+  const deterministicResult: FeasibilityAssessmentResult = calculateDeterministicFeasibility({
+    input,
+    location,
+    businessCategoryId: input.businessCategoryId || 'dairy',
+    dscr,
+    availableOwnCapital,
+    indicativeProjectCost,
+    overallRiskLevel,
+    evidenceRecords
+  });
 
   const getRating = (s: number): 'STRONG' | 'ADEQUATE' | 'NEEDS_ATTENTION' | 'CRITICAL' => {
     if (s >= 80) return 'STRONG';
@@ -115,119 +66,66 @@ export function runFinalAdvisorAgent(
     return 'CRITICAL';
   };
 
-  const marketOppRating = getRating(marketOppScore);
-  const compRating = getRating(competitionScore);
-  const econRating = getRating(econScore);
-  const finRating = getRating(finReadinessScore);
-  const riskRating = getRating(riskScore);
-  const dataRating = getRating(dataConfidenceScore);
-
-  const weightedScore = Math.round(
-    marketOppScore * 0.25 +
-    competitionScore * 0.15 +
-    econScore * 0.20 +
-    finReadinessScore * 0.15 +
-    riskScore * 0.15 +
-    dataConfidenceScore * 0.10
-  );
-
-  let feasibilityCategory: FeasibilityCategory = 'MODERATE';
-  if (weightedScore >= 78) feasibilityCategory = 'HIGH';
-  else if (weightedScore >= 60) feasibilityCategory = 'MODERATE';
-  else if (weightedScore >= 45) feasibilityCategory = 'CONDITIONAL';
-  else feasibilityCategory = 'LOW';
-
-  const getSectorMarketSummary = (): string => {
-    if (bizCategory === 'dairy') {
-      const dairyDist = location.nearestDairyCooperativeKm?.value ?? 4.5;
-      return `Proximity to cooperative collection hub (${dairyDist} km) and transport corridor provide dependable milk off-take.`;
-    }
-    if (bizCategory === 'tailoring') {
-      return `Local demand in ${location.village || 'catchment'} for bridal wear, alteration, and institutional uniforms provides steady volume.`;
-    }
-    if (bizCategory === 'retail') {
-      return `Daily recurring footfall for FMCG, provisions, and staples from core village settlement supports steady turnover.`;
-    }
-    return `Local consumer demand in ${location.village || 'the area'} provides steady off-take for the proposed enterprise.`;
-  };
-
-  const getFinancialSummary = (): string => {
-    return `DSCR is calculated at ${dscr}x with indicative monthly net profit of INR ${monthlyNetProfit.toLocaleString('en-IN')} after servicing monthly EMI of INR ${monthlyEMI.toLocaleString('en-IN')}.`;
-  };
-
-  const getRiskSummary = (): string => {
-    if (bizCategory === 'dairy') {
-      return 'Actionable mitigations established for livestock health (insurance) and feed cost volatility (fodder cultivation).';
-    }
-    if (bizCategory === 'tailoring') {
-      return 'Mitigations established for power continuity (inverter backup) and niche custom stitching positioning.';
-    }
-    if (bizCategory === 'retail') {
-      return 'Credit ledger exposure capped at INR 2,500 per household and FIFO rotation deployed for perishable goods.';
-    }
-    return 'Standard rural operational risk buffers and 45-day working capital reserve identified.';
-  };
-
   const dimensions: FeasibilityDimension[] = [
     {
-      id: 'dim_market_opportunity',
-      name: 'Market Opportunity',
-      weight: 0.25,
-      score: marketOppScore,
+      id: 'dim_location',
+      name: 'Location Viability',
+      weight: 0.30,
+      score: deterministicResult.factors.locationViability,
+      confidence: 0.95,
+      status: (deterministicResult.factors.locationViability >= 65 ? 'VERIFIED' : 'ESTIMATED') as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.locationViability),
+      summary: `Location score (${deterministicResult.factors.locationViability}/100) based on settlement area (${location.areaType || 'Rural'}) and market distance.`
+    },
+    {
+      id: 'dim_market',
+      name: 'Market Catchment Demand',
+      weight: 0.20,
+      score: deterministicResult.factors.marketDemand,
       confidence: 0.90,
-      status: 'VERIFIED',
-      rating: marketOppRating,
-      summary: getSectorMarketSummary()
+      status: (deterministicResult.factors.marketDemand >= 65 ? 'VERIFIED' : 'ESTIMATED') as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.marketDemand),
+      summary: `Market demand (${deterministicResult.factors.marketDemand}/100) evaluated from local population density.`
+    },
+    {
+      id: 'dim_financial',
+      name: 'Financial Viability & DSCR',
+      weight: 0.20,
+      score: deterministicResult.factors.financialViability,
+      confidence: 0.95,
+      status: (deterministicResult.factors.financialViability >= 70 ? 'VERIFIED' : 'ESTIMATED') as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.financialViability),
+      summary: `DSCR calculated at ${dscr}x with capital equity margin of ₹${availableOwnCapital.toLocaleString('en-IN')}.`
+    },
+    {
+      id: 'dim_infrastructure',
+      name: 'Infrastructure & Accessibility',
+      weight: 0.15,
+      score: deterministicResult.factors.infrastructure,
+      confidence: 0.90,
+      status: (deterministicResult.factors.infrastructure >= 60 ? 'ESTIMATED' : 'INSUFFICIENT DATA') as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.infrastructure),
+      summary: `Infrastructure accessibility (${deterministicResult.factors.infrastructure}/100) based on road and collection center connectivity.`
     },
     {
       id: 'dim_competition',
-      name: 'Competition Dynamics',
-      weight: 0.15,
-      score: competitionScore,
-      confidence: 0.85,
-      status: 'VERIFIED',
-      rating: compRating,
-      summary: `Estimated competition intensity is ${market.competitionLevel || 'MODERATE'} in ${location.village || 'Locality'}.`
-    },
-    {
-      id: 'dim_business_economics',
-      name: 'Business Unit Economics',
-      weight: 0.20,
-      score: econScore,
-      confidence: 0.95,
-      status: 'VERIFIED',
-      rating: econRating,
-      summary: `Estimated monthly net profit is INR ${monthlyNetProfit.toLocaleString('en-IN')} with break-even period of ~${plan.estimatedBreakEvenMonths || 12} months.`
-    },
-    {
-      id: 'dim_financial_readiness',
-      name: 'Financial Debt Readiness',
-      weight: 0.15,
-      score: finReadinessScore,
-      confidence: 0.98,
-      status: 'VERIFIED',
-      rating: finRating,
-      summary: getFinancialSummary()
-    },
-    {
-      id: 'dim_operational_risk',
-      name: 'Operational Risk Buffers',
-      weight: 0.15,
-      score: riskScore,
-      confidence: 0.91,
-      status: 'VERIFIED',
-      rating: riskRating,
-      summary: getRiskSummary()
-    },
-    {
-      id: 'dim_data_confidence',
-      name: 'Data Grounding Confidence',
+      name: 'Opportunity & Competition Gap',
       weight: 0.10,
-      score: dataConfidenceScore,
-      confidence: dataConfidenceScore / 100,
-      status: dataConfidenceScore >= 75 ? 'VERIFIED' : 'ESTIMATED',
-      rating: dataRating,
-      summary: `${verifiedCount} metrics verified against official Census, GIS, and Ministry guidelines.`
+      score: deterministicResult.factors.competitionGap,
+      confidence: 0.85,
+      status: 'ESTIMATED' as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.competitionGap),
+      summary: `Commercial opportunity gap score of ${deterministicResult.factors.competitionGap}/100.`
+    },
+    {
+      id: 'dim_risk',
+      name: 'Risk Adjustment',
+      weight: 0.05,
+      score: deterministicResult.factors.riskAdjustment,
+      confidence: 0.85,
+      status: 'ESTIMATED' as DataQualityStatus,
+      rating: getRating(deterministicResult.factors.riskAdjustment),
+      summary: `Operational risk profile evaluated at ${overallRiskLevel}.`
     }
   ];
 
@@ -239,19 +137,22 @@ export function runFinalAdvisorAgent(
     summary: d.summary
   }));
 
-  const headline = feasibilityCategory === 'HIGH' ? 'Strong Enterprise Feasibility' : 'Moderate Enterprise Feasibility';
-  const explanation = `Based on available evidence, the estimated enterprise feasibility is supported by a DSCR of ${dscr}x, steady off-take, and structured credit under ${topScheme?.scheme?.shortName || 'Government Schemes'}.`;
-
   const criticalCaveat = 'Institutional loan sanction is subject to lender credit appraisal, applicant CIBIL score, and document verification.';
   const disclaimer = 'UDYORA provides advisory estimates based on official data sources and mathematical models. This report is for planning and does not constitute a guaranteed commercial contract or bank credit sanction.';
 
   return {
-    score: weightedScore,
-    feasibilityScore: weightedScore,
-    dataConfidenceScore,
-    category: feasibilityCategory,
-    headline,
-    explanation,
+    score: deterministicResult.score,
+    feasibilityScore: deterministicResult.score,
+    dataConfidenceScore: deterministicResult.dataConfidenceScore,
+    category: deterministicResult.category,
+    status: deterministicResult.status,
+    statusLabel: deterministicResult.statusLabel,
+    headline: deterministicResult.statusLabel,
+    explanation: deterministicResult.explanation,
+    counterfactualRecommendation: deterministicResult.counterfactualRecommendation,
+    appliedConstraints: deterministicResult.appliedConstraints,
+    limitingFactors: deterministicResult.limitingFactors,
+    positiveFactors: deterministicResult.positiveFactors,
     dimensions,
     readinessFactors,
     criticalCaveat,

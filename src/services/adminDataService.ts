@@ -550,8 +550,18 @@ const SEED_SETTINGS: SystemSettingsEntity = {
    GENERIC STORAGE REPOSITORY HELPER (READY FOR POSTGRES REST API)
    ========================================================================= */
 
+const inMemoryStorageMap = new Map<string, string>();
+
 function getStorageData<T>(key: string, fallback: T): T {
-  if (typeof window === 'undefined') return fallback;
+  if (typeof window === 'undefined') {
+    const raw = inMemoryStorageMap.get(key);
+    if (!raw) return fallback;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  }
   try {
     const raw = localStorage.getItem(key);
     if (!raw) {
@@ -565,12 +575,15 @@ function getStorageData<T>(key: string, fallback: T): T {
 }
 
 function setStorageData<T>(key: string, data: T): void {
+  const serialized = JSON.stringify(data);
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(key, JSON.stringify(data));
+      localStorage.setItem(key, serialized);
     } catch (err) {
       console.warn(`Failed to persist ${key}:`, err);
     }
+  } else {
+    inMemoryStorageMap.set(key, serialized);
   }
 }
 
@@ -712,6 +725,9 @@ export function getUsers(): UserEntity[] {
   const adminUsers = getStorageData(STORAGE_KEYS.USERS, SEED_USERS);
   const realUsers = getRegisteredUsers();
 
+  const userStatusMap = new Map<string, 'ACTIVE' | 'SUSPENDED'>();
+  adminUsers.forEach((u) => userStatusMap.set(u.id, u.status));
+
   const convertedReal: UserEntity[] = realUsers.map((ru) => ({
     id: ru.userId,
     maskedName: ru.name,
@@ -722,7 +738,7 @@ export function getUsers(): UserEntity[] {
     createdAt: ru.createdAt.split('T')[0],
     lastActive: ru.updatedAt.split('T')[0],
     assessmentsCount: getSavedAssessments().filter((a) => a.userId === ru.userId).length,
-    status: 'ACTIVE'
+    status: userStatusMap.get(ru.userId) || 'ACTIVE'
   }));
 
   const combined = [...convertedReal];

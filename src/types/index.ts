@@ -2,7 +2,7 @@ export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'OBSERVED' | 'INSUFFI
 
 export type GeographicLevel = string;
 
-export type FeasibilityCategory = 'HIGH' | 'MODERATE' | 'CONDITIONAL' | 'LOW';
+export type FeasibilityCategory = 'VERY_HIGH' | 'HIGH' | 'MODERATE' | 'CONDITIONAL' | 'LOW';
 
 export type AgentExecutionStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'PARTIAL' | 'FAILED' | 'ERROR' | 'SUCCESS' | 'DEGRADED';
 

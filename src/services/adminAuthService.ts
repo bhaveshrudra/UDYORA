@@ -3,13 +3,13 @@
  * Provides centralized session management, role validation, and route guards.
  *
  * AUTHENTICATION CONFIGURATION:
- * - Admin Role: Full platform administration
- * - Editorial Role: Content, location, scheme & translation management
+ * - Chief Administrator: Full platform administration, participant management, reports & settings
+ * - Editorial Content Officer: Content, location, scheme, evidence & translation management
  * Default Email: admin@udyora.gov.in
  * Default Password: 123456
  */
 
-export type AdminRole = 'ADMIN' | 'EDITORIAL';
+export type AdminRole = 'CHIEF_ADMINISTRATOR' | 'EDITORIAL_OFFICER' | 'ADMIN' | 'EDITORIAL';
 
 export interface AdminUser {
   id: string;
@@ -30,9 +30,9 @@ export const ADMIN_AUTH_CONFIG = {
 // Backward-compatible alias
 export const PROTOTYPE_AUTH_CONFIG = ADMIN_AUTH_CONFIG;
 
-// Restricted subroutes for EDITORIAL role
+// Restricted subroutes for Editorial Content Officer role
 export const EDITORIAL_RESTRICTED_ROUTES = [
-  'financial-rules',
+  'participants',
   'users',
   'audit-logs',
   'settings'
@@ -54,14 +54,14 @@ export function isAuthenticatedAdmin(): boolean {
 }
 
 export function isRouteAllowedForRole(role: AdminRole, route: string): boolean {
-  if (role === 'ADMIN') return true;
+  if (role === 'CHIEF_ADMINISTRATOR' || role === 'ADMIN') return true;
   return !EDITORIAL_RESTRICTED_ROUTES.includes(route);
 }
 
 export function loginAdmin(
   email: string,
   pass: string,
-  selectedRole: AdminRole = 'ADMIN',
+  selectedRole: AdminRole = 'CHIEF_ADMINISTRATOR',
   remember: boolean = false
 ): Promise<{ success: boolean; user?: AdminUser; error?: string }> {
   return new Promise((resolve) => {
@@ -73,19 +73,24 @@ export function loginAdmin(
       const isPassValid = cleanPass === ADMIN_AUTH_CONFIG.defaultPassword;
 
       if (isEmailValid && isPassValid) {
+        const isChief = selectedRole === 'CHIEF_ADMINISTRATOR' || selectedRole === 'ADMIN';
+        const userRole: AdminRole = isChief ? 'CHIEF_ADMINISTRATOR' : 'EDITORIAL_OFFICER';
+
         const user: AdminUser = {
-          id: selectedRole === 'ADMIN' ? 'adm_super_01' : 'adm_edit_02',
+          id: isChief ? 'adm_chief_01' : 'adm_edit_02',
           email: ADMIN_AUTH_CONFIG.defaultEmail,
-          name: selectedRole === 'ADMIN' ? 'Chief Policy Administrator' : 'Editorial Content Officer',
-          role: selectedRole,
+          name: isChief ? 'Chief Administrator' : 'Editorial Content Officer',
+          role: userRole,
           lastLogin: new Date().toISOString()
         };
 
         const serialized = JSON.stringify(user);
-        if (remember) {
-          localStorage.setItem(ADMIN_SESSION_KEY, serialized);
-        } else {
-          sessionStorage.setItem(ADMIN_SESSION_KEY, serialized);
+        if (typeof window !== 'undefined') {
+          if (remember) {
+            localStorage.setItem(ADMIN_SESSION_KEY, serialized);
+          } else {
+            sessionStorage.setItem(ADMIN_SESSION_KEY, serialized);
+          }
         }
 
         resolve({ success: true, user });
@@ -95,7 +100,7 @@ export function loginAdmin(
           error: 'Invalid administrator credentials. Please verify your email and password.'
         });
       }
-    }, 400);
+    }, 300);
   });
 }
 

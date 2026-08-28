@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Compass, MapPin, Sparkles, Building2, Store, ExternalLink, Info, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Compass, MapPin, Sparkles, Building2, Store, ExternalLink, Info, CheckCircle2, ChevronRight, RotateCcw } from 'lucide-react';
 import { LocationResolution, OpportunitySpot } from '../types/map';
 import { useLanguage } from '../i18n/LanguageContext';
 import {
   isApiKeyConfigured,
   loadGoogleMapsScript,
-  isMapBillingError
+  isMapBillingError,
+  resetGoogleMapLoader
 } from '../services/googleMapLoader';
 import { normalizeCoordinates, MapLocation } from '../services/coordinateNormalizer';
 import {
@@ -149,18 +150,24 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     setOpportunitySpots(opps);
 
     // B. Fetch Real Nearby Resources from Google Places API
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
     setIsLoadingPlaces(true);
-    fetchNearbyResourcesFromGoogle(map, normalizedLocationCoords, businessCategory, activeRadius)
+    fetchNearbyResourcesFromGoogle(normalizedLocationCoords, businessCategory, activeRadius)
       .then((items) => {
         setNearbyResources(items);
       })
       .finally(() => {
         setIsLoadingPlaces(false);
       });
-  }, [mapState, location?.id, businessCategory, activeRadius]);
+  }, [
+    mapState,
+    location?.id,
+    location?.latitude,
+    location?.longitude,
+    location?.villageName,
+    location?.localityName,
+    businessCategory,
+    activeRadius
+  ]);
 
   // 5. Render Map Center, Catchment Circle, and Distinct AdvancedMarkerElement Pins
   useEffect(() => {
@@ -320,7 +327,23 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     }
   };
 
-  // Fallback for BillingNotEnabledMapError or Unconfigured API Key
+  const handleRetryMap = () => {
+    resetGoogleMapLoader();
+    setHasBillingError(false);
+    setMapConfigured(true);
+    setIsMapLoaded(false);
+
+    loadGoogleMapsScript().then((success) => {
+      if (success && window.google && window.google.maps) {
+        setIsMapLoaded(true);
+        setMapConfigured(true);
+      } else {
+        setMapConfigured(false);
+      }
+    });
+  };
+
+  // Controlled UDYORA Fallback for BillingNotEnabledMapError, Key/Referrer Failure, or Unconfigured API Key
   if (!mapConfigured || hasBillingError) {
     return (
       <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs ${className}`}>
@@ -335,7 +358,18 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <h4 className="text-xs sm:text-sm font-black text-slate-800">
               Map temporarily unavailable.
             </h4>
+            <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+              Location intelligence could not be loaded right now. Rest of the assessment remains active.
+            </p>
           </div>
+          <button
+            type="button"
+            onClick={handleRetryMap}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Retry</span>
+          </button>
         </div>
       </div>
     );

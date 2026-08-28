@@ -36,6 +36,8 @@ export interface LocationResolution {
   areaType: 'Rural' | 'Semi-Urban' | 'Urban';
   isCustomResolution?: boolean;
   regionalGazette?: string;
+  accuracy?: number; // In meters (e.g. 35)
+  source?: 'LIVE_GPS' | 'MANUAL_SELECTION' | 'DEMO' | string;
 }
 
 export interface NearbyPlace {

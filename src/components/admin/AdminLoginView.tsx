@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Shield,
+  ShieldCheck,
   Lock,
   Mail,
   ArrowRight,
-  AlertCircle,
   ArrowLeft,
-  CheckCircle2,
-  UserCheck,
-  BookOpen,
-  Loader2,
   Check,
-  Sparkles,
-  Server,
-  Activity
+  AlertCircle,
+  HelpCircle,
+  KeyRound,
+  ShieldAlert,
+  Building2,
+  Users,
+  Award,
+  Languages
 } from 'lucide-react';
-import { loginAdmin, AdminUser, AdminRole, ADMIN_AUTH_CONFIG } from '../../services/adminAuthService';
-import { BrandLogo } from '../BrandLogo';
+import {
+  loginAdmin,
+  AdminUser,
+  AdminRole,
+  ADMIN_AUTH_CONFIG
+} from '../../services/adminAuthService';
 
 interface AdminLoginViewProps {
   onLoginSuccess: (user: AdminUser) => void;
@@ -28,37 +32,30 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
   onLoginSuccess,
   onNavigateHome
 }) => {
-  const shouldReduceMotion = useReducedMotion();
-  const [selectedRole, setSelectedRole] = useState<AdminRole>('ADMIN');
   const [email, setEmail] = useState<string>(ADMIN_AUTH_CONFIG.defaultEmail);
   const [password, setPassword] = useState<string>(ADMIN_AUTH_CONFIG.defaultPassword);
-  const [remember, setRemember] = useState<boolean>(true);
-  const [authStatus, setAuthStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [selectedRole, setSelectedRole] = useState<AdminRole>('CHIEF_ADMINISTRATOR');
+  const [rememberMe, setRememberMe] = useState<boolean>(true);
+  const [authStatus, setAuthStatus] = useState<'idle' | 'authenticating' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Dynamic Content according to selected role
-  const isEditorial = selectedRole === 'EDITORIAL';
-  const welcomeHeading = isEditorial ? 'WELCOME, EDITORIAL' : 'WELCOME, ADMIN';
-  const centerTitle = isEditorial ? 'UDYORA Editorial Center' : 'UDYORA Administration Center';
-  const supportingText = isEditorial
-    ? 'Manage content, evidence, business templates, schemes, and translations.'
-    : 'Manage data, evidence, business intelligence configuration, and platform operations.';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || authStatus === 'loading') return;
 
-    setAuthStatus('loading');
+    if (!email.trim() || !password.trim()) {
+      setAuthStatus('error');
+      setErrorMessage('Please enter both administrator email and password.');
+      return;
+    }
+
+    setAuthStatus('authenticating');
     setErrorMessage(null);
 
-    const res = await loginAdmin(email, password, selectedRole, remember);
-
+    const res = await loginAdmin(email, password, selectedRole, rememberMe);
     if (res.success && res.user) {
-      setAuthStatus('success');
-      // Smooth 500ms transition before invoking success callback
       setTimeout(() => {
         onLoginSuccess(res.user!);
-      }, 550);
+      }, 350);
     } else {
       setAuthStatus('error');
       setErrorMessage(res.error || 'Invalid administrator credentials.');
@@ -66,307 +63,173 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950/2 text-slate-900 flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8 select-none relative overflow-hidden">
-      {/* 1. RESTAINED ANIMATED BUSINESS INTELLIGENCE BACKGROUND */}
+    <div className="min-h-screen bg-slate-950 text-white flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8 select-none relative overflow-hidden">
+      {/* BACKGROUND GRAPHICS */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        {/* Subtle Grid Pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.035]" />
-
-        {/* Ambient Top Light Beam */}
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-gradient-to-b from-blue-100/60 via-indigo-50/20 to-transparent blur-3xl" />
-
-        {/* Faint Administrative Analytics Spline Curve */}
-        <svg
-          className="absolute inset-0 w-full h-full opacity-[0.04]"
-          xmlns="http://www.w3.org/2000/svg"
-          preserveAspectRatio="none"
-          viewBox="0 0 1440 900"
-        >
-          <path
-            d="M 0,600 C 300,550 500,450 720,480 C 950,510 1150,380 1440,320 L 1440,900 L 0,900 Z"
-            fill="url(#adminSplineGradient)"
-          />
-          <path
-            d="M 0,600 C 300,550 500,450 720,480 C 950,510 1150,380 1440,320"
-            fill="none"
-            stroke="#1e3a8a"
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
-          />
-          <defs>
-            <linearGradient id="adminSplineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#1e3a8a" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        {/* Faint Watermark Text */}
-        <div className="absolute bottom-6 right-8 text-[9vw] font-black text-slate-900/[0.02] tracking-widest uppercase pointer-events-none select-none font-mono">
+        <div className="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:32px_32px] opacity-[0.08]" />
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-gradient-to-b from-blue-600/30 via-indigo-600/10 to-transparent blur-3xl" />
+        <div className="absolute bottom-6 right-8 text-[9vw] font-black text-white/[0.02] tracking-widest uppercase pointer-events-none select-none font-mono">
           UDYORA
         </div>
       </div>
 
-      {/* 2. TOP CONTROL BAR */}
+      {/* TOP CONTROL BAR */}
       <div className="relative z-10 w-full max-w-5xl mx-auto flex items-center justify-between">
         <button
           type="button"
           onClick={onNavigateHome}
-          className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-950 bg-white/90 hover:bg-white border border-slate-200 shadow-2xs transition-all cursor-pointer"
+          className="group inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 shadow-2xs transition-all cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-          <span>Back to Public App</span>
+          <span>Back to Public Platform</span>
         </button>
 
-        <div className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span>Control Plane Operational</span>
+        <div className="flex items-center gap-2 text-xs text-slate-400 font-mono">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Secure Admin Portal</span>
         </div>
       </div>
 
-      {/* 3. CENTER ENTRY COMPOSITION */}
-      <div className="relative z-10 my-auto w-full max-w-md mx-auto py-6">
-        <motion.div
-          initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-6"
-        >
-          {/* Header Reveal & Branding */}
-          <div className="text-center space-y-3">
-            {/* Logo Mark Reveal */}
-            <motion.div
-              initial={{ scale: shouldReduceMotion ? 1 : 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.45, delay: 0.08 }}
-              className="inline-flex justify-center"
-            >
-              <BrandLogo size="lg" showTagline={false} />
-            </motion.div>
-
-            {/* Dynamic Welcome Titles */}
-            <div className="space-y-1">
-              <motion.div
-                key={welcomeHeading}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase bg-slate-900 text-white shadow-2xs">
-                  <Shield className="w-3 h-3 text-blue-400" />
-                  <span>Authorized Access</span>
-                </span>
-
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-950 mt-2">
-                  {welcomeHeading}
-                </h1>
-                <p className="text-xs font-bold text-blue-900 mt-0.5 tracking-tight">
-                  {centerTitle}
-                </p>
-                <p className="text-xs text-slate-500 max-w-xs mx-auto mt-1 leading-relaxed">
-                  {supportingText}
-                </p>
-              </motion.div>
-            </div>
+      {/* CENTER AUTHENTICATION CARD */}
+      <div className="relative z-10 w-full max-w-md mx-auto my-auto py-8">
+        <div className="text-center space-y-2 mb-6">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-xl mx-auto shadow-lg shadow-blue-600/30">
+            U
           </div>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            UDYORA Admin Center
+          </h1>
+          <p className="text-xs text-slate-400 font-medium max-w-xs mx-auto">
+            Select your administrative role and enter credentials to access governance tools.
+          </p>
+        </div>
 
-          {/* MAIN LOGIN CARD */}
-          <motion.div
-            initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.97 }}
-            animate={{
-              opacity: authStatus === 'success' ? 0.4 : 1,
-              scale: authStatus === 'success' ? 0.98 : 1
-            }}
-            transition={{ duration: 0.4 }}
-            className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl shadow-slate-200/50 space-y-5 backdrop-blur-xs"
-          >
-            {/* Error Feedback Message */}
-            <AnimatePresence>
-              {authStatus === 'error' && errorMessage && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="p-3 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 font-medium flex items-center gap-2 overflow-hidden"
-                >
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{errorMessage}</span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 backdrop-blur-md">
+          {authStatus === 'error' && errorMessage && (
+            <div className="p-3 bg-rose-950/80 border border-rose-800/80 rounded-2xl text-xs text-rose-300 font-medium flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* STEP 6: ROLE SELECTOR CARDS */}
-              <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Select Administrative Role
-                </label>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* ADMIN Card */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole('ADMIN');
-                      setErrorMessage(null);
-                    }}
-                    className={`relative p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
-                      selectedRole === 'ADMIN'
-                        ? 'bg-blue-50/90 border-blue-700 shadow-xs ring-1 ring-blue-700 text-slate-950 -translate-y-0.5'
-                        : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 hover:-translate-y-0.5 text-slate-700 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-black tracking-tight">ADMIN</span>
-                      <div
-                        className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                          selectedRole === 'ADMIN' ? 'bg-blue-700 text-white' : 'border border-slate-300'
-                        }`}
-                      >
-                        {selectedRole === 'ADMIN' && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <span className="text-[11px] text-slate-500 leading-tight block font-medium">
-                      Full administration
-                    </span>
-                  </button>
-
-                  {/* EDITORIAL Card */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRole('EDITORIAL');
-                      setErrorMessage(null);
-                    }}
-                    className={`relative p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer ${
-                      selectedRole === 'EDITORIAL'
-                        ? 'bg-blue-50/90 border-blue-700 shadow-xs ring-1 ring-blue-700 text-slate-950 -translate-y-0.5'
-                        : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50 hover:-translate-y-0.5 text-slate-700 shadow-2xs'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-black tracking-tight">EDITORIAL</span>
-                      <div
-                        className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors ${
-                          selectedRole === 'EDITORIAL' ? 'bg-blue-700 text-white' : 'border border-slate-300'
-                        }`}
-                      >
-                        {selectedRole === 'EDITORIAL' && <Check className="w-2.5 h-2.5 stroke-[3]" />}
-                      </div>
-                    </div>
-                    <span className="text-[11px] text-slate-500 leading-tight block font-medium">
-                      Data & content
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Email Field */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@udyora.gov.in"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Password Field */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
-                  <input
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Remember Session Toggle */}
-              <div className="flex items-center justify-between text-xs pt-1">
-                <label className="flex items-center gap-2 text-slate-600 font-medium cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span>Remember session</span>
-                </label>
-                <span className="text-[11px] text-slate-400 font-mono">256-bit Token</span>
-              </div>
-
-              {/* PRIMARY CTA: SIGN IN WITH LEFT-TO-RIGHT SWEEP FILL ANIMATION */}
-              <div className="pt-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ROLE SELECTOR CARDS */}
+            <div className="space-y-1.5">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Select Administrative Role
+              </label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* CHIEF ADMINISTRATOR */}
                 <button
-                  type="submit"
-                  disabled={authStatus === 'loading' || authStatus === 'success'}
-                  className={`group relative w-full inline-flex items-center justify-center gap-3 px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold text-white overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.99] disabled:opacity-85 cursor-pointer ${
-                    authStatus === 'success' ? 'bg-emerald-600' : 'bg-slate-900'
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole('CHIEF_ADMINISTRATOR');
+                    setErrorMessage(null);
+                  }}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    selectedRole === 'CHIEF_ADMINISTRATOR' || selectedRole === 'ADMIN'
+                      ? 'bg-blue-600/20 border-blue-500 text-white shadow-xs ring-1 ring-blue-500'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
                   }`}
                 >
-                  {/* Left-to-Right Hover Sweep Fill */}
-                  <span
-                    className="absolute inset-0 w-full h-full bg-blue-800 -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] pointer-events-none"
-                    aria-hidden="true"
-                  />
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-black tracking-tight uppercase">Chief Admin</span>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                      selectedRole === 'CHIEF_ADMINISTRATOR' || selectedRole === 'ADMIN' ? 'bg-blue-500 text-white' : 'border border-slate-600'
+                    }`}>
+                      {(selectedRole === 'CHIEF_ADMINISTRATOR' || selectedRole === 'ADMIN') && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-400 leading-tight block font-medium">
+                    Full platform governance
+                  </span>
+                </button>
 
-                  {/* Button Content */}
-                  <span className="relative z-10 flex items-center gap-2 text-white">
-                    {authStatus === 'loading' && (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin text-white" />
-                        <span>AUTHENTICATING...</span>
-                      </>
-                    )}
-                    {authStatus === 'success' && (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 text-white" />
-                        <span>ACCESS GRANTED • OPENING...</span>
-                      </>
-                    )}
-                    {authStatus !== 'loading' && authStatus !== 'success' && (
-                      <>
-                        <span>SIGN IN TO ADMIN CENTER</span>
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform duration-300 text-white" />
-                      </>
-                    )}
+                {/* EDITORIAL CONTENT OFFICER */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole('EDITORIAL_OFFICER');
+                    setErrorMessage(null);
+                  }}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    selectedRole === 'EDITORIAL_OFFICER' || selectedRole === 'EDITORIAL'
+                      ? 'bg-emerald-600/20 border-emerald-500 text-white shadow-xs ring-1 ring-emerald-500'
+                      : 'bg-slate-800/60 border-slate-700/80 text-slate-300 hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-black tracking-tight uppercase">Editorial</span>
+                    <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
+                      selectedRole === 'EDITORIAL_OFFICER' || selectedRole === 'EDITORIAL' ? 'bg-emerald-500 text-white' : 'border border-slate-600'
+                    }`}>
+                      {(selectedRole === 'EDITORIAL_OFFICER' || selectedRole === 'EDITORIAL') && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                    </div>
+                  </div>
+                  <span className="text-[10px] text-slate-400 leading-tight block font-medium">
+                    Content & schemes
                   </span>
                 </button>
               </div>
-            </form>
-          </motion.div>
-        </motion.div>
+            </div>
+
+            {/* EMAIL INPUT */}
+            <div className="space-y-1">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Administrator Email
+              </label>
+              <div className="relative">
+                <Mail className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@udyora.gov.in"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-mono font-bold text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-hidden"
+                />
+              </div>
+            </div>
+
+            {/* PASSWORD INPUT */}
+            <div className="space-y-1">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs font-mono font-bold text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-hidden"
+                />
+              </div>
+            </div>
+
+            {/* LOGIN SUBMIT CTA */}
+            <button
+              type="submit"
+              disabled={authStatus === 'authenticating'}
+              className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition-all active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2 border border-blue-400/30"
+            >
+              {authStatus === 'authenticating' ? (
+                <span>Authenticating...</span>
+              ) : (
+                <>
+                  <span>Sign In to Admin Center</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
 
-      {/* 4. MINIMAL ADMIN FOOTER */}
-      <footer className="relative z-10 w-full max-w-5xl mx-auto pt-6 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
-        <div className="flex items-center gap-2 text-slate-500">
-          <span className="font-bold text-slate-700">UDYORA Administration Center</span>
-          <span>•</span>
-          <span>© 2026 UDYORA</span>
-        </div>
-
-        <div className="flex items-center gap-4 text-[11px]">
-          <span className="hover:text-slate-600 cursor-default">Privacy</span>
-          <span className="hover:text-slate-600 cursor-default">Accessibility</span>
-          <span className="hover:text-slate-600 cursor-default">Support</span>
-        </div>
-      </footer>
+      {/* BOTTOM FOOTER */}
+      <div className="relative z-10 w-full max-w-5xl mx-auto text-center text-[10px] text-slate-500 font-mono">
+        UDYORA Public Advisory & Governance Platform • Session Security Protocol active
+      </div>
     </div>
   );
 };

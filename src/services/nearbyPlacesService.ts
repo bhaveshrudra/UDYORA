@@ -2,6 +2,7 @@
  * UDYORA Google Places Nearby Resources Service
  * Performs real geographic Nearby Search queries using Google Places API
  * and calculates exact ground distance from the resolved location center.
+ * Uses an off-screen HTMLDivElement container to avoid legacy PlacesService map instance warnings.
  */
 
 import { SupportedLanguage } from '../i18n/types';
@@ -79,16 +80,18 @@ export function calculateExactDistanceKm(
 
 /**
  * Executes a real Google Places Nearby Search query.
+ * Uses an off-screen DOM element to prevent legacy PlacesService map instance warnings.
  */
 export function fetchNearbyResourcesFromGoogle(
-  map: google.maps.Map,
   center: { lat: number; lng: number },
   businessCategory: string,
   radiusKm: 5 | 10 = 5
 ): Promise<NearbyResourceItem[]> {
   return new Promise((resolve) => {
     if (!window.google || !window.google.maps || !window.google.maps.places) {
-      console.warn('[UDYORA Places API] Google Places Library not available.');
+      if (import.meta.env?.DEV) {
+        console.log('[UDYORA Places API] Google Places Library not available.');
+      }
       resolve([]);
       return;
     }
@@ -97,7 +100,14 @@ export function fetchNearbyResourcesFromGoogle(
     const radiusMeters = radiusKm * 1000;
 
     try {
-      const service = new google.maps.places.PlacesService(map);
+      // Off-screen container node prevents legacy PlacesService map instance deprecation warning
+      const containerNode = typeof document !== 'undefined' ? document.createElement('div') : null;
+      if (!containerNode) {
+        resolve([]);
+        return;
+      }
+
+      const service = new google.maps.places.PlacesService(containerNode);
       const request: google.maps.places.PlaceSearchRequest = {
         location: center,
         radius: radiusMeters,
@@ -149,7 +159,9 @@ export function fetchNearbyResourcesFromGoogle(
         resolve(items.slice(0, 10));
       });
     } catch (err) {
-      console.warn('[UDYORA Places API Exception]', err);
+      if (import.meta.env?.DEV) {
+        console.warn('[UDYORA Places API Exception]', err);
+      }
       resolve([]);
     }
   });

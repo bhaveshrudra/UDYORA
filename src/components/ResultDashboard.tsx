@@ -23,6 +23,7 @@ import {
 import { CompleteAnalysisReport, EvidenceRecord, SchemeMatchResult } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { InteractiveMap } from './InteractiveMap';
+import { MapErrorBoundary } from './MapErrorBoundary';
 import { AppSectionNav } from './AppSectionNav';
 import { HorizontalBarChart, DonutChart } from './charts/DashboardCharts';
 import { EvidenceAuditModal } from './modals/EvidenceAuditModal';
@@ -330,7 +331,15 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
             <span className="text-xs text-slate-400 font-sans font-bold">/ 100</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <span className={`text-[10px] font-extrabold uppercase px-1.5 py-0.2 rounded border ${
+              feasibilityVerdict.category === 'LOW'
+                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                : feasibilityVerdict.category === 'CONDITIONAL'
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : feasibilityVerdict.category === 'MODERATE'
+                ? 'bg-blue-50 text-blue-800 border-blue-200'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+            }`}>
               {feasibilityVerdict.category || 'HIGH'}
             </span>
           </div>
@@ -447,13 +456,15 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
             {/* Left 65% — Interactive Google Map */}
             <div className="lg:col-span-8 w-full rounded-xl overflow-hidden border border-slate-200 shadow-2xs">
-              <InteractiveMap
-                location={mapLocation}
-                mapState="confirmed"
-                centerCoords={{ lat: mapLocation.latitude, lng: mapLocation.longitude, zoom: 13.0 }}
-                radiusKm={5}
-                businessCategory={input.businessCategoryId || 'dairy'}
-              />
+              <MapErrorBoundary>
+                <InteractiveMap
+                  location={mapLocation}
+                  mapState="confirmed"
+                  centerCoords={{ lat: mapLocation.latitude, lng: mapLocation.longitude, zoom: 13.0 }}
+                  radiusKm={5}
+                  businessCategory={input.businessCategoryId || 'dairy'}
+                />
+              </MapErrorBoundary>
             </div>
 
             {/* Right 35% — Top Opportunity Cards */}
@@ -759,8 +770,14 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
               {t('dash.advisory.title') || 'FINAL BUSINESS ADVISORY'}
             </h2>
           </div>
-          <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-            SANCTION RECOMMENDED
+          <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-md border ${
+            feasibilityVerdict.status === 'NOT RECOMMENDED' || feasibilityVerdict.category === 'LOW'
+              ? 'text-rose-400 bg-rose-500/10 border-rose-500/30'
+              : feasibilityVerdict.status === 'CONDITIONAL' || feasibilityVerdict.category === 'CONDITIONAL'
+              ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+              : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30'
+          }`}>
+            {feasibilityVerdict.status || (feasibilityVerdict.category === 'LOW' ? 'NOT RECOMMENDED' : 'SANCTION RECOMMENDED')}
           </span>
         </div>
 

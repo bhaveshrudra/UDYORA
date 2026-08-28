@@ -5,7 +5,6 @@ import {
   Briefcase,
   Award,
   Database,
-  Calculator,
   Users,
   FileText,
   Languages,
@@ -19,7 +18,11 @@ import {
   ShieldAlert,
   Search,
   ChevronRight,
-  Bell
+  Bell,
+  BookOpen,
+  UserCheck,
+  Building2,
+  FileCode
 } from 'lucide-react';
 import { AdminUser, isRouteAllowedForRole } from '../../services/adminAuthService';
 
@@ -29,10 +32,11 @@ export type AdminSubRoute =
   | 'businesses'
   | 'schemes'
   | 'evidence'
-  | 'financial-rules'
-  | 'users'
-  | 'reports'
   | 'translations'
+  | 'guidance'
+  | 'assessments'
+  | 'participants'
+  | 'users'
   | 'audit-logs'
   | 'settings';
 
@@ -54,42 +58,55 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children
 }) => {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState<boolean>(false);
+
+  const isChiefAdmin = currentAdmin.role === 'CHIEF_ADMINISTRATOR' || currentAdmin.role === 'ADMIN';
 
   const rawNavSections = [
     {
-      title: 'Overview',
+      title: 'OVERVIEW',
       items: [
         { id: 'dashboard' as AdminSubRoute, label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> }
       ]
     },
     {
-      title: 'Data Management',
+      title: 'DATA MANAGEMENT',
       items: [
-        { id: 'locations' as AdminSubRoute, label: 'Locations (LGD)', icon: <MapPin className="w-4 h-4" /> },
+        { id: 'locations' as AdminSubRoute, label: 'Locations', icon: <MapPin className="w-4 h-4" /> },
         { id: 'businesses' as AdminSubRoute, label: 'Business Templates', icon: <Briefcase className="w-4 h-4" /> },
         { id: 'schemes' as AdminSubRoute, label: 'Government Schemes', icon: <Award className="w-4 h-4" /> },
-        { id: 'evidence' as AdminSubRoute, label: 'Evidence Sources', icon: <Database className="w-4 h-4" /> },
-        { id: 'financial-rules' as AdminSubRoute, label: 'Financial Rules', icon: <Calculator className="w-4 h-4" /> }
+        { id: 'evidence' as AdminSubRoute, label: 'Evidence Sources', icon: <Database className="w-4 h-4" /> }
       ]
     },
     {
-      title: 'Platform',
+      title: 'CONTENT',
       items: [
-        { id: 'users' as AdminSubRoute, label: 'User Directory', icon: <Users className="w-4 h-4" /> },
-        { id: 'reports' as AdminSubRoute, label: 'Assessments', icon: <FileText className="w-4 h-4" /> },
-        { id: 'translations' as AdminSubRoute, label: 'Translations (i18n)', icon: <Languages className="w-4 h-4" /> }
+        { id: 'translations' as AdminSubRoute, label: 'Translations', icon: <Languages className="w-4 h-4" /> },
+        { id: 'guidance' as AdminSubRoute, label: 'Announcements / Guidance', icon: <BookOpen className="w-4 h-4" /> }
       ]
     },
     {
-      title: 'System',
+      title: 'PLATFORM',
       items: [
-        { id: 'audit-logs' as AdminSubRoute, label: 'Audit Logs', icon: <History className="w-4 h-4" /> },
+        { id: 'assessments' as AdminSubRoute, label: 'Assessments', icon: <FileText className="w-4 h-4" /> },
+        { id: 'participants' as AdminSubRoute, label: 'Participants', icon: <Users className="w-4 h-4" /> }
+      ]
+    },
+    {
+      title: 'ADMINISTRATION',
+      items: [
+        { id: 'users' as AdminSubRoute, label: 'User Management', icon: <UserCheck className="w-4 h-4" /> },
+        { id: 'audit-logs' as AdminSubRoute, label: 'Audit Logs', icon: <History className="w-4 h-4" /> }
+      ]
+    },
+    {
+      title: 'SYSTEM',
+      items: [
         { id: 'settings' as AdminSubRoute, label: 'Settings', icon: <Settings className="w-4 h-4" /> }
       ]
     }
   ];
 
-  // Filter sections and items based on active role permissions
   const navSections = rawNavSections
     .map((sec) => ({
       ...sec,
@@ -102,214 +119,144 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     setMobileDrawerOpen(false);
   };
 
-  const isCurrentRouteAllowed = isRouteAllowedForRole(currentAdmin.role, activeRoute);
-
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 flex flex-col antialiased selection:bg-blue-100 selection:text-blue-950">
-      {/* Top Admin Navigation Header Bar */}
-      <header className="sticky top-0 z-30 bg-slate-900 text-white border-b border-slate-800 shadow-xs px-4 sm:px-6 py-2.5 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex flex-col selection:bg-blue-100 selection:text-blue-950">
+      {/* TOP DEEP NAVY BAR */}
+      <header className="bg-slate-950 text-white sticky top-0 z-40 border-b border-slate-800 shadow-sm h-14 flex items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          {/* Mobile menu toggle */}
           <button
             onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-            className="md:hidden p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 cursor-pointer"
-            aria-label="Toggle navigation drawer"
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
           >
             {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          {/* Admin Brand Badge & Role Pill */}
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-blue-700 text-white flex items-center justify-center font-black text-xs shadow-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-xs shadow-2xs">
               U
             </div>
-            <div>
-              <span className="font-bold text-sm text-white tracking-tight flex items-center gap-2">
-                <span>UDYORA Administration Center</span>
-                <span
-                  className={`text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded border ${
-                    currentAdmin.role === 'ADMIN'
-                      ? 'bg-blue-900/90 text-blue-200 border-blue-700'
-                      : 'bg-amber-900/90 text-amber-200 border-amber-700'
-                  }`}
-                >
-                  {currentAdmin.role}
-                </span>
-              </span>
-            </div>
+            <span className="font-black text-sm tracking-tight text-white">
+              UDYORA <span className="font-medium text-slate-400 text-xs hidden sm:inline">Administration Center</span>
+            </span>
           </div>
+
+          <span className={`hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+            isChiefAdmin
+              ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+          }`}>
+            {isChiefAdmin ? 'CHIEF ADMINISTRATOR' : 'EDITORIAL CONTENT OFFICER'}
+          </span>
         </div>
 
-        {/* Right Header Controls */}
         <div className="flex items-center gap-3">
           <button
             onClick={onNavigateToPublic}
-            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer border border-slate-800"
           >
-            <span>Public App</span>
-            <ExternalLink className="w-3 h-3" />
+            <span>Main Platform</span>
+            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
           </button>
 
-          {/* Admin User Chip */}
-          <div className="flex items-center gap-2 pl-3 border-l border-slate-800 text-xs">
-            <div className="w-6 h-6 rounded-full bg-slate-700 text-slate-200 flex items-center justify-center font-bold text-[10px]">
-              {currentAdmin.name.charAt(0)}
-            </div>
-            <div className="hidden md:block text-left leading-tight">
-              <span className="font-bold text-slate-100 block text-[11px] truncate max-w-[140px]">
-                {currentAdmin.name}
-              </span>
-              <span className="text-[9px] text-slate-400 font-mono">
-                {currentAdmin.email}
-              </span>
-            </div>
+          {/* User Profile Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <div className="w-7 h-7 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-xs">
+                {currentAdmin.name.charAt(0)}
+              </div>
+              <div className="hidden md:block text-left text-xs">
+                <p className="font-bold text-white leading-tight">{currentAdmin.name}</p>
+                <p className="text-[10px] text-slate-400 font-mono truncate max-w-[140px]">{currentAdmin.email}</p>
+              </div>
+            </button>
+
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 z-50 text-slate-900 text-xs animate-in fade-in">
+                <div className="px-3.5 py-2 border-b border-slate-100">
+                  <p className="font-bold text-slate-950">{currentAdmin.name}</p>
+                  <p className="text-[10px] text-slate-500 font-mono">{currentAdmin.email}</p>
+                  <span className={`inline-block mt-1.5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                    isChiefAdmin ? 'bg-blue-50 text-blue-800 border border-blue-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    {isChiefAdmin ? 'Chief Administrator' : 'Editorial Content Officer'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    setProfileDropdownOpen(false);
+                    onLogout();
+                  }}
+                  className="w-full text-left px-3.5 py-2 font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Logout Button */}
-          <button
-            onClick={onLogout}
-            title="Sign out of Admin Portal"
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer ml-1"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
         </div>
       </header>
 
-      {/* Main Layout Container (Sidebar + Content Workspace) */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Sidebar */}
-        <aside className="hidden md:flex w-60 bg-white border-r border-slate-200 flex-col shrink-0 overflow-y-auto">
-          <div className="p-4 space-y-6 flex-1">
+        {/* SIDEBAR NAVIGATION */}
+        <aside
+          className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:z-auto flex flex-col pt-14 lg:pt-0 ${
+            mobileDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {navSections.map((sec, idx) => (
-              <div key={idx} className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-3 block mb-1">
+              <div key={idx} className="space-y-1.5">
+                <h3 className="px-3 text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {sec.title}
-                </span>
-                {sec.items.map((item) => {
-                  const isActive = activeRoute === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-left ${
-                        isActive
-                          ? 'bg-blue-50 text-blue-900 border border-blue-200 shadow-2xs font-extrabold'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className={isActive ? 'text-blue-700' : 'text-slate-500'}>
-                        {item.icon}
-                      </span>
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* Sidebar Bottom Metadata */}
-          <div className="p-4 border-t border-slate-100 text-[11px] text-slate-400 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-slate-600">UDYORA Core v2.4</span>
-              <span className="text-[10px] font-mono bg-slate-100 px-1.5 py-0.2 rounded font-bold">
-                {currentAdmin.role}
-              </span>
-            </div>
-            <p className="font-mono text-[10px]">Session Active</p>
-          </div>
-        </aside>
-
-        {/* Mobile Navigation Drawer Overlay */}
-        {mobileDrawerOpen && (
-          <div className="md:hidden fixed inset-0 z-40 flex">
-            <div
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
-              onClick={() => setMobileDrawerOpen(false)}
-            />
-            <div className="relative w-64 bg-white shadow-xl flex flex-col p-4 space-y-6 overflow-y-auto z-50">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="font-bold text-sm text-slate-900">Admin Navigation</span>
-                <button
-                  onClick={() => setMobileDrawerOpen(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {navSections.map((sec, idx) => (
-                <div key={idx} className="space-y-1">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 px-2 block mb-1">
-                    {sec.title}
-                  </span>
+                </h3>
+                <div className="space-y-0.5">
                   {sec.items.map((item) => {
                     const isActive = activeRoute === item.id;
                     return (
                       <button
                         key={item.id}
                         onClick={() => handleItemClick(item.id)}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                        className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           isActive
-                            ? 'bg-blue-50 text-blue-900 border border-blue-200'
-                            : 'text-slate-600 hover:bg-slate-50'
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-950 hover:bg-slate-100'
                         }`}
                       >
-                        {item.icon}
+                        <span className={isActive ? 'text-white' : 'text-slate-500'}>{item.icon}</span>
                         <span>{item.label}</span>
                       </button>
                     );
                   })}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
 
-        {/* Main Content Workspace (or Permission Denied Guard) */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-50/70">
-          <div className="max-w-6xl mx-auto space-y-6">
-            {isCurrentRouteAllowed ? (
-              children
-            ) : (
-              <PermissionDeniedView
-                role={currentAdmin.role}
-                route={activeRoute}
-                onReturnToDashboard={() => onNavigate('dashboard')}
-              />
-            )}
+          <div className="p-4 border-t border-slate-200 bg-slate-50/50 space-y-2">
+            <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+              <span>Platform Version</span>
+              <span className="font-mono font-bold text-slate-700">v2.4.0</span>
+            </div>
+            <button
+              onClick={onLogout}
+              className="w-full py-2 px-3 bg-white hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl text-xs font-bold text-rose-600 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* MAIN CONTENT AREA */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-slate-100/70">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {children}
           </div>
         </main>
-      </div>
-    </div>
-  );
-};
-
-export const PermissionDeniedView: React.FC<{
-  role: string;
-  route: string;
-  onReturnToDashboard: () => void;
-}> = ({ role, route, onReturnToDashboard }) => {
-  return (
-    <div className="bg-white border border-rose-200 rounded-3xl p-8 sm:p-12 shadow-sm text-center max-w-lg mx-auto space-y-4">
-      <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
-        <ShieldAlert className="w-6 h-6" />
-      </div>
-      <div className="space-y-1">
-        <h3 className="text-lg font-black text-slate-950">Permission Denied</h3>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          The <strong className="text-slate-900 font-mono uppercase">{role}</strong> role does not have administrative permission to view or manage the <strong className="text-slate-900 font-mono">/{route}</strong> section.
-        </p>
-      </div>
-      <div className="pt-2">
-        <button
-          onClick={onReturnToDashboard}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-900 hover:bg-blue-900 transition-colors cursor-pointer shadow-xs"
-        >
-          <span>Return to Dashboard</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
       </div>
     </div>
   );

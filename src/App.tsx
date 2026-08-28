@@ -26,10 +26,11 @@ import {
   AdminBusinessesView,
   AdminSchemesView,
   AdminEvidenceView,
-  AdminFinancialRulesView,
-  AdminUsersView,
+  AdminParticipantsView,
+  AdminUserManagementView,
   AdminAssessmentsView,
   AdminTranslationsView,
+  AdminGuidanceView,
   AdminAuditLogsView,
   AdminSettingsView
 } from './components/admin/AdminManagementViews';
@@ -351,16 +352,17 @@ export function App() {
         onNavigateToPublic={handleNavigateHome}
       >
         {adminSubRoute === 'dashboard' && (
-          <AdminDashboardView onNavigate={handleAdminSubNavigate} role={activeAdmin.role} />
+          <AdminDashboardView currentAdmin={activeAdmin} onNavigate={handleAdminSubNavigate} />
         )}
         {adminSubRoute === 'locations' && <AdminLocationsView />}
         {adminSubRoute === 'businesses' && <AdminBusinessesView />}
-        {adminSubRoute === 'schemes' && <AdminSchemesView />}
+        {adminSubRoute === 'schemes' && <AdminSchemesView currentAdmin={activeAdmin} />}
         {adminSubRoute === 'evidence' && <AdminEvidenceView />}
-        {adminSubRoute === 'financial-rules' && <AdminFinancialRulesView />}
-        {adminSubRoute === 'users' && <AdminUsersView />}
-        {adminSubRoute === 'reports' && <AdminAssessmentsView />}
         {adminSubRoute === 'translations' && <AdminTranslationsView />}
+        {adminSubRoute === 'guidance' && <AdminGuidanceView />}
+        {adminSubRoute === 'assessments' && <AdminAssessmentsView />}
+        {adminSubRoute === 'participants' && <AdminParticipantsView currentAdmin={activeAdmin} />}
+        {adminSubRoute === 'users' && <AdminUserManagementView currentAdmin={activeAdmin} />}
         {adminSubRoute === 'audit-logs' && <AdminAuditLogsView />}
         {adminSubRoute === 'settings' && <AdminSettingsView />}
       </AdminLayout>
@@ -409,19 +411,6 @@ export function App() {
               {/* SCREEN 1: GUIDED INPUT & WORKSPACE */}
               {currentScreen === 'form' && (
                 <div className="space-y-6 animate-fadeIn">
-                  {/* App Single Primary Heading Banner */}
-                  <div className="text-center max-w-3xl mx-auto pt-2 pb-2">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-100/80 text-blue-900 border border-blue-200 mb-3 shadow-2xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-                      <span>{t('brand.badge')}</span>
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-950">
-                      Enterprise Feasibility & Advisory Assessment
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-600 mt-2 max-w-xl mx-auto leading-relaxed">
-                      Tell us about your location, business idea, and available capital to begin your assessment.
-                    </p>
-                  </div>
 
                   {/* Analysis Error Alert UI */}
                   {analysisError && (
