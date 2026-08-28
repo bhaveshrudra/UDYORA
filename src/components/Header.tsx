@@ -109,14 +109,6 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 Guidance
               </button>
-              <button
-                type="button"
-                onClick={handleAdminClick}
-                className="px-3 py-1.5 rounded-xl text-slate-600 hover:text-slate-950 hover:bg-slate-100 transition-colors cursor-pointer flex items-center gap-1"
-              >
-                <Shield className="w-3.5 h-3.5 text-slate-500" />
-                <span>Admin</span>
-              </button>
             </nav>
           </div>
 

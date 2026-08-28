@@ -262,7 +262,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Participants</span>
             <Users className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-2xl font-black text-slate-950 font-mono">{totalUsers.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-black text-slate-950 font-mono">{(totalUsers || 0).toLocaleString('en-IN')}</p>
           <p className="text-[10px] font-bold text-emerald-700">Registered Users</p>
         </div>
 
@@ -271,7 +271,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider">Active Users</span>
             <UserCheck className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-black text-slate-950 font-mono">{activeUsers.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-black text-slate-950 font-mono">{(activeUsers || 0).toLocaleString('en-IN')}</p>
           <p className="text-[10px] font-bold text-slate-500">94.6% Active Ratio</p>
         </div>
 
@@ -289,7 +289,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider">Total Assessments</span>
             <FileText className="w-4 h-4 text-indigo-600" />
           </div>
-          <p className="text-2xl font-black text-slate-950 font-mono">{totalAssessments.toLocaleString('en-IN')}</p>
+          <p className="text-2xl font-black text-slate-950 font-mono">{(totalAssessments || 0).toLocaleString('en-IN')}</p>
           <p className="text-[10px] font-bold text-indigo-700">+284 This Month</p>
         </div>
 
@@ -349,7 +349,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       <td className="p-2.5 font-mono font-bold text-blue-900">{a.id}</td>
                       <td className="p-2.5 font-bold text-slate-900">{a.locationName}</td>
                       <td className="p-2.5 text-slate-600">{a.businessName}</td>
-                      <td className="p-2.5 font-mono font-bold text-slate-950">₹{a.projectCost.toLocaleString('en-IN')}</td>
+                      <td className="p-2.5 font-mono font-bold text-slate-950">₹{((a && (a.projectCost || a.ownCapital)) || 0).toLocaleString('en-IN')}</td>
                       <td className="p-2.5 font-mono font-bold text-emerald-700">{a.feasibilityScore}/100</td>
                       <td className="p-2.5">
                         <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
