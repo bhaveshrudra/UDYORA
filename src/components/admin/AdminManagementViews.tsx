@@ -95,10 +95,14 @@ export const AdminParticipantsView: React.FC<AdminParticipantsViewProps> = ({ cu
   const [removeReason, setRemoveReason] = useState<string>('Account deactivated per retention policy');
 
   const filteredUsers = usersList.filter((u) => {
-    const matchSearch =
-      u.maskedName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.maskedPhone.includes(searchQuery) ||
-      u.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) {
+      return statusFilter === 'ALL' || u.status === statusFilter;
+    }
+    const nameMatch = u.maskedName ? u.maskedName.toLowerCase().includes(q) : false;
+    const phoneMatch = u.maskedPhone ? u.maskedPhone.includes(q) : false;
+    const locMatch = u.location ? u.location.toLowerCase().includes(q) : false;
+    const matchSearch = nameMatch || phoneMatch || locMatch;
     const matchStatus = statusFilter === 'ALL' || u.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -425,9 +429,11 @@ export const AdminTranslationsView: React.FC = () => {
   const [editingItem, setEditingItem] = useState<any | null>(null);
 
   const filtered = translations.filter((t) => {
-    const matchSearch =
-      t.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.en.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return statusFilter === 'ALL' || t.status === statusFilter;
+    const matchKey = t.key ? t.key.toLowerCase().includes(q) : false;
+    const matchEn = t.en ? t.en.toLowerCase().includes(q) : false;
+    const matchSearch = matchKey || matchEn;
     const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
     return matchSearch && matchStatus;
   });
@@ -623,10 +629,13 @@ export const AdminSchemesView: React.FC<AdminSchemesViewProps> = ({ currentAdmin
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [editingScheme, setEditingScheme] = useState<SchemeEntity | null>(null);
 
-  const filtered = schemes.filter((s) =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.nodalAgency.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = schemes.filter((s) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    const matchName = s.name ? s.name.toLowerCase().includes(q) : false;
+    const matchAgency = s.nodalAgency ? s.nodalAgency.toLowerCase().includes(q) : false;
+    return matchName || matchAgency;
+  });
 
   const handleSave = (e: React.FormEvent, isPublishing: boolean) => {
     e.preventDefault();

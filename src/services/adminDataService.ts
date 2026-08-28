@@ -729,16 +729,18 @@ export function getUsers(): UserEntity[] {
   adminUsers.forEach((u) => userStatusMap.set(u.id, u.status));
 
   const convertedReal: UserEntity[] = realUsers.map((ru) => ({
-    id: ru.userId,
-    maskedName: ru.name,
-    maskedPhone: ru.mobile.length === 10 ? `${ru.mobile.slice(0, 3)}****${ru.mobile.slice(7)}` : ru.mobile,
-    language: ru.preferredLanguage,
+    id: ru.userId || (ru as any).id || `usr_${Math.random().toString(36).substr(2, 4)}`,
+    maskedName: ru.name || (ru as any).maskedName || 'Participant User',
+    maskedPhone: ru.mobile
+      ? (ru.mobile.length === 10 ? `${ru.mobile.slice(0, 3)}****${ru.mobile.slice(7)}` : ru.mobile)
+      : ((ru as any).maskedPhone || 'N/A'),
+    language: ru.preferredLanguage || 'en',
     location: `${ru.mandal || 'Haveli'}, ${ru.district || 'Pune'}, ${ru.state || 'Maharashtra'}`,
     preferredBusiness: 'Micro-Enterprise',
-    createdAt: ru.createdAt.split('T')[0],
-    lastActive: ru.updatedAt.split('T')[0],
+    createdAt: (ru.createdAt || new Date().toISOString()).split('T')[0],
+    lastActive: (ru.updatedAt || new Date().toISOString()).split('T')[0],
     assessmentsCount: getSavedAssessments().filter((a) => a.userId === ru.userId).length,
-    status: userStatusMap.get(ru.userId) || 'ACTIVE'
+    status: ru.status || userStatusMap.get(ru.userId) || 'ACTIVE'
   }));
 
   const combined = [...convertedReal];
