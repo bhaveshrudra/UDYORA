@@ -64,7 +64,7 @@ import {
   getTranslationsList
 } from '../../services/adminDataService';
 import { getLgdIngestionStatus, triggerLgdDataRefresh } from '../../services/locationIngestionService';
-import { SupportedLanguage } from '../../i18n/types';
+import { checkDuplicateIdentitiesDiagnostic } from '../../services/userAuthService';
 
 /* =========================================================================
    1. PARTICIPANTS MANAGEMENT VIEW (CHIEF ADMINISTRATOR ONLY)
@@ -81,6 +81,13 @@ export const AdminParticipantsView: React.FC<AdminParticipantsViewProps> = ({ cu
   const [selectedUser, setSelectedUser] = useState<UserEntity | null>(null);
   const [selectedAssessmentForReport, setSelectedAssessmentForReport] = useState<AssessmentEntity | null>(null);
 
+  // Diagnostic State
+  const [diagnosticResult, setDiagnosticResult] = useState<{
+    duplicateMobileCount: number;
+    duplicateEmailCount: number;
+    details: string[];
+  } | null>(null);
+
   // Modal States
   const [suspendModalUser, setSuspendModalUser] = useState<UserEntity | null>(null);
   const [suspendReason, setSuspendReason] = useState<string>('Policy review pending');
@@ -95,6 +102,11 @@ export const AdminParticipantsView: React.FC<AdminParticipantsViewProps> = ({ cu
     const matchStatus = statusFilter === 'ALL' || u.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const handleRunDiagnostic = () => {
+    const res = checkDuplicateIdentitiesDiagnostic();
+    setDiagnosticResult(res);
+  };
 
   const handleConfirmSuspend = () => {
     if (!suspendModalUser) return;
@@ -134,6 +146,13 @@ export const AdminParticipantsView: React.FC<AdminParticipantsViewProps> = ({ cu
 
         <div className="flex items-center gap-2">
           <button
+            onClick={handleRunDiagnostic}
+            className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <ShieldAlert className="w-4 h-4 text-blue-700" />
+            <span>Duplicate Identity Check</span>
+          </button>
+          <button
             onClick={() => window.print()}
             className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-2xs flex items-center gap-1.5"
           >
@@ -142,6 +161,28 @@ export const AdminParticipantsView: React.FC<AdminParticipantsViewProps> = ({ cu
           </button>
         </div>
       </div>
+
+      {/* DIAGNOSTIC BANNER */}
+      {diagnosticResult && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1 text-xs animate-fadeIn">
+          <div className="flex items-center gap-2 font-bold text-emerald-950">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <span>Identity Uniqueness Audit Result</span>
+          </div>
+          <p className="text-slate-700 font-medium">
+            Duplicate Mobiles: <strong className="font-mono font-bold text-emerald-800">{diagnosticResult.duplicateMobileCount}</strong> | Duplicate Emails: <strong className="font-mono font-bold text-emerald-800">{diagnosticResult.duplicateEmailCount}</strong>
+          </p>
+          {diagnosticResult.details.length === 0 ? (
+            <p className="text-emerald-700 font-bold text-[11px]">✓ All participant mobile & email identities are canonically unique across the platform database.</p>
+          ) : (
+            <div className="text-rose-800 text-[11px] font-mono space-y-0.5 pt-1">
+              {diagnosticResult.details.map((d, idx) => (
+                <div key={idx}>⚠️ {d}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filter Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs flex flex-wrap items-center justify-between gap-3">

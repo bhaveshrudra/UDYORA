@@ -12,7 +12,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { AnimatedBusinessBackground } from './components/AnimatedBusinessBackground';
 import { StartupLanguageGate } from './components/StartupLanguageGate';
 import { HeroEntry } from './components/HeroEntry';
+import { AccountOnboardingView } from './components/AccountOnboardingView';
 import { PublicFooter } from './components/PublicFooter';
+import { getCurrentUserSession } from './services/userAuthService';
 import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { useLanguage } from './i18n/LanguageContext';
 
@@ -79,6 +81,10 @@ export function App() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [currentInput, setCurrentInput] = useState<UserBusinessInput | undefined>(undefined);
   const [analysisReport, setAnalysisReport] = useState<CompleteAnalysisReport | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return getCurrentUserSession() !== null;
+  });
 
   // Multi-agent execution steps (all 8 official agents)
   const INITIAL_AGENT_STEPS: AgentStepStatus[] = [
@@ -408,53 +414,63 @@ export function App() {
             />
 
             <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-              {/* SCREEN 1: GUIDED INPUT & WORKSPACE */}
+              {/* SCREEN 1: ACCOUNT ONBOARDING FIRST OR GUIDED INPUT WORKSPACE */}
               {currentScreen === 'form' && (
-                <div className="space-y-6 animate-fadeIn">
-
-                  {/* Analysis Error Alert UI */}
-                  {analysisError && (
-                    <div className="max-w-3xl mx-auto p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-sm space-y-3 animate-fadeIn">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-700 shrink-0 font-bold text-sm">
-                          ⚠️
+                !isOnboardingComplete ? (
+                  <AccountOnboardingView
+                    onCompleteOnboarding={() => {
+                      setIsOnboardingComplete(true);
+                    }}
+                    onContinueAsGuest={() => {
+                      setIsOnboardingComplete(true);
+                    }}
+                  />
+                ) : (
+                  <div className="space-y-6 animate-fadeIn">
+                    {/* Analysis Error Alert UI */}
+                    {analysisError && (
+                      <div className="max-w-3xl mx-auto p-5 bg-rose-50 border-2 border-rose-200 rounded-2xl shadow-sm space-y-3 animate-fadeIn">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-rose-100 flex items-center justify-center text-rose-700 shrink-0 font-bold text-sm">
+                            ⚠️
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-rose-950">Unable to complete the analysis.</h3>
+                            <p className="text-xs text-rose-700 mt-0.5">{analysisError}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-sm font-black text-rose-950">Unable to complete the analysis.</h3>
-                          <p className="text-xs text-rose-700 mt-0.5">{analysisError}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        {currentInput && (
+                        <div className="flex items-center gap-2 pt-1">
+                          {currentInput && (
+                            <button
+                              type="button"
+                              onClick={() => handleFormSubmit(currentInput)}
+                              className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                            >
+                              Try Again
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => handleFormSubmit(currentInput)}
-                            className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                            onClick={() => {
+                              setAnalysisError(null);
+                              setAnalysisState('idle');
+                            }}
+                            className="px-4 py-2 bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                           >
-                            Try Again
+                            Back to Inputs
                           </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setAnalysisError(null);
-                            setAnalysisState('idle');
-                          }}
-                          className="px-4 py-2 bg-white hover:bg-rose-100 text-rose-800 border border-rose-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                        >
-                          Back to Inputs
-                        </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Input Form with Guided 3-Numbered Sequence */}
-                  <BusinessInputForm
-                    onSubmit={handleFormSubmit}
-                    isLoading={analysisState === 'running'}
-                    initialValues={currentInput}
-                  />
-                </div>
+                    {/* Input Form with Guided 3-Numbered Sequence */}
+                    <BusinessInputForm
+                      onSubmit={handleFormSubmit}
+                      isLoading={analysisState === 'running'}
+                      initialValues={currentInput}
+                    />
+                  </div>
+                )
               )}
 
               {/* SCREEN 2: MULTI-AGENT EXECUTION PROGRESS */}

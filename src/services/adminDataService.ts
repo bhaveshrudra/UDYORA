@@ -2,7 +2,7 @@ import { DEMO_LOCATIONS } from '../data/locations';
 import { VERIFIED_SCHEMES } from '../data/schemes';
 import { TRANSLATIONS } from '../i18n/translations';
 import { SupportedLanguage } from '../i18n/types';
-import { getRegisteredUsers, getSavedAssessments } from './userAuthService';
+import { getRegisteredUsers, getSavedAssessments, updateUserProfileStatus } from './userAuthService';
 
 /* =========================================================================
    POSTGRESQL-READY DATA MODEL ENTITIES
@@ -175,8 +175,8 @@ const STORAGE_KEYS = {
   SCHEMES: 'udyora_admin_schemes',
   EVIDENCE: 'udyora_admin_evidence',
   FIN_RULES: 'udyora_admin_fin_rules',
-  USERS: 'udyora_admin_users',
-  ASSESSMENTS: 'udyora_admin_assessments',
+  USERS: 'udyora_registered_users',
+  ASSESSMENTS: 'udyora_saved_assessments',
   AUDIT_LOGS: 'udyora_admin_audit_logs',
   SETTINGS: 'udyora_admin_settings',
   TRANSLATIONS: 'udyora_admin_translations'
@@ -752,12 +752,22 @@ export function getUsers(): UserEntity[] {
 }
 
 export function updateUserStatus(userId: string, status: 'ACTIVE' | 'SUSPENDED', actor?: string): void {
-  const list = getUsers();
-  const u = list.find((user) => user.id === userId);
-  if (u) {
-    u.status = status;
-    setStorageData(STORAGE_KEYS.USERS, list);
-    recordAuditLog('STATUS_CHANGE', 'USER', userId, u.maskedName, `Changed user status to ${status}`, actor);
+  updateUserProfileStatus(userId, status);
+  const rawUsers = getStorageData<any[]>(STORAGE_KEYS.USERS, SEED_USERS);
+  const target = rawUsers.find((u) => u.userId === userId || u.id === userId);
+  if (target) {
+    target.status = status;
+    setStorageData(STORAGE_KEYS.USERS, rawUsers);
+    recordAuditLog('STATUS_CHANGE', 'USER', userId, target.name || target.maskedName || userId, `Changed user status to ${status}`, actor);
+  } else {
+    // If not in raw storage, update seed user
+    const list = getUsers();
+    const u = list.find((user) => user.id === userId || (user as any).userId === userId);
+    if (u) {
+      u.status = status;
+      setStorageData(STORAGE_KEYS.USERS, list);
+      recordAuditLog('STATUS_CHANGE', 'USER', userId, u.maskedName, `Changed user status to ${status}`, actor);
+    }
   }
 }
 

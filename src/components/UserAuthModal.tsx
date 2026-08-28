@@ -44,12 +44,17 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
 
     let user: UserProfile;
     if (mode === 'register') {
-      user = registerUser({
+      const res = registerUser({
         name: name.trim(),
         mobile: cleanMobile,
         email: email.trim() || undefined,
         preferredLanguage: prefLang
       });
+      if (!res.success || !res.user) {
+        setErrorMsg(res.error || 'Registration failed.');
+        return;
+      }
+      user = res.user;
     } else {
       user = loginUserWithMobile(cleanMobile, name.trim() || undefined);
     }
@@ -123,7 +128,8 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Ramesh Patil"
+                  placeholder="Enter your name"
+                  autoComplete="name"
                   className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-hidden"
                 />
               </div>
@@ -141,7 +147,8 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
                 maxLength={10}
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value)}
-                placeholder="10-digit Mobile Number"
+                placeholder="Enter your mobile number"
+                autoComplete="tel"
                 className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:bg-white focus:border-blue-700 outline-hidden"
               />
             </div>
@@ -159,7 +166,8 @@ export const UserAuthModal: React.FC<UserAuthModalProps> = ({
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
+                    placeholder="Enter your email address"
+                    autoComplete="email"
                     className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:bg-white focus:border-blue-700 outline-hidden"
                   />
                 </div>
