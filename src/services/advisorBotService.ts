@@ -48,7 +48,7 @@ export function formatInrCurrency(amount: number): string {
 }
 
 /**
- * Localized quick action pills offered for out-of-scope or unclear queries.
+ * Localized quick action labels.
  */
 export const LOCALIZED_QUICK_ACTIONS: Record<SupportedLanguage, string[]> = {
   en: ['Business Feasibility', 'Market Analysis', 'Financial Planning', 'Government Schemes', 'Risk Analysis'],
@@ -59,59 +59,74 @@ export const LOCALIZED_QUICK_ACTIONS: Record<SupportedLanguage, string[]> = {
 };
 
 /**
- * Natural, polite, respectful fallback variations (4-6 variations per language) for out-of-scope queries.
+ * Explicit prompt mapping for quick action pill clicks.
  */
+export const QUICK_ACTION_PROMPTS: Record<SupportedLanguage, Record<string, string>> = {
+  en: {
+    'Business Feasibility': 'Can you explain the feasibility of my current business assessment?',
+    'Market Analysis': 'What does the current market analysis say about my business?',
+    'Financial Planning': 'Explain my current financial plan, including project cost, financing and EMI.',
+    'Government Schemes': 'Which government schemes currently match my business, and why?',
+    'Risk Analysis': 'What are the major risks identified for my business and how can I mitigate them?'
+  },
+  hi: {
+    'व्यवसाय व्यवहार्यता': 'क्या आप मेरे वर्तमान व्यवसाय मूल्यांकन की व्यवहार्यता बता सकते हैं?',
+    'बाज़ार विश्लेषण': 'मेरे व्यवसाय के बारे में वर्तमान बाज़ार विश्लेषण क्या कहता है?',
+    'वित्तीय योजना': 'मेरी वर्तमान वित्तीय योजना, परियोजना लागत, वित्तपोषण और EMI समझाएं।',
+    'सरकारी योजनाएं': 'कौन सी सरकारी योजनाएं मेरे व्यवसाय से मेल खाती हैं और क्यों?',
+    'जोखिम विश्लेषण': 'मेरे व्यवसाय के मुख्य जोखिम क्या हैं और मैं उन्हें कैसे कम कर सकता हूँ?'
+  },
+  te: {
+    'వ్యాపార సాధ్యాసాధ్యాలు': 'నా ప్రస్తుత వ్యాపార అంచనా యొక్క సాధ్యాసాధ్యాలను వివరించగలరా?',
+    'మార్కెట్ విశ్లేషణ': 'నా వ్యాపారం గురించి ప్రస్తుత మార్కెట్ విశ్లేషణ ఏమి చెబుతోంది?',
+    'ఆర్థిక ప్రణాళిక': 'ప్రాజెక్ట్ ఖర్చు, ఫైనాన్సింగ్ మరియు EMIతో సహా నా ప్రస్తుత ఆర్థిక ప్రణాళికను వివరించండి.',
+    'ప్రభుత్వ పథకాలు': 'నా వ్యాపారానికి ప్రస్తుతం ఏ ప్రభుత్వ పథకాలు సరిపోతాయి మరియు ఎందుకు?',
+    'రిస్క్ విశ్లేషణ': 'నా వ్యాపారానికి గుర్తించబడిన ప్రధాన రిస్కులు ఏమిటి మరియు వాటిని ఎలా తగ్గించవచ్చు?'
+  },
+  mr: {
+    'व्यवसाय व्यवहार्यता': 'माझ्या सध्याच्या व्यवसाय मूल्यांकनाची व्यवहार्यता स्पष्ट करू शकता का?',
+    'बाजार विश्लेषण': 'माझ्या व्यवसायाबद्दल सध्याचे बाजार विश्लेषण काय सांगते?',
+    'आर्थिक नियोजन': 'प्रकल्प खर्च, वित्तपुरवठा आणि EMI सह माझे सध्याचे आर्थिक नियोजन स्पष्ट करा.',
+    'शासकीय योजना': 'माझ्या व्यवसायासाठी कोणत्या शासकीय योजना योग्य आहेत आणि का?',
+    'जोखीम विश्लेषण': 'माझ्या व्यवसायासाठी कोणते मुख्य धोके आहेत आणि ते कसे कमी करता येतील?'
+  },
+  kn: {
+    'ವ್ಯಾಪಾರ ಕಾರ್ಯಸಾಧ್ಯತೆ': 'ನನ್ನ ಪ್ರಸ್ತುತ ಉದ್ಯಮ ಮೌಲ್ಯಮಾಪನದ ಕಾರ್ಯಸಾಧ್ಯತೆಯನ್ನು ವಿವರಿಸಬಹುದೇ?',
+    'ಮಾರುಕಟ್ಟೆ ವಿಶ್ಲೇಷಣೆ': 'ನನ್ನ ಉದ್ಯಮದ ಬಗ್ಗೆ ಪ್ರಸ್ತುತ ಮಾರುಕಟ್ಟೆ ವಿಶ್ಲೇಷಣೆ ಏನು ಹೇಳುತ್ತದೆ?',
+    'ಹಣಕಾಸು ಯೋಜನೆ': 'ಯೋಜನೆಯ ವೆಚ್ಚ, ಸಾಲ ಮತ್ತು EMI ಸೇರಿದಂತೆ ನನ್ನ ಹಣಕಾಸು ಯೋಜನೆಯನ್ನು ವಿವರಿಸಿ.',
+    'ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು': 'ನನ್ನ ಉದ್ಯಮಕ್ಕೆ ಪ್ರಸ್ತುತ ಯಾವ ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಸೂಕ್ತವಾಗಿವೆ ಮತ್ತು ಏಕೆ?',
+    'ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ': 'ನನ್ನ ಉದ್ಯಮಕ್ಕೆ ಮುಖ್ಯ ಅಪಾಯಗಳು ಯಾವುವು ಮತ್ತು ಅವುಗಳನ್ನು ಹೇಗೆ ಕಡಿಮೆ ಮಾಡಬಹುದು?'
+  }
+};
+
 const OUT_OF_SCOPE_VARIATIONS: Record<SupportedLanguage, string[]> = {
   en: [
-    "Sorry, I’m UDYORA’s Business Advisory Assistant. I can help with business feasibility, local market opportunities, financial planning, government schemes, business risks, and related recommendations. Please ask about your business or use the Business Analysis section.",
-    "I’m here to assist with business planning and advisory through UDYORA. I can help with feasibility, market opportunities, financial planning, schemes, and business risks. You can also ask about the business currently selected in your analysis.",
-    "That question is outside UDYORA’s scope. I can assist with your business idea, local market analysis, financing, government schemes, and risk assessment.",
-    "Sorry, UDYORA is focused on rural and semi-urban business advisory. Please ask about your business idea, location, finances, schemes, market opportunities, or risks.",
-    "I specialize strictly in hyper-local enterprise advisory for UDYORA. I can help calculate your EMI, match government subsidies (PMEGP/Mudra), or assess local market feasibility for your business."
+    "Sorry, I’m UDYORA’s Business Advisory Assistant. I can help with business feasibility, market opportunities, financial planning, government scheme guidance, location insights, risks, and evidence related to your assessment."
   ],
   hi: [
-    "क्षमा कीजिए, मैं UDYORA का व्यवसाय सलाहकार सहायक हूँ। मैं व्यावसायिक व्यवहार्यता, स्थानीय बाज़ार अवसरों, वित्तीय योजना, सरकारी योजनाओं और व्यावसायिक जोखिमों में आपकी सहायता कर सकता हूँ। कृपया अपने व्यवसाय से संबंधित प्रश्न पूछें।",
-    "मैं UDYORA के माध्यम से व्यवसाय योजना और मार्गदर्शन में सहायता के लिए यहाँ हूँ। मैं व्यवहार्यता, बाज़ार के अवसरों, वित्तीय योजना, योजनाओं और जोखिमों में मदद कर सकता हूँ। आप अपने वर्तमान विश्लेषण के बारे में भी पूछ सकते हैं।",
-    "यह प्रश्न UDYORA के कार्यक्षेत्र से बाहर है। मैं आपके व्यवसाय के विचार, स्थानीय बाज़ार विश्लेषण, वित्तपोषण, सरकारी योजनाओं और जोखिम मूल्यांकन में सहायता कर सकता हूँ।",
-    "क्षमा करें, UDYORA व्यावसायिक परामर्श पर केंद्रित है। कृपया अपने व्यवसाय, स्थान, वित्त, सरकारी योजनाओं या बाज़ार के अवसरों के बारे में पूछें।",
-    "मैं UDYORA का समर्पित व्यवसाय सलाहकार हूँ। मैं आपकी EMI, सरकारी सब्सिडी (PMEGP/Mudra), या स्थानीय बाज़ार व्यवहार्यता की गणना में मदद कर सकता हूँ।"
+    "क्षमा कीजिए, मैं UDYORA का व्यवसाय सलाहकार सहायक हूँ। मैं व्यावसायिक व्यवहार्यता, बाज़ार अवसरों, वित्तीय योजना, सरकारी योजनाओं, स्थान की जानकारी और जोखिमों में आपकी सहायता कर सकता हूँ।"
   ],
   mr: [
-    "क्षमस्व, मी UDYORA चा व्यवसाय सल्लागार सहाय्यक आहे. मी व्यवसाय व्यवहार्यता, स्थानिक बाजार संधी, आर्थिक नियोजन, शासकीय योजना आणि व्यवसाय धोके याविषयी मदत करू शकतो. कृपया आपल्या व्यवसायाशी संबंधित प्रश्न विचारा.",
-    "मी UDYORA द्वारे व्यवसाय नियोजन आणि सल्लागारासाठी उपलब्ध आहे. मी व्यवहार्यता, बाजार संधी, आर्थिक नियोजन, योजना आणि व्यवसायातील जोखीम तपासण्यात मदत करू शकतो.",
-    "हा प्रश्न UDYORA च्या कार्यक्षेत्राबाहेरचा आहे. मी आपल्या व्यवसायाची कल्पना, स्थानिक बाजार विश्लेषण, वित्तपुरवठा, शासकीय योजना आणि जोखीम मूल्यांकनात मदत करू शकतो.",
-    "क्षमस्व, UDYORA व्यावसायिक सल्लागारावर केंद्रित आहे. कृपया आपल्या व्यवसायाची कल्पना, स्थान, वित्त, शासकीय योजना किंवा जोखमींबद्दल विचारा.",
-    "मी UDYORA व्यवसाय सल्लागार म्हणून काम करतो. मी तुमची EMI, शासकीय योजना (PMEGP/Mudra), आणि स्थानिक बाजार व्यवहार्यता तपासण्यात मदत करू शकतो."
+    "क्षमस्व, मी UDYORA चा व्यवसाय सल्लागार सहाय्यक आहे. मी व्यवसाय व्यवहार्यता, बाजार संधी, आर्थिक नियोजन, शासकीय योजना आणि जोखीम मूल्यांकनात मदत करू शकतो."
   ],
   te: [
-    "క్షమించండి, నేను UDYORA వ్యాపార సలహా సహాయకుడిని. నేను వ్యాపార సాధ్యాసాధ్యాలు, స్థానిక మార్కెట్ అవకాశాలు, ఆర్థిక ప్రణాళిక, ప్రభుత్వ పథకాలు మరియు వ్యాపార రిస్కులపై సహాయం చేయగలను. దయచేసి మీ వ్యాపారానికి సంబంధించిన ప్రశ్నలను అడగండి.",
-    "నేను UDYORA ద్వారా వ్యాపార ప్రణాళిక మరియు సలహాల కోసం ఇక్కడ ఉన్నాను. నేను సాధ్యాసాధ్యాలు, మార్కెట్ అవకాశాలు, ఆర్థిక ప్రణాళిక, పథకాలు మరియు రిస్కులపై మీకు సహాయపడగలను.",
-    "ఆ ప్రశ్న UDYORA పరిధికి వెలుపల ఉంది. నేను మీ వ్యాపార ఆలోచన, స్థానిక మార్కెట్ విశ్లేషణ, ఫైనాన్సింగ్, ప్రభుత్వ పథకాలు మరియు రిస్క్ అసెస్‌మెంట్‌లో సహాయపడగలను.",
-    "క్షమించండి, UDYORA వ్యాపార సలహాలపై దృష్టి సారిస్తుంది. దయచేసి మీ వ్యాపార ఆలోచన, స్థానం, ఆర్థిక ప్రణాళిక, పథకాలు లేదా రిస్కుల గురించి అడగండి.",
-    "నేను UDYORA వ్యాపార సలహాదారుని. నేను మీ నెలవారీ EMI, ప్రభుత్వ సబ్సిడీలు (PMEGP/ముద్ర), మరియు స్థానిక మార్కెట్ విశ్లేషణలో సహాయం చేయగలను."
+    "క్షమించండి, నేను UDYORA వ్యాపార సలహా సహాయకుడిని. నేను వ్యాపార సాధ్యాసాధ్యాలు, మార్కెట్ అవకాశాలు, ఆర్థిక ప్రణాళిక, ప్రభుత్వ పథకాలు, స్థాన వివరాలు మరియు రిస్కులపై సహాయం చేయగలను."
   ],
   kn: [
-    "ಕ್ಷಮಿಸಿ, ನಾನು UDYORA ವ್ಯವಹಾರ ಸಲಹಾ ಸಹಾಯಕನಾಗಿದ್ದೇನೆ. ನಾನು ವ್ಯಾಪಾರ ಕಾರ್ಯಸಾಧ್ಯತೆ, ಸ್ಥಳೀಯ ಮಾರುಕಟ್ಟೆ ಅವಕಾಶಗಳು, ಆರ್ಥಿಕ ಯೋಜನೆ, ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಮತ್ತು ವ್ಯವಹಾರದ ಅಪಾಯಗಳ ಬಗ್ಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಉದ್ಯಮಕ್ಕೆ ಸಂಬಂಧಿಸಿದ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಿ.",
-    "ನಾನು UDYORA ಮೂಲಕ ವ್ಯಾಪಾರ ಯೋಜನೆ ಮತ್ತು ಸಲಹೆಗಾಗಿ ಇಲ್ಲಿದ್ದೇನೆ. ನಾನು ಕಾರ್ಯಸಾಧ್ಯತೆ, ಮಾರುಕಟ್ಟೆ ಅವಕಾಶಗಳು, ಸಾಲ ಯೋಜನೆ, ಯೋಜನೆಗಳು ಮತ್ತು ಅಪಾಯಗಳ ಬಗ್ಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ.",
-    "ಆ ಪ್ರಶ್ನೆಯು UDYORA ವ್ಯಾಪ್ತಿಗೆ ಹೊರತಾಗಿದೆ. ನಾನು ನಿಮ್ಮ ಉದ್ಯಮ ಕಲ್ಪನೆ, ಸ್ಥಳೀಯ ಮಾರುಕಟ್ಟೆ ವಿಶ್ಲೇಷಣೆ, ಹಣಕಾಸು ಮತ್ತು ಸರ್ಕಾರಿ ಯೋಜನೆಗಳಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ.",
-    "ಕ್ಷಮಿಸಿ, UDYORA ವ್ಯವಹಾರ ಸಲಹೆಯ ಮೇಲೆ ಕೇಂದ್ರೀಕೃತವಾಗಿದೆ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಉದ್ಯಮ, ಸ್ಥಳ, ಹಣಕಾಸು, ಯೋಜನೆಗಳು ಅಥವಾ ಅಪಾಯಗಳ ಬಗ್ಗೆ ಕೇಳಿ.",
-    "ನಾನು UDYORA ಉದ್ಯಮ ಸಲಹೆಗಾರನಾಗಿದ್ದೇನೆ. ನಿಮ್ಮ ಮಾಸಿಕ EMI, ಸರ್ಕಾರಿ ಸಬ್ಸಿಡಿ (PMEGP/Mudra), ಮತ್ತು ಸ್ಥಳೀಯ ಮಾರುಕಟ್ಟೆ ಕಾರ್ಯಸಾಧ್ಯತೆಯನ್ನು ಲೆಕ್ಕಾಚಾರ ಮಾಡಲು ನಾನು ಸಹಾಯ ಮಾಡಬಲ್ಲೆ."
+    "ಕ್ಷಮಿಸಿ, ನಾನು UDYORA ಉದ್ಯಮ ಸಲಹಾ ಸಹಾಯಕ. ನಾನು ವ್ಯಾಪಾರ ಕಾರ್ಯಸಾಧ್ಯತೆ, ಮಾರುಕಟ್ಟೆ ಅವಕಾಶಗಳು, ಆರ್ಥಿಕ ಯೋಜನೆ, ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಮತ್ತು ಅಪಾಯಗಳ ಬಗ್ಗೆ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ."
   ]
 };
 
-/**
- * Short, polite clarification questions for unclear / gibberish queries.
- */
 const UNCLEAR_CLARIFICATIONS: Record<SupportedLanguage, string> = {
-  en: "I can help with business planning and advisory. Are you asking about market opportunities, finances & EMI, government schemes, location insights, or business risks?",
-  hi: "मैं व्यवसाय योजना और परामर्श में मदद कर सकता हूँ। क्या आप बाज़ार के अवसरों, वित्त और EMI, सरकारी योजनाओं, स्थान की जानकारी या व्यावसायिक जोखिमों के बारे में पूछ रहे हैं?",
-  mr: "मी व्यवसाय नियोजन आणि सल्लागारात मदत करू शकतो. आपण बाजार संधी, वित्त व EMI, शासकीय योजना, स्थान माहिती किंवा व्यवसाय जोखमींबद्दल विचारत आहात का?",
-  te: "నేను వ్యాపార ప్రణాళికలో సహాయం చేయగలను. మీరు మార్కెట్ అవకాశాలు, ఆర్థిక & EMI, ప్రభుత్వ పథకాలు, స్థాన వివరాలు లేదా రిస్కుల గురించి అడుగుతున్నారా?",
-  kn: "ನಾನು ಉದ್ಯಮ ಯೋಜನೆಯಲ್ಲಿ ಸಹಾಯ ಮಾಡಬಲ್ಲೆ. ನೀವು ಮಾರುಕಟ್ಟೆ ಅವಕಾಶಗಳು, ಹಣಕಾಸು ಮತ್ತು EMI, ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು, ಸ್ಥಳದ ಮಾಹಿತಿ ಅಥವಾ ಅಪಾಯಗಳ ಬಗ್ಗೆ ಕೇಳುತ್ತಿದ್ದೀರಾ?"
+  en: "What would you like me to explain — the market, financial plan, scheme guidance, risk analysis, or location recommendation?",
+  hi: "आप मुझसे क्या पूछना चाहते हैं — बाज़ार, वित्तीय योजना, सरकारी योजनाएं, जोखिम विश्लेषण या स्थान की जानकारी?",
+  mr: "तुम्हाला काय स्पष्ट करून हवे आहे — बाजार, आर्थिक नियोजन, शासकीय योजना, जोखीम विश्लेषण की स्थान शिफारस?",
+  te: "నేను ఏమి వివరించాలి — మార్కెట్, ఆర్థిక ప్రణాళిక, ప్రభుత్వ పథకాలు, రిస్క్ విశ్లేషణ లేదా స్థాన వివరాలా?",
+  kn: "ನಾನು ಏನನ್ನು ವಿವರಿಸಬೇಕೆಂದು ಬಯಸುತ್ತೀರಿ — ಮಾರುಕಟ್ಟೆ, ಆರ್ಥಿಕ ಯೋಜನೆ, ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು, ಅಪಾಯದ ವಿಶ್ಲೇಷಣೆ ಅಥವಾ ಸ್ಥಳದ ಮಾಹಿತಿ?"
 };
 
 /**
- * Generates an intelligent, deterministic, and multilingual response based on the active context.
+ * Generates a contextual response based on the active user session state.
  */
 export async function generateAdvisorResponse(
   userQuery: string,
@@ -120,14 +135,14 @@ export async function generateAdvisorResponse(
 ): Promise<ChatMessage> {
   const lang = context.language || 'en';
 
-  // Find previous topic for conversational pronoun memory
+  // Find previous topic for conversational memory
   const lastAssistantMsg = [...history].reverse().find((m) => m.sender === 'assistant');
   const previousTopic = lastAssistantMsg?.topic;
 
-  // 1. Route & Classify Intent
+  // 1. Intent Classification
   const routeResult = classifyIntent(userQuery, previousTopic);
 
-  // 2. Resolve Active Context
+  // 2. Resolve Active Session Context
   const input: UserBusinessInput = context.analysisReport?.userInput || context.userInput || {
     locationId: 'loc_khed_shivapur_pune',
     businessCategoryId: 'dairy',
@@ -150,8 +165,21 @@ export async function generateAdvisorResponse(
   const stateName = location.state || 'State';
   const categoryId = input.businessCategoryId || 'dairy';
 
-  // Demo benchmark risk lookup
   const businessBenchmark = DEMO_BUSINESS_BENCHMARKS.find((b) => b.categoryId === categoryId) || DEMO_BUSINESS_BENCHMARKS[0];
+
+  // Development Debugging Logs (Requirement 27)
+  if (typeof window !== 'undefined' || process.env.NODE_ENV !== 'production') {
+    console.log('[CHATBOT] message:', userQuery);
+    console.log('[CHATBOT] intent:', routeResult.intent);
+    console.log('[CHATBOT] confidence:', routeResult.confidence);
+    console.log('[CHATBOT] context:', {
+      business: categoryId,
+      location: villageName,
+      capital: input.availableCapital,
+      language: lang
+    });
+    console.log('[CHATBOT] response source:', routeResult.serviceCalled);
+  }
 
   let responseText = '';
   let topic: ChatMessage['topic'] = 'general';
@@ -159,7 +187,7 @@ export async function generateAdvisorResponse(
   let suggestedAction: ChatMessage['suggestedAction'] = undefined;
   let suggestedQuickActions: string[] | undefined = undefined;
 
-  // Resolved numbers
+  // Exact Deterministic Financial Figures
   const emiFormatted = formatInrCurrency(plan.monthlyEMI || 19680);
   const loanFormatted = formatInrCurrency(plan.netLoanRequirement || plan.indicativeFinancingRequirement || 900000);
   const capexFormatted = formatInrCurrency(plan.indicativeProjectCost || 1000000);
@@ -170,22 +198,41 @@ export async function generateAdvisorResponse(
   const apmcDist = location.nearestApmcMandiKm?.value ? `${location.nearestApmcMandiKm.value} km` : '18.0 km';
   const dairyDist = location.nearestDairyCooperativeKm?.value ? `${location.nearestDairyCooperativeKm.value} km` : '2.5 km';
 
+  const cleanQuery = userQuery.toLowerCase().trim();
+
   // =========================================================================
-  // INTENT 1: OUT OF SCOPE (Jokes, Celebrities, Coding, Trivia, Homework, etc.)
+  // INTENT 1: GREETING
   // =========================================================================
-  if (routeResult.intent === 'OUT_OF_SCOPE') {
+  if (routeResult.intent === 'GREETING') {
     topic = 'general';
     dataQuality = 'VERIFIED';
     suggestedQuickActions = LOCALIZED_QUICK_ACTIONS[lang] || LOCALIZED_QUICK_ACTIONS.en;
 
-    const variations = OUT_OF_SCOPE_VARIATIONS[lang] || OUT_OF_SCOPE_VARIATIONS.en;
-    // Cycle through variations naturally to avoid repetitive responses
-    const index = Math.abs(history.length) % variations.length;
-    responseText = variations[index];
+    if (lang === 'hi') {
+      responseText = `नमस्ते! मैं **UDYORA का व्यवसाय सलाहकार सहायक** हूँ। मैं आपकी व्यावसायिक व्यवहार्यता, बाज़ार के अवसरों, वित्तीय योजना एवं EMI, सरकारी योजनाओं, जोखिमों और साक्ष्य डेटा को समझने में सहायता कर सकता हूँ। आप क्या जानना चाहते हैं?`;
+    } else if (lang === 'te') {
+      responseText = `నమస్కారం! నేను **UDYORA వ్యాపార సలహా సహాయకుడిని**. నేను మీ వ్యాపార సాధ్యాసాధ్యాలు, మార్కెట్ అవకాశాలు, ఆర్థిక ప్రణాళిక & EMI, ప్రభుత్వ పథకాలు, రిస్కులు మరియు ఆధారాలను అర్థం చేసుకోవడంలో సహాయపడగలను. మీరు ఏమి తెలుసుకోవాలనుకుంటున్నారు?`;
+    } else if (lang === 'mr') {
+      responseText = `नमस्कार! मी **UDYORA व्यवसाय सल्लागार सहाय्यक** आहे. मी तुम्हाला व्यवसाय व्यवहार्यता, बाजार संधी, आर्थिक नियोजन व EMI, शासकीय योजना आणि जोखीम मूल्यांकनात मदत करू शकतो.`;
+    } else if (lang === 'kn') {
+      responseText = `ನಮಸ್ಕಾರ! ನಾನು **UDYORA ಉದ್ಯಮ ಸಲಹಾ ಸಹಾಯಕ**. ನಿಮ್ಮ ಉದ್ಯಮದ ಕಾರ್ಯಸಾಧ್ಯತೆ, ಮಾರುಕಟ್ಟೆ ಅವಕಾಶಗಳು, ಹಣಕಾಸು ಮತ್ತು EMI, ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು ಮತ್ತು ಅಪಾಯಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ನಾನು ಸಹಾಯ ಮಾಡಬಲ್ಲೆ.`;
+    } else {
+      responseText = `Hello! I’m **UDYORA’s Business Advisory Assistant**. I can help you understand your business feasibility, market opportunities, financial plan & EMI, government schemes, business risks, and supporting evidence. What would you like to explore?`;
+    }
   }
 
   // =========================================================================
-  // INTENT 2: UNCLEAR (Gibberish, Noise, Unparseable inputs)
+  // INTENT 2: OUT OF SCOPE
+  // =========================================================================
+  else if (routeResult.intent === 'OUT_OF_SCOPE') {
+    topic = 'general';
+    dataQuality = 'VERIFIED';
+    suggestedQuickActions = LOCALIZED_QUICK_ACTIONS[lang] || LOCALIZED_QUICK_ACTIONS.en;
+    responseText = OUT_OF_SCOPE_VARIATIONS[lang]?.[0] || OUT_OF_SCOPE_VARIATIONS.en[0];
+  }
+
+  // =========================================================================
+  // INTENT 3: UNCLEAR
   // =========================================================================
   else if (routeResult.intent === 'UNCLEAR') {
     topic = 'general';
@@ -195,75 +242,55 @@ export async function generateAdvisorResponse(
   }
 
   // =========================================================================
-  // INTENT 3: UDYORA HELP (What is UDYORA, Platform capabilities)
+  // INTENT 4: NEXT STEPS
   // =========================================================================
-  else if (routeResult.intent === 'UDYORA_HELP') {
-    topic = 'help';
+  else if (routeResult.intent === 'NEXT_STEPS') {
+    topic = 'action';
     dataQuality = 'VERIFIED';
 
     if (lang === 'hi') {
-      responseText = `**UDYORA** ग्रामीण और अर्ध-शहरी उद्यमियों के लिए एक समर्पित हाइपर-लोकल बिजनेस इंटेलिजेंस प्लेटफॉर्म है।\n\n• **बहु-एजेंट विश्लेषण:** बाज़ार मांग, वित्तीय व्यवहार्यता और जोखिमों का व्यापक मूल्यांकन।\n• **सटीक वित्तीय योजना:** 10% प्रमोटर मार्जिन के आधार पर कुल परियोजना लागत, बैंक ऋण और मासिक EMI गणना।\n• **सरकारी योजना मार्गदर्शन:** PMEGP, MUDRA (शिशु/किशोर/तरुण) और AHIDF सब्सिडी की पात्रता और आवश्यक दस्तावेज।\n• **स्थानिक मैपिंग:** 5km/10km कैचमेंट मैपिंग, APMC मंडी और बैंक कनेक्टिविटी।\n• **5 भारतीय भाषाओं में उपलब्ध:** हिन्दी, English, मराठी, తెలుగు, ಕನ್ನಡ।`;
+      responseText = `**आपके उद्यम के लिए अनुशंसित आगामी कदम:**\n\n1. **बैंक योग्य DPR डाउनलोड करें:** अपने प्रोजेक्ट रिपोर्ट को डाउनलोड/प्रिंट करने के लिए ऊपर 'Print Report' बटन का उपयोग करें।\n2. **सरकारी सब्सिडी आवेदन:** 35% ग्रामीण पूंजी सब्सिडी के लिए JanSamarth या KVIC पोर्टल पर PMEGP हेतु आवेदन करें।\n3. **बैंक ऋण स्वीकृति:** 90% बैंक ऋण के लिए अपने नजदीकी SBI या सहकारी बैंक में DPR जमा करें।\n4. **कार्यशील पूंजी बफर:** वाणिज्यिक संचालन शुरू करने से पहले 45 दिनों का नकद बफर सुरक्षित करें।`;
     } else if (lang === 'te') {
-      responseText = `**UDYORA** అనేది గ్రామీణ మరియు సెమీ-అర్బన్ వ్యవస్థాపకుల కోసం రూపొందించబడిన హైపర్-లోకల్ బిజినెస్ ఇంటెలిజెన్స్ ప్లాట్‌ఫారమ్.\n\n• **మల్టీ-ఏజెంట్ విశ్లేషణ:** మార్కెట్ డిమాండ్, ఆర్థిక సాధ్యాసాధ్యాలు మరియు రిస్క్ అసెస్‌మెంట్.\n• **ఖచ్చితమైన ఆర్థిక ప్రణాళిక:** ప్రాజెక్ట్ ఖర్చు, బ్యాంక్ లోన్, మరియు నెలవారీ EMI లెక్కలు.\n• **ప్రభుత్వ పథకాలు:** PMEGP, ముద్ర మరియు AHIDF సబ్సిడీ అర్హతలు మరియు అవసరమైన పత్రాలు.\n• **మ్యాపింగ్:** 5km/10km కేచ్‌మెంట్ మరియు సమీప మార్కెట్ యార్డ్ దూరం.\n• **5 భాషల్లో అందుబాటులో ఉంది:** తెలుగు, English, हिन्दी, मराठी, ಕನ್ನಡ.`;
-    } else if (lang === 'mr') {
-      responseText = `**UDYORA** हे ग्रामीण आणि निमशहरी उद्योजकांसाठी एक समर्पित बिझनेस इंटेलिजन्स व्यासपीठ आहे.\n\n• **बहु-एजंट विश्लेषण:** बाजार मागणी, आर्थिक व्यवहार्यता आणि व्यवसाय जोखीम मूल्यांकन.\n• **अचूक वित्तीय मॉडेल:** प्रकल्प खर्च, बँक कर्ज आणि मासिक EMI चे नियमबद्ध गणित.\n• **शासकीय योजना मार्गदर्शक:** PMEGP, MUDRA आणि AHIDF योजनांची पात्रता व अनुदान.\n• **स्थानिक मॅपिंग:** 5km/10km भौगोलिक परीघ आणि बँक सुविधा.\n• **5 भाषांमध्ये उपलब्ध.**`;
-    } else if (lang === 'kn') {
-      responseText = `**UDYORA** ಗ್ರಾಮೀಣ ಮತ್ತು ಅರೆ-ನಗರ ಉದ್ಯಮಿಗಳಿಗಾಗಿ ಹೈಪರ್-ಲೋಕಲ್ ಬಿಸಿನೆಸ್ ಇಂಟೆಲಿಜೆನ್ಸ್ ವೇದಿಕೆಯಾಗಿದೆ.\n\n• **ಬಹು-ಏಜೆಂಟ್ ವಿಶ್ಲೇಷಣೆ:** ಮಾರುಕಟ್ಟೆ ಬೇಡಿಕೆ, ಆರ್ಥಿಕ ಕಾರ್ಯಸಾಧ್ಯತೆ ಮತ್ತು ಅಪಾಯಗಳ ಮೌಲ್ಯಮಾಪನ.\n• **ನಿಖರ ಆರ್ಥಿಕ ಯೋಜನೆ:** ಯೋಜನಾ ವೆಚ್ಚ, ಬ್ಯಾಂಕ್ ಸಾಲ ಮತ್ತು ಮಾಸಿಕ EMI ಲೆಕ್ಕಾಚಾರ.\n• **ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು:** PMEGP, ಮುದ್ರಾ ಸಬ್ಸಿಡಿ ಅರ್ಹತೆಗಳು ಮತ್ತು ದಾಖಲೆಗಳು.\n• **ಸ್ಥಳೀಯ ಮ್ಯಾಪಿಂಗ್:** 5km/10km ವ್ಯಾಪ್ತಿ ಮತ್ತು ಎಪಿಎಂಸಿ ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ.`;
+      responseText = `**మీ వ్యాపారం కోసం తదుపరి చర్యలు:**\n\n1. **బ్యాంక్ DPR డౌన్‌లోడ్ చేయండి:** మీ బ్యాంకబుల్ DPR రిపోర్ట్‌ను ప్రింట్ లేదా డౌన్‌లోడ్ చేయండి.\n2. **ప్రభుత్వ సబ్సిడీ దరఖాస్తు:** 35% గ్రామీణ సబ్సిడీ కోసం JanSamarth / KVIC పోర్టల్ ద్వారా PMEGP కి దరఖాస్తు చేయండి.\n3. **బ్యాంక్ లోన్ మంజూరు:** 90% లోన్ కోసం సమీప SBI లేదా సహకార బ్యాంక్‌లో DPR సమర్పించండి.\n4. **వర్కింగ్ క్యాపిటల్ రిజర్వ్:** కనీసం 45 రోజుల ఆపరేటింగ్ క్యాపిటల్ బఫర్ సిద్ధంగా ఉంచుకోండి.`;
     } else {
-      responseText = `**UDYORA** is a dedicated hyper-local business intelligence platform built for rural and semi-urban entrepreneurs.\n\n• **Multi-Agent Advisory:** Simultaneous evaluation of market demand, spatial logistics, financial viability, and operational risks.\n• **Deterministic Banking Financials:** Precise CapEx, 10% promoter equity margin, debt sizing, and reducing-balance monthly EMI.\n• **Government Scheme Matching:** Instant qualification audits for PMEGP, MUDRA (Shishu/Kishore/Tarun), AHIDF, and Stand-Up India.\n• **Spatial Intelligence:** 5 km & 10 km infrastructure overlays with verified Census 2011 baseline data.\n• **Multilingual Support:** Available across English, हिन्दी, मराठी, తెలుగు, and ಕನ್ನಡ.`;
+      responseText = `**Recommended Actionable Next Steps for Your Enterprise:**\n\n1. **Generate Detailed Project Report (DPR):** Use the 'Print Report' button in the top menu to output your bankable DPR.\n2. **Submit Capital Subsidy Application:** Register on JanSamarth / KVIC portal for the PMEGP scheme (${topScheme?.potentialSubsidyPct || 35}% rural subsidy).\n3. **Sanction Bank Debt Facility:** Present your DPR to your local SBI or District Cooperative Bank for ${loanFormatted} term loan financing.\n4. **Establish Operating Cash Buffer:** Secure a mandatory 45-day working capital reserve before commercial launch.`;
     }
   }
 
   // =========================================================================
-  // INTENT 4: MULTILINGUAL HELP
+  // INTENT 5: EMI / FINANCIAL PLANNING
   // =========================================================================
-  else if (routeResult.intent === 'MULTILINGUAL_HELP') {
-    topic = 'general';
-    dataQuality = 'VERIFIED';
-
-    if (lang === 'hi') {
-      responseText = `UDYORA 5 भाषाओं का समर्थन करता है: **English, हिन्दी, मराठी, తెలుగు, ಕನ್ನಡ**। आप स्क्रीन के शीर्ष पर स्थित भाषा चयनकर्ता से कभी भी भाषा बदल सकते हैं।`;
-    } else if (lang === 'te') {
-      responseText = `UDYORA 5 భాషలకు మద్దతు ఇస్తుంది: **English, हिन्दी, मराठी, తెలుగు, ಕನ್ನಡ**. మీరు స్క్రీన్ పైభాగంలో ఉన్న భాషా ఎంపిక ద్వారా ఎప్పుడైనా భాషను మార్చవచ్చు.`;
-    } else {
-      responseText = `UDYORA fully supports 5 regional languages: **English, Hindi (हिन्दी), Marathi (मराठी), Telugu (తెలుగు), and Kannada (ಕನ್ನಡ)**. You can switch your preferred language at any time from the top header.`;
-    }
-  }
-
-  // =========================================================================
-  // INTENT 5: FINANCIAL PLANNING (EMI, Loan, CapEx, OpEx, Equity, DSCR)
-  // =========================================================================
-  else if (routeResult.intent === 'FINANCIAL_PLANNING' || routeResult.intent === 'FINANCE') {
+  else if (routeResult.intent === 'EMI' || routeResult.intent === 'FINANCIAL_PLANNING' || routeResult.intent === 'FINANCE') {
     topic = 'finance';
     dataQuality = 'VERIFIED';
 
-    const isEmiConceptQuery = userQuery.toLowerCase().includes('what is emi') || userQuery.toLowerCase().includes('why does it matter') || userQuery.includes('ईएमआई क्या है');
+    const isEmiReductionQuery = cleanQuery.includes('reduce') || cleanQuery.includes('lower') || cleanQuery.includes('कम') || cleanQuery.includes('తగ్గించడం');
 
-    if (isEmiConceptQuery) {
+    if (isEmiReductionQuery) {
       if (lang === 'hi') {
-        responseText = `**EMI (Equated Monthly Installment)** वह निश्चित मासिक राशि है जो बैंक ऋण चुकाने के लिए हर महीने दी जाती है। इसमें मूलधन (Principal) और ब्याज (Interest) दोनों शामिल होते हैं।\n\n**आपके वर्तमान व्यवसाय (${businessBenchmark.name}) के लिए:**\n• **कुल परियोजना लागत:** ${capexFormatted}\n• **आपकी अपनी पूंजी:** ${capitalFormatted} (${marginVal}%)\n• **अनुशंसित बैंक ऋण:** ${loanFormatted} (10.5% ब्याज दर, 5 वर्ष)\n• **आपकी मासिक EMI:** **${emiFormatted}/माह**\n• **ऋण सेवा कवरेज (DSCR):** ${dscrVal} (सुरक्षित > 1.5)\n\nसमय पर EMI भुगतान से आपका सिबिल (CIBIL) स्कोर सुधरता है और भविष्य में उच्च ऋण पात्रता मिलती है।`;
+        responseText = `**अपनी मासिक EMI को कम करने के 3 प्रभावी उपाय:**\n\n1. **प्रमोटर अंशदान बढ़ाएं:** यदि आप अपनी पूंजी ${capitalFormatted} से बढ़ाते हैं, तो बैंक ऋण आवश्यकता घट जाएगी और EMI सीधे कम होगी।\n2. **सरकारी सब्सिडी (PMEGP 35%):** PMEGP योजना मार्जिन मनी सब्सिडी मिलने पर 3 वर्षों के बाद ऋण मूलधन घट जाता है।\n3. **ऋण मुदत बढ़ाएं (5 से 7 वर्ष):** मुदत बढ़ाने से मासिक EMI कम हो जाती है।\n\n**वर्तमान वित्तीय स्थिति:** आपकी वर्तमान EMI **${emiFormatted}/माह** (${loanFormatted} बैंक ऋण पर) है।`;
       } else if (lang === 'te') {
-        responseText = `**EMI (Equated Monthly Installment)** అంటే మీరు బ్యాంక్ లోన్ తీర్చుకోవడానికి ప్రతి నెలా చెల్లించే స్థిరమైన మొత్తం. ఇందులో అసలు (Principal) మరియు వడ్డీ (Interest) కలిసి ఉంటాయి.\n\n**మీ ప్రస్తుత వ్యాపార ప్రణాళిక ప్రకారం:**\n• **మొత్తం ప్రాజెక్ట్ ఖర్చు:** ${capexFormatted}\n• **మీ సొంత పెట్టుబడి:** ${capitalFormatted} (${marginVal}%)\n• **బ్యాంక్ లోన్ మొత్తం:** ${loanFormatted} (10.5% వార్షిక వడ్డీ, 5 సంవత్సరాలు)\n• **నెలవారీ EMI:** **${emiFormatted}/నెల**\n• **DSCR నిష్పత్తి:** ${dscrVal}\n\nసరైన సమయంలో EMI చెల్లించడం ద్వారా మీ వ్యాపార క్రెడిట్ స్కోరు పెరుగుతుంది.`;
+        responseText = `**మీ నెలవారీ EMIని తగ్గించుకోవడానికి 3 మార్గాలు:**\n\n1. **మీ సొంత పెట్టుబడి పెంచడం:** మీ పెట్టుబడి ${capitalFormatted} కంటే పెంచితే బ్యాంక్ లోన్ మొత్తం తగ్గి, EMI తగ్గుతుంది.\n2. **ప్రభుత్వ సబ్సిడీ (PMEGP 35%):** PMEGP సబ్సిడీ ద్వారా ప్రిన్సిపల్ అమౌంట్ తగ్గుతుంది.\n3. **లోన్ కాలపరిమితి పెంచడం:** 5 ఏళ్ల నుండి 7 ఏళ్లకు కాలపరిమితి పెంచితే నెలవారీ EMI భారం తగ్గుతుంది.\n\n**ప్రస్తుత లెక్క:** మీ ప్రస్తుత EMI **${emiFormatted}/నెల** (${loanFormatted} బ్యాంక్ లోన్‌పై).`;
       } else {
-        responseText = `**EMI (Equated Monthly Installment)** is the fixed monthly payment made to a lending bank to service your term loan, comprising both principal reduction and interest charges.\n\n**Calculations for your active ${businessBenchmark.name} plan:**\n• **Total Project Cost:** ${capexFormatted}\n• **Promoter Own Equity:** ${capitalFormatted} (${marginVal}% mandatory margin)\n• **Bank Term Loan Amount:** ${loanFormatted} (at 10.5% p.a., 5-year tenure)\n• **Calculated Monthly EMI:** **${emiFormatted}/month**\n• **Debt Service Coverage Ratio (DSCR):** **${dscrVal}** *(Healthy benchmark > 1.50)*\n\nAll figures are computed via deterministic reducing-balance debt amortization.`;
+        responseText = `**3 Effective Strategies to Reduce Your Monthly EMI:**\n\n1. **Increase Own Promoter Contribution:** Raising your equity above ${capitalFormatted} directly reduces the required term loan from ${loanFormatted}, lowering your monthly installment.\n2. **Apply PMEGP Capital Subsidy:** Qualifying for PMEGP's 35% rural margin money subsidy reduces loan principal balance after 3 years.\n3. **Extend Loan Tenure:** Extending repayment from 5 to 7 years spreads principal reduction, reducing monthly cash outflow.\n\n**Current Financial Benchmark:**\n• **Indicative Project Cost:** ${capexFormatted}\n• **Promoter Equity (10%):** ${capitalFormatted}\n• **Net Bank Financing:** ${loanFormatted}\n• **Current EMI:** **${emiFormatted}/month** (10.5% p.a., 5-year tenure)\n• **DSCR Coverage:** **${dscrVal}** *(Healthy > 1.50)*`;
       }
     } else {
       if (lang === 'hi') {
-        responseText = `आपके प्रस्तावित **${capitalFormatted}** पूंजी अंशदान के आधार पर, आपकी गणना की गई मासिक EMI **${emiFormatted}/माह** है।\n\n• **कुल परियोजना लागत:** ${capexFormatted}\n• **प्रमोटर इक्विटी:** ${capitalFormatted} (${marginVal}%)\n• **अनुशंसित बैंक ऋण:** ${loanFormatted} (10.5% ब्याज दर, 5 वर्ष मुदत)\n• **ऋण सेवा कवरेज (DSCR):** ${dscrVal} *(मानक > 1.5)*\n\nसभी वित्तीय गणनाएं अनुसूचित बैंक मानकों और भारतीय रिजर्व बैंक के दिशानिर्देशों पर आधारित हैं।`;
+        responseText = `**आपकी वर्तमान वित्तीय योजना एवं ऋण विवरण:**\n\n• **प्रस्तावित प्रमोटर पूंजी:** **${capitalFormatted}** (${marginVal}% अंशदान)\n• **सांकेतिक कुल परियोजना लागत:** **${capexFormatted}**\n• **आवश्यक बैंक ऋण:** **${loanFormatted}** (10.5% वार्षिक ब्याज दर, 5 वर्ष)\n• **मासिक EMI:** **${emiFormatted}/माह**\n• **ऋण सेवा कवरेज अनुपात (DSCR):** **${dscrVal}** *(सुरक्षित मानक > 1.50)*\n\n*नोट: 10% मार्जिन नियम के अनुसार ₹1,00,000 पूंजी से ₹10,00,000 तक की परियोजना स्थापित की जा सकती है।*`;
       } else if (lang === 'te') {
-        responseText = `మీ **${capitalFormatted}** సొంత పెట్టుబడి ఆధారంగా, మీ లెక్కించబడిన నెలవారీ EMI **${emiFormatted}/నెల**.\n\n• **మొత్తం ప్రాజెక్ట్ ఖర్చు:** ${capexFormatted}\n• **ప్రమోటర్ వాటా:** ${capitalFormatted} (${marginVal}%)\n• **బ్యాంక్ లోన్ మొత్తం:** ${loanFormatted} (10.5% వార్షిక వడ్డీ, 5 సంవత్సరాల కాలపరిమితి)\n• **DSCR కవరేజ్:** ${dscrVal}\n\nఈ లెక్కలు 10% ప్రమోటర్ మార్జిన్ నిబంధనల ప్రకారం రూపొందించబడ్డాయి.`;
+        responseText = `**మీ ప్రస్తుత ఆర్థిక ప్రణాళిక & EMI వివరాలు:**\n\n• **మీ సొంత పెట్టుబడి:** **${capitalFormatted}** (${marginVal}% ప్రమోటర్ వాటా)\n• **మొత్తం ప్రాజెక్ట్ ఖర్చు:** **${capexFormatted}**\n• **బ్యాంక్ లోన్ మొత్తం:** **${loanFormatted}** (10.5% వార్షిక వడ్డీ, 5 సంవత్సరాల కాలపరిమితి)\n• **నెలవారీ EMI:** **${emiFormatted}/నెల**\n• **DSCR నిష్పత్తి:** **${dscrVal}** *(ఆరోగ్యకరమైన నిష్పత్తి > 1.50)*\n\n*గమనిక: 10% నిబంధన ప్రకారం మీ ₹1,00,000 పెట్టుబడి ₹10,00,000 ప్రాజెక్ట్ పరిమితికి ప్రాతినిధ్యం వహిస్తుంది.*`;
       } else if (lang === 'mr') {
-        responseText = `तुमच्या **${capitalFormatted}** स्वतःच्या भांडवलावर आधारित, तुमचा मासिक EMI **${emiFormatted}/महिना** आहे.\n\n• **एकूण प्रकल्प खर्च:** ${capexFormatted}\n• **स्वतःचे भांडवल:** ${capitalFormatted} (${marginVal}%)\n• **बँक कर्ज रक्कम:** ${loanFormatted} (10.5% व्याजदर, 5 वर्षे मुदत)\n• **कर्ज परतफेड प्रमाण (DSCR):** ${dscrVal}`;
+        responseText = `**तुमचे सध्याचे आर्थिक नियोजन व EMI विवरण:**\n\n• **स्वतःचे भांडवल:** **${capitalFormatted}** (${marginVal}%)\n• **एकूण प्रकल्प खर्च:** **${capexFormatted}**\n• **बँक कर्ज रक्कम:** **${loanFormatted}** (10.5% व्याजदर, 5 वर्षे मुदत)\n• **मासिक EMI:** **${emiFormatted}/महिना**\n• **DSCR प्रमाण:** **${dscrVal}**`;
       } else if (lang === 'kn') {
-        responseText = `ನಿಮ್ಮ **${capitalFormatted}** ಸ್ವಂತ ಬಂಡವಾಳದ ಆಧಾರದ ಮೇಲೆ, ಲೆಕ್ಕಹಾಕಲಾದ ಮಾಸಿಕ EMI **${emiFormatted}/ತಿಂಗಳು**.\n\n• **ಒಟ್ಟು ಯೋಜನೆ ವೆಚ್ಚ:** ${capexFormatted}\n• **ಸ್ವಂತ ಬಂಡವಾಳ:** ${capitalFormatted} (${marginVal}%)\n• **ಬ್ಯಾಂಕ್ ಸಾಲ:** ${loanFormatted} (10.5% ಬಡ್ಡಿ, 5 ವರ್ಷಗಳ ಅವಧಿ)\n• **DSCR ಅನುಪಾತ:** ${dscrVal}`;
+        responseText = `**ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಹಣಕಾಸು ಯೋಜನೆ ಮತ್ತು EMI ವಿವರಗಳು:**\n\n• **ಸ್ವಂತ ಬಂಡವಾಳ:** **${capitalFormatted}** (${marginVal}%)\n• **ಒಟ್ಟು ಯೋಜನೆ ವೆಚ್ಚ:** **${capexFormatted}**\n• **ಬ್ಯಾಂಕ್ ಸಾಲ:** **${loanFormatted}** (10.5% ಬಡ್ಡಿ, 5 ವರ್ಷಗಳ ಅವಧಿ)\n• **ಮಾಸಿಕ EMI:** **${emiFormatted}/ತಿಂಗಳು**\n• **DSCR ಅನುಪಾತ:** **${dscrVal}**`;
       } else {
-        responseText = `Based on your proposed **${capitalFormatted}** own capital, your calculated monthly EMI is **${emiFormatted}/month**.\n\n• **Total Indicative Project Cost:** ${capexFormatted}\n• **Promoter Equity Contribution:** ${capitalFormatted} (${marginVal}%)\n• **Recommended Bank Term Loan:** ${loanFormatted} (at 10.5% p.a., 5-year tenure)\n• **Debt Service Coverage Ratio (DSCR):** ${dscrVal} *(Healthy benchmark > 1.50)*\n\nAll financial projections use deterministic reducing-balance calculations without estimations.`;
+        responseText = `Based on the stated 10% margin rule, your **${capitalFormatted}** capital corresponds to an indicative **${capexFormatted}** project cost and **${loanFormatted}** financing requirement.\n\n**Financial Amortization Summary:**\n• **Indicative Project Cost:** ${capexFormatted}\n• **Promoter Equity Contribution:** ${capitalFormatted} (${marginVal}%)\n• **Net Bank Debt Sizing:** ${loanFormatted}\n• **Calculated Monthly EMI:** **${emiFormatted}/month** *(at 10.5% p.a., 5-year tenure)*\n• **Debt Service Coverage Ratio (DSCR):** **${dscrVal}** *(Healthy benchmark > 1.50)*\n\n*Note: The 10% equity rule defines indicative financing capacity. Business-specific recommended CapEx is determined by your operational capacity.*`;
       }
     }
   }
 
   // =========================================================================
-  // INTENT 6: SCHEME GUIDANCE (PMEGP, MUDRA, AHIDF, Subsidies, Documents)
+  // INTENT 6: SCHEME GUIDANCE
   // =========================================================================
   else if (routeResult.intent === 'SCHEME_GUIDANCE' || routeResult.intent === 'SCHEME') {
     topic = 'scheme';
@@ -274,20 +301,16 @@ export async function generateAdvisorResponse(
     const maxLoan = topScheme?.scheme?.maxProjectCost ? formatInrCurrency(topScheme.scheme.maxProjectCost) : '₹ 50,00,000';
 
     if (lang === 'hi') {
-      responseText = `आपके व्यवसाय के लिए सबसे उपयुक्त सरकारी योजना **${schemeName}** है।\n\n• **अनुदान / सब्सिडी लाभ:** ग्रामीण क्षेत्र के लिए **${subsidy}**\n• **अधिकतम परियोजना सीमा:** ${maxLoan}\n• **प्रमोटर अंशदान:** केवल 10% (विशेष श्रेणी के लिए 5%)\n\n**अनिवार्य आवश्यक दस्तावेज:**\n1. आधार कार्ड एवं पैन कार्ड\n2. बैंक योग्य विस्तृत परियोजना रिपोर्ट (Bankable DPR)\n3. ग्रामीण क्षेत्र प्रमाण पत्र (ग्राम पंचायत / तहसीलदार)\n4. पिछले 6 माह का बैंक खाता विवरण\n\nआवेदन जनसमर्थ (JanSamarth) / KVIC पोर्टल के माध्यम से ऑनलाइन जमा किए जा सकते हैं।`;
+      responseText = `**अनुशंसित सरकारी योजना: ${schemeName}**\n\n• **पात्रता एवं लाभ:** ग्रामीण क्षेत्र के लिए **${subsidy} पूंजी सब्सिडी**\n• **अधिकतम परियोजना सीमा:** ${maxLoan}\n• **प्रमोटर अंशदान:** 10% (विशेष श्रेणी हेतु 5%)\n\n**अनिवार्य दस्तावेज:**\n1. आधार कार्ड एवं पैन कार्ड\n2. बैंक योग्य विस्तृत परियोजना रिपोर्ट (Bankable DPR)\n3. ग्रामीण क्षेत्र प्रमाण पत्र (ग्राम पंचायत)\n4. पिछले 6 माह का बैंक खाता विवरण\n\n*सत्यापन स्थिति: VERIFIED — आधिकारिक JanSamarth / KVIC पोर्टल से सम्बद्ध।*`;
     } else if (lang === 'te') {
-      responseText = `మీ ప్రాజెక్ట్‌కు అత్యంత అనువైన ప్రభుత్వ పథకం **${schemeName}**.\n\n• **సబ్సిడీ ప్రయోజనం:** గ్రామీణ ప్రాంతాలకు **${subsidy}**\n• **గరిష్ట ప్రాజెక్ట్ పరిమితి:** ${maxLoan}\n• **ప్రమోటర్ వాటా:** 10%\n\n**అవసరమైన పత్రాలు:**\n1. ఆధార్ కార్డు & పాన్ కార్డు\n2. బ్యాంకబుల్ డీటైల్డ్ ప్రాజెక్ట్ రిపోర్ట్ (DPR)\n3. గ్రామ పంచాయతీ గ్రామీణ ధృవీకరణ పత్రం\n4. గత 6 నెలల బ్యాంక్ స్టేట్‌మెంట్\n\nJanSamarth / KVIC పోర్టల్ ద్వారా దరఖాస్తు చేసుకోవచ్చు.`;
-    } else if (lang === 'mr') {
-      responseText = `तुमच्या व्यवसायासाठी सर्वात अनुकूल शासकीय योजना **${schemeName}** आहे.\n\n• **अनुदान (सब्सिडी):** ग्रामीण भागासाठी **${subsidy}**\n• **कमाल मर्यादा:** ${maxLoan}\n• **आवश्यक कागदपत्रे:** आधार कार्ड, पॅन कार्ड, DPR प्रकल्प अहवाल आणि 6 महिन्यांचा बँक उतारा.`;
-    } else if (lang === 'kn') {
-      responseText = `ನಿಮ್ಮ ಉದ್ಯಮಕ್ಕೆ ಶಿಫಾರಸು ಮಾಡಲಾದ ಸರ್ಕಾರಿ ಯೋಜನೆ **${schemeName}**.\n\n• **ಸಬ್ಸಿಡಿ ಪ್ರಯೋಜನ:** ಗ್ರಾಮೀಣ ಪ್ರದೇಶಗಳಿಗೆ **${subsidy}**\n• **ಗರಿಷ್ಠ ಯೋಜನೆ ಮೊತ್ತ:** ${maxLoan}\n• **ಅಗತ್ಯ ದಾಖಲೆಗಳು:** ಆಧಾರ್ ಕಾರ್ಡ್, ಪ್ಯಾನ್ ಕಾರ್ಡ್, DPR ಯೋಜನೆ ವರದಿ ಮತ್ತು 6 ತಿಂಗಳ ಬ್ಯಾಂಕ್ ವಿವರಗಳು.`;
+      responseText = `**మీ వ్యాపారానికి సరిపోయే ప్రభుత్వ పథకం: ${schemeName}**\n\n• **సబ్సిడీ లబ్ధి:** గ్రామీణ ప్రాంతాలకు **${subsidy} సబ్సిడీ**\n• **గరిష్ట పరిమితి:** ${maxLoan}\n• **ప్రమోటర్ వాటా:** 10%\n\n**అవసరమైన పత్రాలు:**\n1. ఆధార్ కార్డ్ & పాన్ కార్డ్\n2. బ్యాంకబుల్ DPR రిపోర్ట్\n3. గ్రామ పంచాయతీ గ్రామీణ ధృవీకరణ పత్రం\n4. 6 నెలల బ్యాంక్ స్టేట్‌మెంట్\n\n*ధృవీకరణ: VERIFIED — JanSamarth / KVIC పోర్టల్ డేటా.*`;
     } else {
-      responseText = `The highest-matching government scheme for your enterprise is **${schemeName}**.\n\n• **Capital Subsidy:** **${subsidy}** for rural enterprises\n• **Max Project Ceiling:** ${maxLoan}\n• **Promoter Contribution:** 10% (5% for special categories)\n• **Required Documents:**\n  1. Aadhaar Card & PAN Card\n  2. Bankable Detailed Project Report (DPR)\n  3. Rural Area Certificate from Gram Panchayat / Tehsildar\n  4. Last 6 Months Bank Statement\n\nApplications can be submitted directly through the official JanSamarth / KVIC portal.`;
+      responseText = `**Recommended Scheme Match: ${schemeName}**\n\n• **Why It Matches:** High alignment for rural micro-enterprises in ${villageName}\n• **Capital Subsidy:** **${subsidy}** margin money for rural units\n• **Max Project Ceiling:** ${maxLoan}\n• **Promoter Contribution:** 10% (5% for special category applicants)\n• **Required Documents:**\n  1. Aadhaar Card & PAN Card\n  2. Bankable Detailed Project Report (DPR)\n  3. Rural Area Certificate from Gram Panchayat\n  4. Last 6 Months Bank Account Statement\n\n*Verification Status: VERIFIED via JanSamarth & KVIC official Nodal Guidelines.*`;
     }
   }
 
   // =========================================================================
-  // INTENT 7: RISK ANALYSIS (Top Risks, Severity, Mitigations)
+  // INTENT 7: RISK ANALYSIS
   // =========================================================================
   else if (routeResult.intent === 'RISK_ANALYSIS' || routeResult.intent === 'RISK') {
     topic = 'risk';
@@ -295,39 +318,34 @@ export async function generateAdvisorResponse(
 
     const r1 = businessBenchmark.riskFactors[0] || { risk: 'Working Capital Depletion', severity: 'HIGH', mitigation: 'Maintain 45-day cash reserve buffer' };
     const r2 = businessBenchmark.riskFactors[1] || { risk: 'Price & Offtake Volatility', severity: 'MEDIUM', mitigation: 'Enter direct cooperative supply agreement' };
-    const r3 = businessBenchmark.riskFactors[2] || { risk: 'Perishability & Storage', severity: 'MEDIUM', mitigation: 'Install localized cold storage / chiller unit' };
 
     if (lang === 'hi') {
-      responseText = `**${businessBenchmark.name}** के लिए प्रमुख जोखिम एवं निवारण रणनीति:\n\n1. **${r1.risk}** [गंभीरता: **${r1.severity}**]\n   • **बचाव उपाय:** ${r1.mitigation}\n2. **${r2.risk}** [गंभीरता: **${r2.severity}**]\n   • **बचाव उपाय:** ${r2.mitigation}\n3. **${r3.risk}** [गंभीरता: **${r3.severity}**]\n   • **बचाव उपाय:** ${r3.mitigation}\n\n**सर्वोच्च प्राथमिकता:** संचालन शुरू करने से पहले 45 दिनों का कार्यशील पूंजी (working capital) बफर सुरक्षित रखें।`;
+      responseText = `**${businessBenchmark.name} के लिए मुख्य जोखिम एवं बचाव:**\n\n1. **${r1.risk}** [गंभीरता: **${r1.severity}**]\n   • **प्रभाव:** नकदी प्रवाह में बाधा\n   • **बचाव उपाय:** ${r1.mitigation}\n2. **${r2.risk}** [गंभीरता: **${r2.severity}**]\n   • **प्रभाव:** आय में उतार-चढ़ाव\n   • **बचाव उपाय:** ${r2.mitigation}\n\n**मुख्य सिफारिश:** कम से कम 45 दिनों की कार्यशील पूंजी (working capital buffer) का नकद बफर रखें।`;
     } else if (lang === 'te') {
-      responseText = `**${businessBenchmark.name}** కొరకు ప్రధాన రిస్కులు & నివారణా చర్యలు:\n\n1. **${r1.risk}** [తీవ్రత: **${r1.severity}**]\n   • **నివారణ:** ${r1.mitigation}\n2. **${r2.risk}** [తీవ్రత: **${r2.severity}**]\n   • **నివారణ:** ${r2.mitigation}\n3. **${r3.risk}** [తీవ్రత: **${r3.severity}**]\n   • **నివారణ:** ${r3.mitigation}\n\n**ముఖ్య సూచన:** కనీసం 45 రోజుల వర్కింగ్ క్యాపిటల్ రిజర్వ్ కలిగి ఉండడం చాలా ముఖ్యం.`;
-    } else if (lang === 'mr') {
-      responseText = `**${businessBenchmark.name}** मधील प्रमुख धोके आणि उपाययोजना:\n\n1. **${r1.risk}** [तीव्रता: ${r1.severity}]\n   • **उपाय:** ${r1.mitigation}\n2. **${r2.risk}** [तीव्रता: ${r2.severity}]\n   • **उपाय:** ${r2.mitigation}\n3. **${r3.risk}** [तीव्रता: ${r3.severity}]\n   • **उपाय:** ${r3.mitigation}`;
-    } else if (lang === 'kn') {
-      responseText = `**${businessBenchmark.name}** ಉದ್ಯಮದ ಮುಖ್ಯ ಅಪಾಯಗಳು ಮತ್ತು ಪರಿಹಾರಗಳು:\n\n1. **${r1.risk}** [ತೀವ್ರತೆ: ${r1.severity}]\n   • **ಪರಿಹಾರ:** ${r1.mitigation}\n2. **${r2.risk}** [ತೀವ್ರತೆ: ${r2.severity}]\n   • **ಪರಿಹಾರ:** ${r2.mitigation}\n3. **${r3.risk}** [ತೀವ್ರತೆ: ${r3.severity}]\n   • **ಪರಿಹಾರ:** ${r3.mitigation}`;
+      responseText = `**${businessBenchmark.name} కొరకు ప్రధాన రిస్కులు & నివారణా చర్యలు:**\n\n1. **${r1.risk}** [తీవ్రత: **${r1.severity}**]\n   • **ప్రభావం:** నగదు కొరత\n   • **నివారణ:** ${r1.mitigation}\n2. **${r2.risk}** [తీవ్రత: **${r2.severity}**]\n   • **ప్రభావం:** మార్కెట్ ధరల వ్యత్యాసం\n   • **నివారణ:** ${r2.mitigation}\n\n**ముఖ్య సూచన:** కనీసం 45 రోజుల వర్కింగ్ క్యాపిటల్ రిజర్వ్ కలిగి ఉండడం అవసరం.`;
     } else {
-      responseText = `Your evaluated risk profile for **${businessBenchmark.name}** in ${villageName} identifies 3 key operational risk factors:\n\n1. **${r1.risk}** — **[${r1.severity}]**\n   • **Mitigation:** ${r1.mitigation}\n2. **${r2.risk}** — **[${r2.severity}]**\n   • **Mitigation:** ${r2.mitigation}\n3. **${r3.risk}** — **[${r3.severity}]**\n   • **Mitigation:** ${r3.mitigation}\n\n**Key Recommendation:** Maintaining an emergency 45-day operational reserve mitigates over 70% of early business default risk.`;
+      responseText = `**Risk Evaluation for ${businessBenchmark.name} in ${villageName}:**\n\n1. **${r1.risk}** — **[Severity: ${r1.severity}]**\n   • **Potential Impact:** Cash flow strain during early operations\n   • **Mitigation Strategy:** ${r1.mitigation}\n2. **${r2.risk}** — **[Severity: ${r2.severity}]**\n   • **Potential Impact:** Revenue volatility due to seasonal price swings\n   • **Mitigation Strategy:** ${r2.mitigation}\n\n**Key Operational Rule:** Establishing an emergency 45-day operating cash buffer mitigates over 70% of early default risk.`;
     }
   }
 
   // =========================================================================
-  // INTENT 8: EVIDENCE & PROVENANCE (Census, APMC, Sources)
+  // INTENT 8: EVIDENCE & DATA SOURCES
   // =========================================================================
   else if (routeResult.intent === 'EVIDENCE') {
     topic = 'evidence';
     dataQuality = 'VERIFIED';
 
     if (lang === 'hi') {
-      responseText = `UDYORA में उपयोग किए गए सत्यापित डेटा स्रोत और संदर्भ:\n\n• **जनसंख्या डेटा:** ${popVal} निवासी — *स्रोत: भारत की जनगणना 2011 (PCA श्रृंखला, ऐतिहासिक जनसांख्यिकी)*\n• **APMC मंडी दूरी:** ${apmcDist} — *स्रोत: राज्य कृषि विपणन बोर्ड (MSAMB)*\n• **डेयरी सहकारी केंद्र:** ${dairyDist} — *स्रोत: जिला सहकारी दुग्ध उत्पादक संघ*\n• **प्रशासनिक पदानुक्रम:** Local Government Directory (LGD, पंचायती राज मंत्रालय)\n\nसभी जनसांख्यिकीय आंकड़े आधिकारिक सरकारी अभिलेखों और स्थानिक नेटवर्क से सत्यापित हैं।`;
+      responseText = `**UDYORA डेटा स्रोत एवं सत्यापन स्थिति:**\n\n• **जनसंख्या डेटा:** ${popVal} निवासी — *स्रोत: भारत की जनगणना 2011 (Primary Census Abstract)* [स्थिति: **VERIFIED**]\n• **APMC मंडी दूरी:** ${apmcDist} — *स्रोत: राज्य कृषि विपणन बोर्ड स्थानिक नेटवर्क* [स्थिति: **VERIFIED**]\n• **डेयरी सहकारी केंद्र:** ${dairyDist} — *स्रोत: जिला सहकारी दुग्ध उत्पादक संघ* [स्थिति: **VERIFIED**]\n• **प्रशासनिक पदानुक्रम:** Local Government Directory (LGD, पंचायती राज मंत्रालय) [स्थिति: **VERIFIED**]\n\nसभी आंकड़ों के साथ पूर्ण ऑडिट ट्रेल उपलब्ध है।`;
     } else if (lang === 'te') {
-      responseText = `UDYORA విశ్లేషణలో ఉపయోగించిన అధికారిక డేటా మూలాలు:\n\n• **జనాభా వివరాలు:** ${popVal} మంది — *మూలం: సెన్సస్ ఇండియా 2011 (ప్రైమరీ సెన్సస్ అబ్‌స్ట్రాక్ట్)*\n• **APMC మార్కెట్ యార్డ్ దూరం:** ${apmcDist} — *మూలం: రాష్ట్ర వ్యవసాయ మార్కెటింగ్ బోర్డు*\n• **పాడి సహకార కేంద్రం:** ${dairyDist} — *మూలం: జిల్లా సహకార యూనియన్*\n• **పరిపాలనా వివరాలు:** Local Government Directory (LGD)`;
+      responseText = `**UDYORA డేటా మూలాలు & ధృవీకరణ వివరాలు:**\n\n• **జనాభా వివరాలు:** ${popVal} మంది — *మూలం: సెన్సస్ ఇండియా 2011* [పరిస్థితి: **VERIFIED**]\n• **APMC మార్కెట్ యార్డ్ దూరం:** ${apmcDist} — *మూలం: రాష్ట్ర వ్యవసాయ మార్కెటింగ్ బోర్డు* [పరిస్థితి: **VERIFIED**]\n• **పాడి సహకార కేంద్రం:** ${dairyDist} — *మూలం: జిల్లా సహకార యూనియన్* [పరిస్థితి: **VERIFIED**]\n• **పరిపాలనా వివరాలు:** Local Government Directory (LGD)`;
     } else {
-      responseText = `UDYORA utilizes verified official data sources combined with deterministic mathematical models:\n\n• **Population Metrics:** ${popVal} residents — *Source: Census of India 2011 (Primary Census Abstract). Historical demographic baseline.*\n• **APMC Mandi Proximity:** ${apmcDist} — *Source: State Agricultural Marketing Board geospatial network.*\n• **Dairy Cooperative Proximity:** ${dairyDist} — *Source: District Cooperative Milk Producers Union registry.*\n• **Administrative Hierarchy:** Local Government Directory (LGD), Ministry of Panchayati Raj.\n\nAll metrics maintain explicit audit timestamps and source verification records.`;
+      responseText = `**Verified Data Sources & Audit Trail for ${villageName}:**\n\n• **Population Baseline:** ${popVal} residents — *Source: Census of India 2011 (Primary Census Abstract)* [Status: **VERIFIED**]\n• **APMC Wholesale Mandi Proximity:** ${apmcDist} — *Source: State Agricultural Marketing Board geospatial network* [Status: **VERIFIED**]\n• **Cooperative Milk Center:** ${dairyDist} — *Source: District Cooperative Union Registry* [Status: **VERIFIED**]\n• **Administrative Hierarchy:** Local Government Directory (LGD), Ministry of Panchayati Raj [Status: **VERIFIED**]\n\n*Data Quality Key: VERIFIED = Official Census/LGD record; ESTIMATED = Demographic benchmark projection; REQUIRES VERIFICATION = Needs local field check.*`;
     }
   }
 
   // =========================================================================
-  // INTENT 9: LOCATION ANALYSIS (Why recommend, village population, coordinates, banks)
+  // INTENT 9: LOCATION ANALYSIS
   // =========================================================================
   else if (routeResult.intent === 'LOCATION_ANALYSIS' || routeResult.intent === 'LOCATION') {
     topic = 'location';
@@ -339,32 +357,32 @@ export async function generateAdvisorResponse(
       : '18.3541° N, 73.8489° E';
 
     if (lang === 'hi') {
-      responseText = `**स्थान एवं कैचमेंट विश्लेषण (${villageName}):**\n\n• **गाँव की जनसंख्या:** **${popVal} निवासी** (जनगणना 2011 आधार)\n• **स्थान:** **${villageName}**, तहसील: ${subDistrict}, ज़िला: ${districtName}, ${stateName}\n• **पिन कोड:** ${pincode} (भौगोलिक निर्देशांक: ${coordsStr})\n• **नजदीकी बैंक:** State Bank of India (~1.2 km), जिला सहकारी बैंक (~1.8 km)\n• **नजदीकी थोक मंडी:** ${apmcDist}\n\n**यह स्थान क्यों उपयुक्त है?**\nयह स्थान 5km/10km कैचमेंट में स्थिर उपभोक्ता मांग, सड़क संपर्क और निकटवर्ती बैंकिंग बुनियादी ढांचा प्रदान करता है।`;
+      responseText = `**${villageName} स्थान एवं कैचमेंट विश्लेषण:**\n\n• **गाँव की जनसंख्या:** **${popVal} निवासी** (जनगणना 2011 आधार)\n• **स्थान विवरण:** ${villageName}, तहसील: ${subDistrict}, ज़िला: ${districtName}, ${stateName}\n• **पिन कोड:** ${pincode} (निर्देशांक: ${coordsStr})\n• **नजदीकी बैंक:** State Bank of India (~1.2 km), जिला सहकारी बैंक (~1.8 km)\n• **नजदीकी थोक मंडी:** ${apmcDist}\n\n**यह स्थान क्यों अनुशंसित है?**\nयह स्थान 5km/10km कैचमेंट में उच्च उपभोक्ता घनत्व, मजबूत सड़क परिवहन और नजदीकी बैंकिंग सुविधाएं प्रदान करता है।`;
     } else if (lang === 'te') {
-      responseText = `**స్థానం & కేచ్‌మెంట్ విశ్లేషణ (${villageName}):**\n\n• **గ్రామ జనాభా:** **${popVal} మంది** (సెన్సస్ 2011 ఆధారం)\n• **ప్రదేశం:** **${villageName}**, మండలం: ${subDistrict}, జిల్లా: ${districtName}, ${stateName}\n• **పిన్ కోడ్:** ${pincode} (కోఆర్డినేట్స్: ${coordsStr})\n• **సమీప బ్యాంకులు:** SBI (~1.2 కి.మీ), జిల్లా సహకార బ్యాంక్ (~1.8 కి.మీ)\n• **సమీప మార్కెట్ యార్డ్:** ${apmcDist}\n\nఈ స్థానం మంచి రవాణా సౌకర్యాలు మరియు స్థిరమైన స్థానిక మార్కెట్ డిమాండ్ కలిగి ఉంది.`;
+      responseText = `**${villageName} స్థాన & కేచ్‌మెంట్ విశ్లేషణ:**\n\n• **గ్రామ జనాభా:** **${popVal} మంది** (సెన్సస్ 2011 ఆధారం)\n• **వివరాలు:** ${villageName}, మండలం: ${subDistrict}, జిల్లా: ${districtName}, ${stateName}\n• **పిన్ కోడ్:** ${pincode} (కోఆర్డినేట్స్: ${coordsStr})\n• **సమీప బ్యాంకులు:** SBI (~1.2 కి.మీ), జిల్లా సహకార బ్యాంక్ (~1.8 కి.మీ)\n• **సమీప మార్కెట్ యార్డ్:** ${apmcDist}\n\nమంచి రవాణా సౌకర్యాలు మరియు స్థానిక డిమాండ్ ఉన్నందున ఈ స్థానం అనుకూలమైనది.`;
     } else {
-      responseText = `**Confirmed Locality & Spatial Map Intelligence for ${villageName}:**\n\n• **Village Population:** **${popVal} residents** *(Census of India 2011 baseline)*\n• **Locality:** **${villageName}**, Sub-District/Taluka: ${subDistrict}, District: ${districtName}, ${stateName}\n• **Postal PIN Code:** ${pincode} *(Coordinates: ${coordsStr})*\n• **Nearby Financial Infrastructure:** State Bank of India (~1.2 km), District Central Cooperative Bank (~1.8 km)\n• **Nearest Wholesale Mandi:** ${apmcDist}\n\n**Why this location is recommended:**\nHigh catchment density, reliable road transport corridors, and direct proximity to financial institutions create strong viability for your ${businessBenchmark.name}.`;
+      responseText = `**Locality & Spatial Intelligence for ${villageName}:**\n\n• **Village Population:** **${popVal} residents** *(Census of India 2011 baseline)*\n• **Administrative Unit:** ${villageName}, Sub-District: ${subDistrict}, District: ${districtName}, ${stateName}\n• **PIN Code:** ${pincode} *(Coordinates: ${coordsStr})*\n• **Banking Infrastructure:** SBI (~1.2 km), District Central Cooperative Bank (~1.8 km)\n• **Wholesale Mandi Distance:** ${apmcDist}\n\n**Why Recommended:** High 5km/10km consumer catchment density, direct road connectivity, and immediate proximity to financial institutions support robust enterprise viability.`;
     }
   }
 
   // =========================================================================
-  // INTENT 10: MARKET INTELLIGENCE (Demand, Catchment, Competition)
+  // INTENT 10: MARKET INTELLIGENCE
   // =========================================================================
   else if (routeResult.intent === 'MARKET_INTELLIGENCE' || routeResult.intent === 'MARKET') {
     topic = 'market';
     dataQuality = 'ESTIMATED';
 
     if (lang === 'hi') {
-      responseText = `**${villageName}** के लिए बाज़ार मांग एवं प्रतिस्पर्धा विश्लेषण:\n\n• **प्राथमिक उपभोक्ता कैचमेंट:** लगभग ${popVal} निवासी\n• **नजदीकी मंडी:** ${apmcDist} दूरी पर स्थित\n• **प्रतिस्पर्धा स्तर:** मध्यम (असंगठित स्थानीय विक्रेताओं की उपस्थिति)\n• **मांग स्थिरता:** दैनिक उपभोग की आवश्यक वस्तुओं के लिए उच्च और स्थिर मांग।\n\n*डेटा गुणवत्ता: अनुमानित स्थानीय बाज़ार सूचकांक।*`;
+      responseText = `**${villageName} के लिए बाज़ार मांग एवं प्रतिस्पर्धा विश्लेषण:**\n\n• **प्राथमिक उपभोक्ता कैचमेंट:** लगभग ${popVal} निवासी (5 किमी परिधि)\n• **नजदीकी मंडी:** ${apmcDist} दूरी पर स्थित\n• **प्रतिस्पर्धा घनत्व:** मध्यम (असंगठित स्थानीय विक्रेताओं की उपस्थिति)\n• **मांग की प्रकृति:** दैनिक उपभोग की आवश्यक वस्तुओं के लिए उच्च और स्थिर मांग।`;
     } else if (lang === 'te') {
-      responseText = `**${villageName}** పరిసరాల్లో మార్కెట్ విశ్లేషణ:\n\n• **స్థానిక డిమాండ్ కేచ్‌మెంట్:** సుమారు ${popVal} జనాభా\n• **సమీప మార్కెట్ యార్డ్:** ${apmcDist}\n• **పోటీ స్థాయి:** మోడరేట్ (స్థానిక వ్యాపారాలు)\n• **అమ్మకాల అవకాశం:** రోజువారీ నిత్యావసరాలు మరియు పాల సేకరణలో నిరంతర డిమాండ్ ఉంది.`;
+      responseText = `**${villageName} పరిసరాల్లో మార్కెట్ విశ్లేషణ:**\n\n• **స్థానిక డిమాండ్ కేచ్‌మెంట్:** సుమారు ${popVal} జనాభా (5 కి.మీల పరిధి)\n• **సమీప మార్కెట్ యార్డ్:** ${apmcDist}\n• **పోటీ స్థాయి:** మోడరేట్ (స్థానిక వ్యాపారాలు)\n• **డిమాండ్ స్థిరత్వం:** నిత్యావసర ఉత్పత్తులకు నిరంతర డిమాండ్ ఉంటుంది.`;
     } else {
-      responseText = `Market demand intelligence for **${businessBenchmark.name}** in ${villageName}, ${districtName}:\n\n• **Primary Consumer Catchment:** ~${popVal} residents within direct 5 km radius\n• **Wholesale Aggregation Point:** Nearest APMC mandi located at **${apmcDist}**\n• **Competitive Density:** Moderate (localized informal providers)\n• **Demand Stability:** Essential consumer staple with high daily volume turnover\n\n*Market indicators are benchmarked against regional demographic density.*`;
+      responseText = `**Market Intelligence for ${businessBenchmark.name} in ${villageName}:**\n\n• **Consumer Demand Catchment:** ~${popVal} residents within direct 5 km radius\n• **Wholesale Aggregation Point:** APMC Mandi located at **${apmcDist}**\n• **Competitive Density:** Moderate (informal localized providers)\n• **Demand Stability:** Essential consumer commodity with steady daily turnover\n\n*Market indicators are benchmarked against regional demographic density.*`;
     }
   }
 
   // =========================================================================
-  // INTENT 11: REPORT EXPLANATION & SUMMARY (Feasibility Verdict, Score breakdown)
+  // INTENT 11: REPORT EXPLANATION
   // =========================================================================
   else if (routeResult.intent === 'REPORT_EXPLANATION' || routeResult.intent === 'REPORT') {
     topic = 'feasibility';
@@ -378,12 +396,12 @@ export async function generateAdvisorResponse(
     } else if (lang === 'te') {
       responseText = `**మొత్తం నివేదిక సారాంశం:**\n\n• **ఫిజిబిలిటీ స్కోరు:** **${score}/100** (${rating} అనుకూలత)\n• **ఆర్థిక వివరాలు:** ${capitalFormatted} సొంత పెట్టుబడి మరియు ${loanFormatted} బ్యాంక్ లోన్ (EMI: ${emiFormatted})\n• **పథకం మద్దతు:** **${topScheme.scheme.name}** ద్వారా సబ్సిడీ అర్హత ఉంది\n• **తుది తీర్పు:** ఎంచుకున్న ప్రదేశంలో ఈ వ్యాపారం ప్రారంభించడానికి అనుకూలంగా ఉంది.`;
     } else {
-      responseText = `**Executive Advisory Feasibility Summary:**\n\n• **Feasibility Score:** **${score}/100** — **${rating} FEASIBILITY**\n• **Financial Structure:** Sustainable with ${capitalFormatted} equity and ${loanFormatted} bank debt (Monthly EMI: ${emiFormatted}, DSCR: ${dscrVal})\n• **Scheme Alignment:** High qualification for **${topScheme.scheme.name}** (${topScheme.potentialSubsidyPct || 35}% rural subsidy)\n• **Actionable Verdict:** Bankable and viable for deployment with recommended livestock insurance and local cooperative offtake agreements.`;
+      responseText = `**Executive Advisory Feasibility Summary:**\n\n• **Feasibility Score:** **${score}/100** — **${rating} FEASIBILITY**\n• **Financial Sizing:** Sustainable with ${capitalFormatted} equity and ${loanFormatted} bank debt (Monthly EMI: ${emiFormatted}, DSCR: ${dscrVal})\n• **Scheme Alignment:** High qualification for **${topScheme.scheme.name}** (${topScheme.potentialSubsidyPct || 35}% rural subsidy)\n• **Actionable Verdict:** Bankable and viable for deployment with recommended livestock insurance and local cooperative offtake agreements.`;
     }
   }
 
   // =========================================================================
-  // INTENT 12: BUSINESS FEASIBILITY & DOMAIN COMPARISON (What business with ₹1 lakh, suitability)
+  // INTENT 12: BUSINESS FEASIBILITY & DOMAIN COMPARISON
   // =========================================================================
   else if (
     routeResult.intent === 'BUSINESS_FEASIBILITY' ||
@@ -439,10 +457,6 @@ export async function generateAdvisorResponse(
       responseText = `मैं आपकी सहायता के लिए तैयार हूँ। आप मुझसे अपनी **मासिक EMI**, **सरकारी योजनाएं (PMEGP/Mudra)**, **व्यवसाय जोखिम**, **बाज़ार आंकड़े** या **व्यवहार्यता रिपोर्ट** के बारे में पूछ सकते हैं।`;
     } else if (lang === 'te') {
       responseText = `నేను మీకు సహాయం చేయడానికి సిద్ధంగా ఉన్నాను. మీరు మీ **నెలవారీ EMI**, **ప్రభుత్వ పథకాలు**, **రిస్క్ వివరాలు**, లేదా **మార్కెట్ సమాచారం** గురించి అడగవచ్చు.`;
-    } else if (lang === 'mr') {
-      responseText = `मी तुम्हाला मदत करण्यास तयार आहे. तुम्ही तुमच्या **मासिक EMI**, **शासकीय योजना**, **व्यवसाय जोखीम** किंवा **बाजारपेठ माहिती** बद्दल विचारू शकता.`;
-    } else if (lang === 'kn') {
-      responseText = `ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಸಿದ್ಧನಿದ್ದೇನೆ. ನಿಮ್ಮ **ಮಾಸಿಕ EMI**, **ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು**, **ಅಪಾಯದ ಅಂಶಗಳು** ಅಥವಾ **ವರದಿ** ಬಗ್ಗೆ ನೀವು ಕೇಳಬಹುದು.`;
     } else {
       responseText = `I can answer specific questions about your **monthly EMI**, **loan calculations**, **government schemes (PMEGP/MUDRA)**, **operational risks**, **market evidence**, or **feasibility report** in ${villageName}. What would you like to explore?`;
     }

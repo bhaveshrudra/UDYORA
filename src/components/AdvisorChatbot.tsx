@@ -28,7 +28,9 @@ import { SupportedLanguage } from '../i18n/types';
 import {
   ChatMessage,
   AdvisorContext,
-  generateAdvisorResponse
+  generateAdvisorResponse,
+  LOCALIZED_QUICK_ACTIONS,
+  QUICK_ACTION_PROMPTS
 } from '../services/advisorBotService';
 import {
   isSpeechRecognitionAvailable,
@@ -109,46 +111,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
     }
   }, [language, messages.length]);
 
-  // Quick Suggestion Prompts
-  const quickPromptsMap: Record<SupportedLanguage, string[]> = {
-    en: [
-      'What is my EMI?',
-      'Which scheme matches me?',
-      'What are my biggest risks?',
-      'Where did this data come from?',
-      'Summarize my report'
-    ],
-    hi: [
-      'मेरी EMI कितनी है?',
-      'कौन सी योजना सही है?',
-      'मुख्य जोखिम क्या हैं?',
-      'डेटा कहाँ से आया?',
-      'रिपोर्ट का सारांश बताएं'
-    ],
-    te: [
-      'నా EMI ఎంత?',
-      'నాకు ఏ పథకం సరిపోతుంది?',
-      'ప్రధాన రిస్కులు ఏంటి?',
-      'ఈ డేటా ఎక్కడి నుండి వచ్చింది?',
-      'నా రిపోర్ట్ సారాంశం చెప్పండి'
-    ],
-    mr: [
-      'माझी EMI किती आहे?',
-      'कोणती शासकीय योजना मिळेल?',
-      'मुख्य धोके कोणते?',
-      'डेटा कुठून आला?',
-      'अहवालाचा सारांश द्या'
-    ],
-    kn: [
-      'ನನ್ನ EMI ಎಷ್ಟು?',
-      'ಯಾವ ಯೋಜನೆ ಸೂಕ್ತ?',
-      'ಮುಖ್ಯ ಅಪಾಯಗಳು ಯಾವುವು?',
-      'ಮಾಹಿತಿಯ ಮೂಲ ಯಾವುದು?',
-      'ವರದಿಯ ಸಾರಾಂಶ ತಿಳಿಸಿ'
-    ]
-  };
-
-  const quickPrompts = quickPromptsMap[language] || quickPromptsMap.en;
+  const quickPrompts = LOCALIZED_QUICK_ACTIONS[language] || LOCALIZED_QUICK_ACTIONS.en;
 
   // Multilingual listening label
   const listeningLabels: Record<SupportedLanguage, string> = {
@@ -160,8 +123,19 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   };
 
   const handleSend = async (textToSend?: string) => {
-    const text = (textToSend || inputText).trim();
-    if (!text || isThinking) return;
+    let rawText = (textToSend || inputText).trim();
+    if (!rawText || isThinking) return;
+
+    // Resolve quick action pill clicks into explicit intent prompts
+    let text = rawText;
+    if (textToSend) {
+      const mappedPrompt =
+        QUICK_ACTION_PROMPTS[language]?.[textToSend] ||
+        QUICK_ACTION_PROMPTS['en']?.[textToSend];
+      if (mappedPrompt) {
+        text = mappedPrompt;
+      }
+    }
 
     // Stop speaking if new query arrives
     stopVoiceOutput();

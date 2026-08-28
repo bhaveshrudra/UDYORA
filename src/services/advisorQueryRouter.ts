@@ -1,18 +1,22 @@
 /**
  * UDYORA Advisor Query Router & Intent Classification Layer
- * Intelligently classifies natural language queries into deterministic application services or polite out-of-scope handling.
+ * Intelligently classifies natural language queries into deterministic application services
+ * or polite out-of-scope handling.
  * Supports multilingual intent detection across English, Hindi, Telugu, Marathi, and Kannada.
  */
 
 export type AdvisorIntent =
+  | 'GREETING'
   | 'BUSINESS_FEASIBILITY'
   | 'MARKET_INTELLIGENCE'
   | 'LOCATION_ANALYSIS'
   | 'FINANCIAL_PLANNING'
+  | 'EMI'
   | 'SCHEME_GUIDANCE'
   | 'RISK_ANALYSIS'
   | 'EVIDENCE'
   | 'REPORT_EXPLANATION'
+  | 'NEXT_STEPS'
   | 'UDYORA_HELP'
   | 'MULTILINGUAL_HELP'
   | 'OUT_OF_SCOPE'
@@ -58,7 +62,6 @@ function isGibberish(text: string): boolean {
   if (latinOnly && clean.length >= 6) {
     const vowelCount = (clean.match(/[aeiou]/g) || []).length;
     if (vowelCount === 0) return true;
-    // Known keyboard mash patterns
     if (/asdf|dfgh|ghjk|hjkl|qwerty|werty|ertyu|rtyui|tyuio|yuio|zxcvb|xcvbn|cvbnm/.test(clean)) {
       return true;
     }
@@ -68,23 +71,17 @@ function isGibberish(text: string): boolean {
 }
 
 /**
- * Detects prompt injections, jailbreak attempts, or malicious instructions.
+ * Detects prompt injections or jailbreak attempts.
  */
 function isPromptInjection(text: string): boolean {
   const clean = text.toLowerCase().trim();
   return (
     clean.includes('ignore previous instructions') ||
     clean.includes('ignore all previous instructions') ||
-    clean.includes('ignore your instructions') ||
-    clean.includes('disregard previous instructions') ||
-    clean.includes('disregard all previous instructions') ||
     clean.includes('system prompt') ||
     clean.includes('jailbreak') ||
     clean.includes('act as a general') ||
-    clean.includes('act as an unrestricted') ||
-    clean.includes('pretend you are') ||
     clean.includes('bypass rules') ||
-    clean.includes('answer anything') ||
     clean.includes('override instructions')
   );
 }
@@ -120,7 +117,7 @@ function isOutOfScope(raw: string): boolean {
     return true;
   }
 
-  // 2. Creative Writing, Humor & Entertainment
+  // 2. Creative Writing, Jokes & Entertainment
   if (
     clean.includes('tell me a joke') ||
     clean.includes('tell a joke') ||
@@ -129,9 +126,6 @@ function isOutOfScope(raw: string): boolean {
     clean.includes('write me a poem') ||
     clean.includes('write a poem') ||
     clean.includes('write a story') ||
-    clean.includes('write a song') ||
-    clean.includes('riddle') ||
-    clean.includes('funny joke') ||
     clean.includes('joke') ||
     clean.includes('poem') ||
     clean.includes('चुटकुल') ||
@@ -149,17 +143,14 @@ function isOutOfScope(raw: string): boolean {
     return true;
   }
 
-  // 3. General Trivia & Non-Business Geography / History
+  // 3. General Trivia & Non-Business Subjects
   if (
     clean.includes('capital of france') ||
     clean.includes('capital of germany') ||
-    clean.includes('capital of') ||
     clean.includes('who is president') ||
     clean.includes('who is prime minister') ||
     clean.includes('solar system') ||
-    clean.includes('planet') ||
-    clean.includes('speed of light') ||
-    clean.includes('history of rome')
+    clean.includes('speed of light')
   ) {
     return true;
   }
@@ -174,19 +165,17 @@ function isOutOfScope(raw: string): boolean {
     clean.includes('write html') ||
     clean.includes('write sql') ||
     clean.includes('debug my code') ||
-    clean.includes('write a script to') ||
-    clean.includes('write code') ||
     clean.includes('java code') ||
     clean.includes('python code') ||
+    clean.includes('write code') ||
     clean.includes('coding in')
   ) {
     return true;
   }
 
-  // 5. Academic / College Homework
+  // 5. Academic / Homework
   if (
-    clean.includes('solve my college homework') ||
-    clean.includes('solve my homework') ||
+    clean.includes('college homework') ||
     clean.includes('do my homework') ||
     clean.includes('solve this math problem') ||
     clean.includes('calculus') ||
@@ -197,63 +186,37 @@ function isOutOfScope(raw: string): boolean {
     return true;
   }
 
-  // 6. Sports Matches & Live News
+  // 6. Sports Matches & Live Scores
   if (
     clean.includes('cricket match') ||
     clean.includes('football match') ||
     clean.includes('who won the match') ||
     clean.includes('live score') ||
     clean.includes('ipl score') ||
-    clean.includes('world cup score')
+    clean.includes('cricket score') ||
+    clean.includes('what is cricket') ||
+    clean.includes('cricket')
   ) {
     return true;
   }
 
-  // 7. Personal & Relationship Advice
+  // 7. Relationships & Astrology
   if (
     clean.includes('relationship advice') ||
-    clean.includes('dating advice') ||
-    clean.includes('my boyfriend') ||
-    clean.includes('my girlfriend') ||
     clean.includes('horoscope') ||
     clean.includes('astrology') ||
-    clean.includes('zodiac sign') ||
-    clean.includes('love life')
+    clean.includes('zodiac sign')
   ) {
     return true;
   }
 
-  // 8. Cryptocurrency & Speculation
+  // 8. Crypto & Speculation
   if (
     clean.includes('bitcoin') ||
     clean.includes('ethereum') ||
     clean.includes('crypto price') ||
-    clean.includes('buy crypto') ||
-    clean.includes('stock market tip') ||
     clean.includes('forex trading') ||
     clean.includes('nft')
-  ) {
-    return true;
-  }
-
-  // 9. Social Media Captions
-  if (
-    clean.includes('instagram caption') ||
-    clean.includes('insta caption') ||
-    clean.includes('tiktok bio') ||
-    clean.includes('youtube title') ||
-    clean.includes('write a tweet')
-  ) {
-    return true;
-  }
-
-  // 10. Weather (when not agricultural business climate)
-  if (
-    clean.includes('weather') ||
-    clean.includes('forecast') ||
-    clean.includes('rain today') ||
-    clean.includes('आज का मौसम') ||
-    clean.includes('ఈరోజు వాతావరణం')
   ) {
     return true;
   }
@@ -262,7 +225,7 @@ function isOutOfScope(raw: string): boolean {
 }
 
 /**
- * Classifies a user query into one of the standard UDYORA intents.
+ * Classifies a user query into structured AdvisorIntent with confidence score and entities.
  */
 export function classifyIntent(
   rawQuery: string,
@@ -300,18 +263,58 @@ export function classifyIntent(
     };
   }
 
-  // 4. ACTION INTENT (Start / Run / Reset / Analyze)
+  // 4. NATURAL GREETINGS
+  if (
+    query === 'hi' ||
+    query === 'hello' ||
+    query === 'hey' ||
+    query === 'namaste' ||
+    query === 'good morning' ||
+    query === 'good afternoon' ||
+    query === 'good evening' ||
+    query === 'नमस्ते' ||
+    query === 'नमस्कार' ||
+    query === 'నమస్కారం' ||
+    query === 'నమస్తే' ||
+    query === 'ನಮಸ್ಕಾರ'
+  ) {
+    return {
+      intent: 'GREETING',
+      confidence: 0.99,
+      serviceCalled: 'Conversational Greeting Handler',
+      entities: { topic: 'greeting' }
+    };
+  }
+
+  // 5. NEXT STEPS / ACTIONABLE RECOMMENDATIONS
+  if (
+    query.includes('what should i do next') ||
+    query.includes('what to do next') ||
+    query.includes('next steps') ||
+    query.includes('how to proceed') ||
+    query.includes('what to do now') ||
+    query.includes('अगला कदम') ||
+    query.includes('आगे क्या करें') ||
+    query.includes('తదుపరి చర్యలు') ||
+    query.includes('తర్వాత ఏమి చేయాలి') ||
+    query.includes('ಮುಂದಿನ ಹೆಜ್ಜೆಗಳು')
+  ) {
+    return {
+      intent: 'NEXT_STEPS',
+      confidence: 0.98,
+      serviceCalled: 'Actionable Next-Step Protocol (finalAdvisor.ts)',
+      entities: { topic: 'next_steps' }
+    };
+  }
+
+  // 6. ACTION INTENTS (Start / Reset Analysis)
   if (
     query.includes('start analysis') ||
     query.includes('run analysis') ||
     query.includes('analyze my business') ||
     query.includes('analyze business') ||
-    query.includes('begin assessment') ||
     query.includes('विश्लेषण शुरू') ||
-    query.includes('विश्लेषण सुरू') ||
-    query.includes('విశ్లేషణ ప్రారంభించు') ||
-    query.includes('విశ్లేషణ మొదలుపెట్టు') ||
-    query.includes('ವಿಶ್ಲೇಷಣೆ ಪ್ರಾರಂಭಿಸಿ')
+    query.includes('విశ్లేషణ ప్రారంభించు')
   ) {
     return {
       intent: 'BUSINESS_FEASIBILITY',
@@ -324,11 +327,9 @@ export function classifyIntent(
   if (
     query.includes('reset analysis') ||
     query.includes('start new') ||
-    query.includes('start a new analysis') ||
     query.includes('clear form') ||
     query.includes('नया विश्लेषण') ||
-    query.includes('కొత్త విశ్లేషణ') ||
-    query.includes('नवीन विश्लेषण')
+    query.includes('కొత్త విశ్లేషణ')
   ) {
     return {
       intent: 'BUSINESS_FEASIBILITY',
@@ -338,18 +339,14 @@ export function classifyIntent(
     };
   }
 
-  // 5. UDYORA HELP & PLATFORM INQUIRIES
+  // 7. UDYORA HELP & PLATFORM INQUIRIES
   if (
     query.includes('what is udyora') ||
     query.includes('what does udyora do') ||
     query.includes('how does udyora work') ||
-    query.includes('who made udyora') ||
     query.includes('about udyora') ||
     query.includes('udyora help') ||
-    query.includes('how to use this app') ||
-    query.includes('what is this app') ||
     query.includes('उद्योरा क्या है') ||
-    query.includes('उद्योरा काय आहे') ||
     query.includes('ఉద్యోరా అంటే ఏమిటి') ||
     query.includes('ಉದ್ಯೋರಾ ಎಂದರೇನು')
   ) {
@@ -361,17 +358,14 @@ export function classifyIntent(
     };
   }
 
-  // 6. MULTILINGUAL GUIDANCE & LANGUAGE ASSISTANCE
+  // 8. MULTILINGUAL GUIDANCE
   if (
     query.includes('change language') ||
     query.includes('available languages') ||
     query.includes('speak in hindi') ||
     query.includes('speak in telugu') ||
-    query.includes('speak in marathi') ||
-    query.includes('speak in kannada') ||
     query.includes('भाषा बदलें') ||
-    query.includes('భాష మార్చండి') ||
-    query.includes('भाषा बदला')
+    query.includes('భాష మార్చండి')
   ) {
     return {
       intent: 'MULTILINGUAL_HELP',
@@ -381,13 +375,14 @@ export function classifyIntent(
     };
   }
 
-  // 7. EVIDENCE & PROVENANCE (Census, APMC, Sources, Provenance)
+  // 9. EVIDENCE & DATA PROVENANCE
   if (
     query.includes('population number come from') ||
+    query.includes('population data come from') ||
     query.includes('where did this data come from') ||
+    query.includes('where did this population data come from') ||
     query.includes('where did the data come from') ||
-    query.includes('where did you get this data') ||
-    query.includes('where do you get') ||
+    query.includes('data come from') ||
     query.includes('data source') ||
     query.includes('sources') ||
     query.includes('evidence') ||
@@ -395,15 +390,12 @@ export function classifyIntent(
     query.includes('census') ||
     query.includes('provenance') ||
     query.includes('audit trail') ||
-    query.includes('how reliable') ||
     query.includes('verified data') ||
+    query.includes('estimated data') ||
     query.includes('डेटा कहाँ से आया') ||
     query.includes('स्रोत') ||
-    query.includes('सत्यापित') ||
     query.includes('డేటా ఎక్కడి నుండి వచ్చింది') ||
-    query.includes('ఆధారం') ||
-    query.includes('మూలం') ||
-    query.includes('ಮಾಹಿತಿ ಮೂಲ')
+    query.includes('మాಹಿತಿ ಮೂಲ')
   ) {
     return {
       intent: 'EVIDENCE',
@@ -413,66 +405,81 @@ export function classifyIntent(
     };
   }
 
-  // 8. FINANCIAL PLANNING (EMI, Loan, Project Cost, CapEx, OpEx, Profit, Working Capital, Interest, Equity, DSCR)
-  if (
+  // 10. FINANCIAL PLANNING & EMI CALCULATIONS
+  const isFinancePill =
+    query.includes('financial planning') ||
+    query.includes('financial plan') ||
+    query.includes('financial') ||
+    query.includes('finance') ||
+    query.includes('वित्तीय योजना') ||
+    query.includes('आर्थिक नियोजन') ||
+    query.includes('ఆర్థిక ప్రణాళిక') ||
+    query.includes('హణకాసు యోజనె');
+
+  const isEmiSpecific =
+    query.includes('emi') ||
     query.includes('calculate emi') ||
     query.includes('my emi') ||
     query.includes('what is emi') ||
     query.includes('what is my emi') ||
-    query.includes('what about emi') ||
-    query.includes('emi') ||
+    query.includes('why is my emi') ||
+    query.includes('reduce my emi') ||
+    query.includes('reduce emi') ||
     query.includes('monthly installment') ||
     query.includes('monthly payment') ||
+    query.includes('ईएमआई') ||
+    query.includes('मासिक किस्त') ||
+    query.includes('నెలవారీ వాయిదా') ||
+    query.includes('ఈఎంఐ') ||
+    query.includes('मासिक हप्ता') ||
+    query.includes('ಮಾಸಿಕ ಕಂತು');
+
+  if (
+    isFinancePill ||
+    isEmiSpecific ||
     query.includes('loan amount') ||
     query.includes('bank loan') ||
     query.includes('term loan') ||
     query.includes('project cost') ||
     query.includes('total cost') ||
     query.includes('how much loan') ||
+    query.includes('how much to borrow') ||
+    query.includes('how much financing') ||
     query.includes('interest rate') ||
-    query.includes('interest') ||
+    query.includes('interest paid') ||
     query.includes('equity') ||
     query.includes('promoter margin') ||
-    query.includes('down payment') ||
     query.includes('dscr') ||
     query.includes('capex') ||
     query.includes('opex') ||
     query.includes('working capital') ||
     query.includes('profit margin') ||
-    query.includes('roi') ||
     query.includes('किस्त') ||
-    query.includes('ईएमआई') ||
-    query.includes('मासिक किस्त') ||
     query.includes('लोन') ||
     query.includes('ऋण') ||
     query.includes('लागत') ||
     query.includes('ब्याज') ||
-    query.includes('हफ्ता') ||
     query.includes('వడ్డీ') ||
     query.includes('రుణం') ||
     query.includes('ఖర్చు') ||
-    query.includes('ఈఎంఐ') ||
-    query.includes('నెలవారీ వాయిదా') ||
     query.includes('कर्ज') ||
-    query.includes('व्याज') ||
-    query.includes('हप्ता') ||
-    query.includes('ईएमआय') ||
+    query.includes('संसार') ||
     query.includes('ಸಾಲ') ||
-    query.includes('ಬಡ್ಡಿ') ||
-    query.includes('ಮಾಸಿಕ ಕಂತು')
+    query.includes('ಬಡ್ಡಿ')
   ) {
     return {
-      intent: 'FINANCIAL_PLANNING',
-      confidence: 0.98,
+      intent: isEmiSpecific ? 'EMI' : 'FINANCIAL_PLANNING',
+      confidence: 0.99,
       serviceCalled: 'Deterministic Financial Calculator (financialCalculator.ts)',
       entities: {
-        topic: query.includes('emi') || query.includes('किस्त') || query.includes('వాయిదా') || query.includes('हफ्ता') ? 'emi' : 'loan_structure'
+        topic: isEmiSpecific ? 'emi' : 'loan_structure'
       }
     };
   }
 
-  // 9. SCHEME GUIDANCE (Government schemes, PMEGP, MUDRA, Subsidies, Eligibility, Documents)
+  // 11. GOVERNMENT SCHEME GUIDANCE
   if (
+    query.includes('government schemes') ||
     query.includes('which government scheme') ||
     query.includes('which scheme') ||
     query.includes('what scheme') ||
@@ -486,13 +493,11 @@ export function classifyIntent(
     query.includes('ahidf') ||
     query.includes('nabard') ||
     query.includes('stand up india') ||
-    query.includes('pmmsy') ||
     query.includes('eligible for scheme') ||
     query.includes('scheme eligibility') ||
     query.includes('documents needed') ||
     query.includes('documents required') ||
     query.includes('paperwork') ||
-    query.includes('government grant') ||
     query.includes('योजना') ||
     query.includes('सब्सिडी') ||
     query.includes('दस्तावेज') ||
@@ -505,12 +510,11 @@ export function classifyIntent(
     query.includes('कागदपत्रे') ||
     query.includes('अनुदान') ||
     query.includes('ಯೋಜನೆ') ||
-    query.includes('ದಾಖಲೆಗಳು') ||
-    query.includes('ಅರ್ಹತೆ')
+    query.includes('ದಾಖಲೆಗಳು')
   ) {
     return {
       intent: 'SCHEME_GUIDANCE',
-      confidence: 0.97,
+      confidence: 0.99,
       serviceCalled: 'Scheme Rule Engine (schemeRules.ts)',
       entities: {
         schemeName: query.includes('pmegp') ? 'PMEGP' : query.includes('mudra') ? 'MUDRA' : 'ALL_MATCHES'
@@ -518,90 +522,79 @@ export function classifyIntent(
     };
   }
 
-  // 10. RISK ANALYSIS (Risks, what can go wrong, mitigations, severity, dangers)
+  // 12. RISK ANALYSIS
   if (
+    query.includes('risk analysis') ||
     query.includes('risk') ||
     query.includes('risks') ||
+    query.includes('what are my risks') ||
     query.includes('what are the main risks') ||
-    query.includes('main risks') ||
     query.includes('biggest risks') ||
     query.includes('threats') ||
     query.includes('challenges') ||
-    query.includes('danger') ||
     query.includes('what can go wrong') ||
     query.includes('mitigation') ||
     query.includes('reduce risk') ||
+    query.includes('reduce these risks') ||
     query.includes('safeguard') ||
-    query.includes('business failure') ||
-    query.includes('loss') ||
+    query.includes('जोखिम विश्लेषण') ||
     query.includes('जोखिम') ||
     query.includes('खतरे') ||
     query.includes('नुकसान') ||
-    query.includes('बचाव') ||
+    query.includes('రిస్క్ విశ్లేషణ') ||
     query.includes('రిస్క్') ||
     query.includes('రిస్కులు') ||
     query.includes('ప్రమాదం') ||
-    query.includes('ప్రమాదాలు') ||
-    query.includes('ధోకా') ||
     query.includes('धोके') ||
-    query.includes('धोका') ||
-    query.includes('ಅಪಾಯ') ||
-    query.includes('ಅಪಾಯಗಳು')
+    query.includes('अಪಾಯ')
   ) {
     return {
       intent: 'RISK_ANALYSIS',
-      confidence: 0.96,
+      confidence: 0.99,
       serviceCalled: 'Risk Analysis Agent (riskAgent.ts)',
       entities: { topic: 'risk_mitigation' }
     };
   }
 
-  // 11. LOCATION ANALYSIS & SPATIAL INSIGHTS (Why recommend this location, coordinates, banks, village population)
+  // 13. LOCATION ANALYSIS
   if (
+    query.includes('location analysis') ||
+    query.includes('why this location') ||
     query.includes('why did you recommend this location') ||
     query.includes('recommend this location') ||
-    query.includes('how many people live in this village') ||
-    query.includes('people live in this village') ||
+    query.includes('best location') ||
     query.includes('village population') ||
     query.includes('location insights') ||
     query.includes('why this village') ||
     query.includes('nearby banks') ||
     query.includes('nearest bank') ||
     query.includes('nearest market') ||
-    query.includes('how far is mandi') ||
-    query.includes('5 km') ||
-    query.includes('10 km') ||
-    query.includes('catchment') ||
     query.includes('coordinates') ||
     query.includes('latitude') ||
     query.includes('longitude') ||
-    query.includes('taluka') ||
-    query.includes('mandal') ||
     query.includes('tehsil') ||
-    query.includes('pincode') ||
+    query.includes('mandal') ||
     query.includes('lgd') ||
-    query.includes('map location') ||
-    query.includes('स्थान') ||
+    query.includes('स्थान विश्लेषण') ||
     query.includes('गाँव') ||
     query.includes('जनसंख्या') ||
-    query.includes('नजदीकी बैंक') ||
     query.includes('గ్రామం') ||
     query.includes('జనాభా') ||
-    query.includes('సమీప బ్యాంకులు') ||
     query.includes('స్థాన వివరాలు') ||
-    query.includes('ಸ್ಥಳದ ಮಾಹಿತಿ') ||
-    query.includes('ಜನಸಂಖ್ಯೆ')
+    query.includes('ಸ್ಥಳದ ಮಾಹಿತಿ')
   ) {
     return {
       intent: 'LOCATION_ANALYSIS',
-      confidence: 0.95,
+      confidence: 0.99,
       serviceCalled: 'Map Intelligence & LGD Spatial Service (mapService.ts)',
       entities: { topic: 'spatial_and_locality' }
     };
   }
 
-  // 12. MARKET INTELLIGENCE (Demand, competition, buyers, mandi offtake, local consumers)
+  // 14. MARKET INTELLIGENCE
   if (
+    query.includes('market analysis') ||
+    query.includes('market intelligence') ||
     query.includes('market demand') ||
     query.includes('market opportunity') ||
     query.includes('market opportunities') ||
@@ -611,152 +604,138 @@ export function classifyIntent(
     query.includes('competitors') ||
     query.includes('customer base') ||
     query.includes('buyers') ||
-    query.includes('selling') ||
     query.includes('mandi') ||
-    query.includes('cooperative offtake') ||
-    query.includes('बाजार') ||
+    query.includes('बाज़ार विश्लेषण') ||
     query.includes('मांग') ||
     query.includes('ग्राहक') ||
-    query.includes('प्रतिस्पर्धा') ||
-    query.includes('మార్కెట్') ||
+    query.includes('मार्केट విశ్లేషణ') ||
     query.includes('డిమాండ్') ||
     query.includes('పోటీ') ||
-    query.includes('ಮಾರುಕಟ್ಟೆ') ||
-    query.includes('ಬೇಡಿಕೆ')
+    query.includes('ಮಾರುಕಟ್ಟೆ')
   ) {
     return {
       intent: 'MARKET_INTELLIGENCE',
-      confidence: 0.94,
+      confidence: 0.99,
       serviceCalled: 'Market Intelligence Agent (marketAgent.ts)',
       entities: { topic: 'market_dynamics' }
     };
   }
 
-  // 13. REPORT EXPLANATION & SUMMARY (Summarize report, explain feasibility verdict)
+  // 15. REPORT EXPLANATION & SUMMARY
   if (
     query.includes('summarize my report') ||
     query.includes('summarize report') ||
     query.includes('summary of my report') ||
     query.includes('report summary') ||
     query.includes('explain my score') ||
-    query.includes('explain score') ||
-    query.includes('verdict') ||
     query.includes('feasibility score') ||
     query.includes('feasibility verdict') ||
-    query.includes('final recommendation') ||
     query.includes('रिपोर्ट का सारांश') ||
-    query.includes('स्कोर का मतलब') ||
     query.includes('निवेదిక సారాంశం') ||
-    query.includes('స్కోరు వివరాలు') ||
-    query.includes('ಅಹವಾಲು ಸಾರಾಂಶ')
+    query.includes('అహವಾಲು ಸಾರಾಂಶ')
   ) {
     return {
       intent: 'REPORT_EXPLANATION',
-      confidence: 0.96,
+      confidence: 0.98,
       serviceCalled: 'Final Feasibility Aggregator (finalAdvisorAgent.ts)',
       entities: { topic: 'report_explanation' }
     };
   }
 
-  // 14. BUSINESS FEASIBILITY & DOMAIN COMPARISON ("What business can I start with ₹1 lakh?", alternative businesses)
+  // 16. BUSINESS FEASIBILITY & DOMAIN RANKINGS
   if (
+    query.includes('business feasibility') ||
     query.includes('what business can i start') ||
-    query.includes('business can i start with') ||
     query.includes('start with 1 lakh') ||
     query.includes('start with ₹1 lakh') ||
-    query.includes('start with 50000') ||
     query.includes('business idea') ||
     query.includes('business ideas') ||
-    query.includes('business feasibility') ||
     query.includes('is it feasible') ||
     query.includes('which business is best') ||
-    query.includes('best business for me') ||
-    query.includes('other businesses') ||
-    query.includes('other options') ||
     query.includes('compare businesses') ||
     query.includes('suitability score') ||
-    query.includes('ranked first') ||
-    query.includes('ranked #1') ||
     query.includes('dairy business') ||
     query.includes('kirana store') ||
-    query.includes('grocery store') ||
     query.includes('tailoring unit') ||
     query.includes('poultry farm') ||
-    query.includes('cow') ||
-    query.includes('equipment') ||
-    query.includes('machinery') ||
-    query.includes('लाख में कौन सा व्यवसाय') ||
-    query.includes('व्यवसाय के विचार') ||
-    query.includes('లక్షతో ఏ వ్యాపారం') ||
-    query.includes('వ్యాపార ఆలోచనలు') ||
-    query.includes('ಉದ್ಯಮ ಕಲ್ಪನೆಗಳು')
+    query.includes('व्यवसाय व्यवहार्यता') ||
+    query.includes('వ్యాపార సాధ్యాసాధ్యాలు') ||
+    query.includes('ವ್ಯಾಪಾರ ಕಾರ್ಯಸಾಧ್ಯತೆ')
   ) {
     return {
       intent: 'BUSINESS_FEASIBILITY',
-      confidence: 0.95,
+      confidence: 0.99,
       serviceCalled: 'Domain Comparison & Feasibility Engine (domainComparisonService.ts)',
       entities: { topic: 'business_feasibility_ranking' }
     };
   }
 
-  // 15. CONVERSATIONAL PRONOUN RESOLUTION (Contextual Memory fallback)
+  // 17. CONVERSATIONAL PRONOUN RESOLUTION (Memory Continuity)
   if (
     previousTopic &&
     (query === 'why' ||
       query === 'how' ||
       query.includes('why is that') ||
       query.includes('how does that work') ||
-      query.includes('tell me more about it') ||
+      query.includes('tell me more') ||
       query.includes('what about it') ||
+      query.includes('how can i reduce it') ||
+      query.includes('reduce it') ||
+      query.includes('increase my contribution') ||
       query.includes('इसको समझाइए') ||
       query.includes('దీని గురించి వివరించండి'))
   ) {
-    if (previousTopic === 'finance' || previousTopic === 'FINANCIAL_PLANNING') {
+    if (previousTopic === 'finance' || previousTopic === 'FINANCIAL_PLANNING' || previousTopic === 'EMI') {
       return {
-        intent: 'FINANCIAL_PLANNING',
-        confidence: 0.88,
-        serviceCalled: 'Deterministic Financial Calculator (Contextual Followup)',
+        intent: query.includes('reduce') ? 'EMI' : 'FINANCIAL_PLANNING',
+        confidence: 0.90,
+        serviceCalled: 'Deterministic Financial Calculator (Conversational Continuity)',
         entities: { topic: 'emi_explanation' }
       };
     }
     if (previousTopic === 'scheme' || previousTopic === 'SCHEME_GUIDANCE') {
       return {
         intent: 'SCHEME_GUIDANCE',
-        confidence: 0.88,
-        serviceCalled: 'Scheme Rule Engine (Contextual Followup)',
+        confidence: 0.90,
+        serviceCalled: 'Scheme Rule Engine (Conversational Continuity)',
         entities: { topic: 'scheme_details' }
       };
     }
     if (previousTopic === 'risk' || previousTopic === 'RISK_ANALYSIS') {
       return {
         intent: 'RISK_ANALYSIS',
-        confidence: 0.88,
-        serviceCalled: 'Risk Analysis Agent (Contextual Followup)',
+        confidence: 0.90,
+        serviceCalled: 'Risk Analysis Agent (Conversational Continuity)',
         entities: { topic: 'risk_mitigation' }
       };
     }
     if (previousTopic === 'location' || previousTopic === 'LOCATION_ANALYSIS') {
       return {
         intent: 'LOCATION_ANALYSIS',
-        confidence: 0.88,
-        serviceCalled: 'Map Intelligence Service (Contextual Followup)',
+        confidence: 0.90,
+        serviceCalled: 'Map Intelligence Service (Conversational Continuity)',
         entities: { topic: 'location_details' }
+      };
+    }
+    if (previousTopic === 'market' || previousTopic === 'MARKET_INTELLIGENCE') {
+      return {
+        intent: 'MARKET_INTELLIGENCE',
+        confidence: 0.90,
+        serviceCalled: 'Market Intelligence Agent (Conversational Continuity)',
+        entities: { topic: 'market_dynamics' }
       };
     }
   }
 
-  // 16. IF QUERY HAS ANY BUSINESS / FINANCIAL KEYWORDS, PRESERVE AS BUSINESS FEASIBILITY
+  // 18. GENERAL BUSINESS KEYWORD CATCH
   if (
     query.includes('business') ||
     query.includes('enterprise') ||
     query.includes('shop') ||
     query.includes('store') ||
-    query.includes('farming') ||
     query.includes('cost') ||
-    query.includes('money') ||
     query.includes('capital') ||
-    query.includes('invest') ||
-    query.includes('paisa') ||
+    query.includes('money') ||
     query.includes('व्यवसाय') ||
     query.includes('వ్యాపారం') ||
     query.includes('ಉದ್ಯಮ')
@@ -769,7 +748,7 @@ export function classifyIntent(
     };
   }
 
-  // 17. FINAL FALLBACK: UNCLEAR
+  // 19. FINAL FALLBACK: UNCLEAR
   return {
     intent: 'UNCLEAR',
     confidence: 0.80,
@@ -778,8 +757,4 @@ export function classifyIntent(
   };
 }
 
-/**
- * Backward compatibility alias for routeAdvisorQuery.
- */
 export const routeAdvisorQuery = classifyIntent;
-
