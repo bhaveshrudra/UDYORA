@@ -31,6 +31,7 @@ import { RiskDetailsModal } from './modals/RiskDetailsModal';
 import { FinancialBreakdownModal } from './modals/FinancialBreakdownModal';
 import { OpportunityFactorsModal } from './modals/OpportunityFactorsModal';
 import { SchemeAndFinancialGuidance } from './SchemeAndFinancialGuidance';
+import { SwotAnalysisSection } from './SwotAnalysisSection';
 import { OpportunitySpot } from '../types/map';
 
 interface ResultDashboardProps {
@@ -435,6 +436,16 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
             />
           </div>
         </div>
+      </section>
+
+      {/* =========================================================================
+          SWOT ANALYSIS (2x2 DETERMINISTIC EVIDENCE MATRIX)
+          ========================================================================= */}
+      <section id="swot" className="scroll-mt-32 sm:scroll-mt-36 space-y-3">
+        <SwotAnalysisSection
+          swotAnalysis={report.swotAnalysis}
+          evidenceAuditLog={evidenceRecords}
+        />
       </section>
 
       {/* =========================================================================

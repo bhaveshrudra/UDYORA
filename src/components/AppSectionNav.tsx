@@ -6,7 +6,8 @@ import {
   Award,
   Store,
   ShieldAlert,
-  Database
+  Database,
+  Layers
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { TranslationDictionary } from '../i18n/types';
@@ -29,6 +30,12 @@ export const APP_SECTIONS: SectionNavItem[] = [
     labelKey: 'nav.sec.overview',
     defaultLabel: 'Overview',
     icon: <Sparkles className="w-3.5 h-3.5 shrink-0" />
+  },
+  {
+    id: 'swot',
+    labelKey: 'nav.sec.swot' as any,
+    defaultLabel: 'SWOT',
+    icon: <Layers className="w-3.5 h-3.5 shrink-0" />
   },
   {
     id: 'location',

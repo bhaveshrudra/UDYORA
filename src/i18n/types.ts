@@ -195,6 +195,7 @@ export interface TranslationDictionary {
 
   // App Section Sticky Subnav
   'nav.sec.overview': string;
+  'nav.sec.swot': string;
   'nav.sec.location': string;
   'nav.sec.finance': string;
   'nav.sec.guidance': string;

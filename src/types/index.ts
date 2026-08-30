@@ -425,6 +425,7 @@ export interface CompleteAnalysisReport {
   schemeMatches?: SchemeMatchResult[];
   riskAnalysis: AgentPayload<RiskProfile>;
   riskProfile?: RiskProfile;
+  swotAnalysis?: import('./swotTypes').SwotAnalysis;
   domainComparison?: DomainComparisonReport;
   evidenceAuditLog: EvidenceRecord[];
   evidenceRecords?: EvidenceRecord[];
@@ -436,6 +437,8 @@ export interface CompleteAnalysisReport {
     flags?: Record<string, boolean>;
   };
 }
+
+export * from './swotTypes';
 
 export interface AgentStepStatus {
   id: string;

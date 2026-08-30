@@ -22,6 +22,7 @@ import { validateAndReconcileAgentOutputs } from '../services/aggregatorValidato
 import { runFinalAdvisorAgent } from './finalAdvisor';
 import { compareBusinessDomains } from '../services/domainComparisonService';
 import { normalizeCoordinates } from '../services/coordinateNormalizer';
+import { generateDeterministicSwot } from '../services/swotEngine';
 
 /**
  * UDYORA MULTI-AGENT ORCHESTRATOR
@@ -401,6 +402,15 @@ export async function executeMultiAgentWorkflow(
     schemeMatches: schemePayload.data,
     riskAnalysis: riskPayload,
     riskProfile: riskPayload.data,
+    swotAnalysis: generateDeterministicSwot({
+      input,
+      location,
+      financialPlan: financePayload.data,
+      schemeMatches: schemePayload.data,
+      riskProfile: riskPayload.data,
+      evidenceAuditLog,
+      opportunitySpots: marketPayload.data?.recommendedOpportunitySpots || []
+    }),
     domainComparison: compareBusinessDomains(input, location),
     evidenceAuditLog,
     evidenceRecords: evidenceAuditLog,

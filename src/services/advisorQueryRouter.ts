@@ -15,6 +15,11 @@ export type AdvisorIntent =
   | 'SCHEME_GUIDANCE'
   | 'RISK_ANALYSIS'
   | 'EVIDENCE'
+  | 'SWOT_STRENGTHS'
+  | 'SWOT_WEAKNESSES'
+  | 'SWOT_OPPORTUNITIES'
+  | 'SWOT_THREATS'
+  | 'SWOT_FULL'
   | 'REPORT_EXPLANATION'
   | 'NEXT_STEPS'
   | 'UDYORA_HELP'
@@ -260,6 +265,99 @@ export function classifyIntent(
       confidence: 0.97,
       serviceCalled: 'Out-Of-Scope Boundary Handler',
       entities: { topic: 'general_knowledge_fallback' }
+    };
+  }
+
+  // 4.5 SWOT INTENTS (Strengths, Weaknesses, Opportunities, Threats)
+  if (
+    query.includes('strength') ||
+    query.includes('strengths') ||
+    query.includes('strong point') ||
+    query.includes('advantages') ||
+    query.includes('सामर्थ्य') ||
+    query.includes('शक्तियाँ') ||
+    query.includes('ताकत') ||
+    query.includes('बलाలు') ||
+    query.includes('సామర్థ್ಯ') ||
+    query.includes('ಸಾಮರ್ಥ್ಯ')
+  ) {
+    return {
+      intent: 'SWOT_STRENGTHS',
+      confidence: 0.98,
+      serviceCalled: 'SWOT Analysis Engine (swotEngine.ts)',
+      entities: { topic: 'swot_strengths' }
+    };
+  }
+
+  if (
+    query.includes('weakness') ||
+    query.includes('weaknesses') ||
+    query.includes('limitation') ||
+    query.includes('drawback') ||
+    query.includes('कमजोरी') ||
+    query.includes('कमजोरियाँ') ||
+    query.includes('उणिवा') ||
+    query.includes('त्रुटी') ||
+    query.includes('బలహీనతలు') ||
+    query.includes('దೌರ್ಬಲ್ಯ') ||
+    query.includes('ದೌರ್ಬಲ್ಯಗಳು')
+  ) {
+    return {
+      intent: 'SWOT_WEAKNESSES',
+      confidence: 0.98,
+      serviceCalled: 'SWOT Analysis Engine (swotEngine.ts)',
+      entities: { topic: 'swot_weaknesses' }
+    };
+  }
+
+  if (
+    query.includes('opportunity') ||
+    query.includes('opportunities') ||
+    query.includes('growth potential') ||
+    query.includes('अवसर') ||
+    query.includes('संधी') ||
+    query.includes('అవకాశాలు') ||
+    query.includes('అవకాశం') ||
+    query.includes('ಅವಕಾಶಗಳು') ||
+    query.includes('ಅವಕಾಶ')
+  ) {
+    return {
+      intent: 'SWOT_OPPORTUNITIES',
+      confidence: 0.98,
+      serviceCalled: 'SWOT Analysis Engine (swotEngine.ts)',
+      entities: { topic: 'swot_opportunities' }
+    };
+  }
+
+  if (
+    query.includes('threat') ||
+    query.includes('threats') ||
+    query.includes('external risk') ||
+    query.includes('खतरे') ||
+    query.includes('धोके') ||
+    query.includes('ಮುప్పులు') ||
+    query.includes('సవాళ్లు') ||
+    query.includes('ಬೆದರಿಕೆಗಳು')
+  ) {
+    return {
+      intent: 'SWOT_THREATS',
+      confidence: 0.98,
+      serviceCalled: 'SWOT Analysis Engine (swotEngine.ts)',
+      entities: { topic: 'swot_threats' }
+    };
+  }
+
+  if (
+    query.includes('swot') ||
+    query.includes('swot analysis') ||
+    query.includes('स्वाट') ||
+    query.includes('స్వాట్')
+  ) {
+    return {
+      intent: 'SWOT_FULL',
+      confidence: 0.99,
+      serviceCalled: 'SWOT Analysis Engine (swotEngine.ts)',
+      entities: { topic: 'swot_full' }
     };
   }
 

@@ -18,6 +18,7 @@ import { evaluateSchemeEligibility } from './schemeRules';
 import { getLocationById } from './locationService';
 import { DEMO_BUSINESS_BENCHMARKS } from '../data/demo/businesses';
 import { compareBusinessDomains } from './domainComparisonService';
+import { generateDeterministicSwot } from './swotEngine';
 
 export interface ChatMessage {
   id: string;
@@ -158,6 +159,7 @@ export async function generateAdvisorResponse(
   const schemes: SchemeMatchResult[] = context.analysisReport?.schemeMatches || evaluateSchemeEligibility(input, plan);
   const topScheme = schemes.find((s) => s.qualificationStatus === 'ELIGIBLE' || s.qualificationStatus === 'CONDITIONALLY_ELIGIBLE') || schemes[0];
   const verdict = context.analysisReport?.feasibilityVerdict || context.analysisReport?.finalFeasibility;
+  const riskProfile = context.analysisReport?.riskProfile || context.analysisReport?.riskAnalysis?.data;
 
   const villageName = location.village || 'Selected Village';
   const subDistrict = location.block || 'Sub-District';
@@ -239,6 +241,94 @@ export async function generateAdvisorResponse(
     dataQuality = 'VERIFIED';
     suggestedQuickActions = LOCALIZED_QUICK_ACTIONS[lang] || LOCALIZED_QUICK_ACTIONS.en;
     responseText = UNCLEAR_CLARIFICATIONS[lang] || UNCLEAR_CLARIFICATIONS.en;
+  }
+
+  // =========================================================================
+  // INTENTS: SWOT ANALYSIS (STRENGTHS, WEAKNESSES, OPPORTUNITIES, THREATS)
+  // =========================================================================
+  else if (
+    routeResult.intent === 'SWOT_STRENGTHS' ||
+    routeResult.intent === 'SWOT_WEAKNESSES' ||
+    routeResult.intent === 'SWOT_OPPORTUNITIES' ||
+    routeResult.intent === 'SWOT_THREATS' ||
+    routeResult.intent === 'SWOT_FULL'
+  ) {
+    topic = 'feasibility';
+    dataQuality = 'VERIFIED';
+
+    const swot = context.analysisReport?.swotAnalysis || generateDeterministicSwot({
+      input,
+      location,
+      financialPlan: plan,
+      schemeMatches: [topScheme],
+      riskProfile
+    });
+
+    if (routeResult.intent === 'SWOT_STRENGTHS') {
+      const itemsList = swot.strengths.map((s, idx) => `${idx + 1}. **${s.title}**: ${s.explanation}`).join('\n\n');
+      if (lang === 'hi') {
+        responseText = `**आपके उद्यम के प्रमुख सामर्थ्य / शक्तियां (Strengths):**\n\n${itemsList}`;
+      } else if (lang === 'te') {
+        responseText = `**మీ వ్యాపారం యొక్క ముఖ్య బలాలు (Strengths):**\n\n${itemsList}`;
+      } else if (lang === 'mr') {
+        responseText = `**तुमच्या व्यवसायाची प्रमुख सामर्थ्ये (Strengths):**\n\n${itemsList}`;
+      } else if (lang === 'kn') {
+        responseText = `**ನಿಮ್ಮ ಉದ್ಯಮದ ಪ್ರಮುಖ ಸಾಮರ್ಥ್ಯಗಳು (Strengths):**\n\n${itemsList}`;
+      } else {
+        responseText = `**Key Strategic Strengths of Your Enterprise:**\n\n${itemsList}`;
+      }
+    } else if (routeResult.intent === 'SWOT_WEAKNESSES') {
+      const itemsList = swot.weaknesses.map((w, idx) => `${idx + 1}. **${w.title}**: ${w.explanation}`).join('\n\n');
+      if (lang === 'hi') {
+        responseText = `**आपके उद्यम की आंतरिक कमजोरियां (Weaknesses):**\n\n${itemsList}`;
+      } else if (lang === 'te') {
+        responseText = `**మీ వ్యాపారం యొక్క అంతర్గత బలహీనతలు (Weaknesses):**\n\n${itemsList}`;
+      } else if (lang === 'mr') {
+        responseText = `**तुमच्या व्यवसायाच्या अंतर्गत उणिवा (Weaknesses):**\n\n${itemsList}`;
+      } else if (lang === 'kn') {
+        responseText = `**ನಿಮ್ಮ ಉದ್ಯಮದ ಆಂತರಿಕ ದೌರ್ಬಲ್ಯಗಳು (Weaknesses):**\n\n${itemsList}`;
+      } else {
+        responseText = `**Identified Operational Weaknesses & Constraints:**\n\n${itemsList}`;
+      }
+    } else if (routeResult.intent === 'SWOT_OPPORTUNITIES') {
+      const itemsList = swot.opportunities.map((o, idx) => `${idx + 1}. **${o.title}**: ${o.explanation}`).join('\n\n');
+      if (lang === 'hi') {
+        responseText = `**आपके उद्यम के लिए विकास के अवसर (Opportunities):**\n\n${itemsList}`;
+      } else if (lang === 'te') {
+        responseText = `**మీ వ్యాపారం కోసం వృద్ధి అవకాశాలు (Opportunities):**\n\n${itemsList}`;
+      } else if (lang === 'mr') {
+        responseText = `**तुमच्या व्यवसायासाठी विकासाच्या संधी (Opportunities):**\n\n${itemsList}`;
+      } else if (lang === 'kn') {
+        responseText = `**ನಿಮ್ಮ ಉದ್ಯಮದ ಬೆಳವಣಿಗೆಯ ಅವಕಾಶಗಳು (Opportunities):**\n\n${itemsList}`;
+      } else {
+        responseText = `**Strategic Market & Subsidy Opportunities:**\n\n${itemsList}`;
+      }
+    } else if (routeResult.intent === 'SWOT_THREATS') {
+      const itemsList = swot.threats.map((t, idx) => `${idx + 1}. **${t.title}**: ${t.explanation}`).join('\n\n');
+      if (lang === 'hi') {
+        responseText = `**आपके उद्यम के लिए मुख्य बाहरी खतरे एवं जोखिम (Threats):**\n\n${itemsList}`;
+      } else if (lang === 'te') {
+        responseText = `**మీ వ్యాపారానికి ప్రధాన బాహ్య ముప్పులు మరియు రిస్కులు (Threats):**\n\n${itemsList}`;
+      } else if (lang === 'mr') {
+        responseText = `**तुमच्या व्यवसायासमोरील मुख्य बाह्य धोके (Threats):**\n\n${itemsList}`;
+      } else if (lang === 'kn') {
+        responseText = `**ನಿಮ್ಮ ಉದ್ಯಮಕ್ಕೆ ಬಾಹ್ಯ ಬೆದರಿಕೆಗಳು ಮತ್ತು ಅಪಾಯಗಳು (Threats):**\n\n${itemsList}`;
+      } else {
+        responseText = `**Identified External Threats & Market Vulnerabilities:**\n\n${itemsList}`;
+      }
+    } else {
+      // Full SWOT
+      const s = swot.strengths.slice(0, 2).map((x) => `• **${x.title}**: ${x.explanation}`).join('\n');
+      const w = swot.weaknesses.slice(0, 2).map((x) => `• **${x.title}**: ${x.explanation}`).join('\n');
+      const o = swot.opportunities.slice(0, 2).map((x) => `• **${x.title}**: ${x.explanation}`).join('\n');
+      const t = swot.threats.slice(0, 2).map((x) => `• **${x.title}**: ${x.explanation}`).join('\n');
+
+      responseText = `**Evidence-Based SWOT Synthesis for ${input.businessIdea || input.businessCategoryId}:**\n\n` +
+        `**🟢 Strengths (सामर्थ्य / బలాలు):**\n${s}\n\n` +
+        `**🟠 Weaknesses (उणिवा / బలహీనతలు):**\n${w}\n\n` +
+        `**🔵 Opportunities (संधी / అవకాశాలు):**\n${o}\n\n` +
+        `**🔴 Threats (धोके / ముప్పులు):**\n${t}`;
+    }
   }
 
   // =========================================================================

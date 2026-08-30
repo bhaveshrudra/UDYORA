@@ -182,6 +182,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
 
     // App Section Sticky Subnav
     'nav.sec.overview': 'Overview',
+    'nav.sec.swot': 'SWOT',
     'nav.sec.location': 'Location',
     'nav.sec.finance': 'Finance',
     'nav.sec.guidance': 'Guidance',
@@ -621,6 +622,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'dash.tab.evidence': 'प्रमाण ऑडिट ट्रेल',
     // App Section Sticky Subnav
     'nav.sec.overview': 'अवलोकन',
+    'nav.sec.swot': 'स्वाट (SWOT)',
     'nav.sec.location': 'स्थान',
     'nav.sec.finance': 'वित्त',
     'nav.sec.guidance': 'योजना मार्गदर्शन',
@@ -1060,6 +1062,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'dash.tab.evidence': 'माहिती स्रोत तपासणी',
     // App Section Sticky Subnav
     'nav.sec.overview': 'सारांश',
+    'nav.sec.swot': 'स्वाट (SWOT)',
     'nav.sec.location': 'स्थान',
     'nav.sec.finance': 'वित्त',
     'nav.sec.guidance': 'योजना मार्गदर्शन',
@@ -1500,6 +1503,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
 
     // App Section Sticky Subnav
     'nav.sec.overview': 'అవలోకనం',
+    'nav.sec.swot': 'SWOT విశ్లేషణ',
     'nav.sec.location': 'స్థలం',
     'nav.sec.finance': 'ఆర్థికం',
     'nav.sec.guidance': 'పథకాలు & మార్గదర్శనం',
@@ -1940,6 +1944,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
 
     // App Section Sticky Subnav
     'nav.sec.overview': 'ಅವಲೋಕನ',
+    'nav.sec.swot': 'SWOT ವಿಶ್ಲೇಷಣೆ',
     'nav.sec.location': 'ಸ್ಥಳ',
     'nav.sec.finance': 'ಹಣಕಾಸು',
     'nav.sec.guidance': 'ಯೋಜನೆ & ಮಾರ್ಗದರ್ಶನ',

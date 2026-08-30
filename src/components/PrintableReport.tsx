@@ -2,6 +2,7 @@ import React from 'react';
 import { CompleteAnalysisReport } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { generateRepaymentSchedule } from '../services/financialCalculator';
+import { generateDeterministicSwot } from '../services/swotEngine';
 
 interface PrintableReportProps {
   report: CompleteAnalysisReport;
@@ -33,6 +34,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
       rating: 'Rating',
       keyOpp: '★ Key Strategic Opportunity:',
       keyCaveat: '⚠️ Critical Boundary Condition / Risk:',
+      secSwot: '02.5 • Evidence-Based Strategic SWOT Matrix',
       sec3: '03 • Local Market Intelligence & Catchment Demographics',
       sec3Sub: 'Spatial Infrastructure',
       catchmentPop: 'Estimated Catchment Population',
@@ -305,6 +307,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
       rating: 'ರೇಟಿಂಗ್',
       keyOpp: '★ ಪ್ರಮುಖ ಕಾರ್ಯತಂತ್ರದ ಅವಕಾಶ:',
       keyCaveat: '⚠️ ಮುಖ್ಯ ಮುನ್ನೆಚ್ಚರಿಕೆ / ಷರತ್ತು:',
+      secSwot: '02.5 • ಸಾಕ್ಷ್ಯಾಧಾರಿತ ಕಾರ್ಯತಂತ್ರದ SWOT ಮ್ಯಾಟ್ರಿಕ್ಸ್',
       sec3: '03 • ಸ್ಥಳೀಯ ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ & ಮೂಲಸೌಕರ್ಯ',
       sec3Sub: 'ಮೂಲಸೌಕರ್ಯ ಸಾಮೀಪ್ಯ',
       catchmentPop: 'ಅಂದಾಜು ಜನಸಂಖ್ಯೆ ವ್ಯಾಪ್ತಿ',
@@ -440,6 +443,15 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
     estimatedHouseholds: 2600,
     demandDrivers: ['Local retail distribution', 'Daily milk collection centers', 'Town market consumption']
   };
+
+  const swotAnalysis = report.swotAnalysis || generateDeterministicSwot({
+    input: userInput,
+    location,
+    financialPlan,
+    schemeMatches: [topMatch],
+    riskProfile,
+    evidenceAuditLog: report.evidenceRecords || report.evidenceAuditLog || []
+  });
 
   const evidenceRecords = (report.evidenceRecords || report.evidenceAuditLog || []).slice(0, 5);
   const reportId = report.id || report.reportId || 'UDY-2026-REPORT';
@@ -639,6 +651,56 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({ report }) => {
                   {finalFeasibility.criticalCaveat || 'Secure raw material supply agreements before full capital commitment.'}
                 </p>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 2.5 Evidence-Based Strategic SWOT Matrix */}
+        <div className="space-y-1">
+          <div className="bg-slate-900 text-white px-2.5 py-1 rounded-t font-bold text-[11px] uppercase tracking-wider flex items-center justify-between">
+            <span>{L.secSwot || '02.5 • Evidence-Based Strategic SWOT Matrix'}</span>
+            <span className="text-[9px] font-mono text-slate-300 font-normal">Deterministic Synthesis</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 border border-slate-300 p-2 rounded-b bg-white text-[10px]">
+            <div className="bg-emerald-50/60 border border-emerald-200 p-1.5 rounded space-y-1">
+              <div className="font-black text-emerald-950 text-[10px]">
+                🟢 STRENGTHS (सामर्थ्य / బలాలు)
+              </div>
+              <ul className="list-disc pl-3 text-slate-800 space-y-0.5 text-[9px] leading-tight">
+                {swotAnalysis.strengths.slice(0, 2).map((s, i) => (
+                  <li key={i}><strong>{s.title}:</strong> {s.explanation}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-amber-50/60 border border-amber-200 p-1.5 rounded space-y-1">
+              <div className="font-black text-amber-950 text-[10px]">
+                🟠 WEAKNESSES (उणिवा / బలహీనతలు)
+              </div>
+              <ul className="list-disc pl-3 text-slate-800 space-y-0.5 text-[9px] leading-tight">
+                {swotAnalysis.weaknesses.slice(0, 2).map((w, i) => (
+                  <li key={i}><strong>{w.title}:</strong> {w.explanation}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-blue-50/60 border border-blue-200 p-1.5 rounded space-y-1">
+              <div className="font-black text-blue-950 text-[10px]">
+                🔵 OPPORTUNITIES (संधी / అవకాశాలు)
+              </div>
+              <ul className="list-disc pl-3 text-slate-800 space-y-0.5 text-[9px] leading-tight">
+                {swotAnalysis.opportunities.slice(0, 2).map((o, i) => (
+                  <li key={i}><strong>{o.title}:</strong> {o.explanation}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="bg-rose-50/60 border border-rose-200 p-1.5 rounded space-y-1">
+              <div className="font-black text-rose-950 text-[10px]">
+                🔴 THREATS (धोके / ముప్పులు)
+              </div>
+              <ul className="list-disc pl-3 text-slate-800 space-y-0.5 text-[9px] leading-tight">
+                {swotAnalysis.threats.slice(0, 2).map((t, i) => (
+                  <li key={i}><strong>{t.title}:</strong> {t.explanation}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
