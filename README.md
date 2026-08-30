@@ -2,84 +2,137 @@
 
 ### Hyper-Local Business Intelligence for Rural Entrepreneurs
 
-UDYORA is an intelligent business advisory platform designed to help rural and semi-urban entrepreneurs make better-informed business decisions.
+UDYORA is an AI-assisted business advisory platform designed to help rural and semi-urban micro-entrepreneurs make better-informed business decisions using **local context, deterministic financial analysis, structured government-scheme rules, risk assessment, evidence, and multilingual guidance**.
 
-The platform is designed around three key areas:
+Instead of acting as a general-purpose chatbot, UDYORA follows a structured business-advisory workflow:
 
-- Local business feasibility
-- Financial planning
-- Business and support guidance
-
-It aims to bring business intelligence, financial calculations, and structured recommendations into one simple and accessible experience.
+**Business Idea + Location + Available Capital → Analysis → Financial Structure → Scheme Guidance → Risk → Evidence → Actionable Report**
 
 ---
 
-## Product Overview
+## 🎯 Problem
 
-A user can provide basic information such as:
+Rural and semi-urban entrepreneurs often have difficulty answering practical questions such as:
 
+- Is this business suitable for my location?
+- Is there enough market opportunity nearby?
+- How much capital will I require?
+- How much financing may be required?
+- What could the EMI and repayment burden look like?
+- Which government or institutional schemes may be relevant?
+- What documents and application steps are required?
+- What are the major business risks?
+- How reliable is the information being used?
+
+Existing general-purpose AI tools can provide useful explanations, but they are not designed as a complete, evidence-aware business feasibility and financial-structuring workflow for rural micro-enterprises.
+
+UDYORA is designed specifically for this purpose.
+
+---
+
+# 🚀 Product Overview
+
+A user provides information such as:
+
+- Business idea
+- Business category
 - Location
-- Available capital
-- Proposed business
+- Available own capital
+- Entrepreneur profile
+- Preferred language
 
-UDYORA can then analyze the available information and provide:
+UDYORA then coordinates specialized analysis to produce:
 
-- Local market insights
-- Business opportunity analysis
-- Competition insights
-- Risk identification
+- Hyper-local market intelligence
 - Business feasibility assessment
+- Location opportunity analysis
 - Financial structuring
 - Loan and repayment calculations
-- Relevant support guidance
-
-The platform is designed to clearly distinguish between verified information, estimates, and insufficient data.
-
----
-
-## Key Features
-
-### Local Business Intelligence
-Analyze the available local information to understand market opportunities, competition, and potential business risks.
-
-### Business Feasibility
-Generate a structured feasibility overview based on the entrepreneur's location, business idea, available capital, and supporting data.
-
-### Financial Planning
-Calculate indicative project cost, financing requirements, repayment schedules, and other financial parameters.
-
-### Intelligent Guidance
-Provide contextual recommendations using a combination of deterministic rules, structured data, and AI-assisted analysis.
-
-### Evidence & Transparency
-Show supporting data sources and clearly identify estimated or unavailable information instead of presenting unsupported claims as facts.
-
-### Responsive Interface
-Designed for desktop, tablet, and mobile experiences with a clean public-service oriented interface.
+- Government scheme matching
+- Eligibility guidance
+- Document checklist
+- Application roadmap
+- Risk analysis and mitigation
+- Evidence and provenance
+- Multilingual advisory output
+- Executive two-page report
+- Context-aware business chatbot
 
 ---
 
-## Technology Stack
+# 🧠 What Makes UDYORA Different?
 
-### Frontend
-- React
-- TypeScript
-- HTML5
-- CSS
-- Tailwind CSS
+UDYORA is **not simply a ChatGPT wrapper**.
 
-### Backend
-- Node.js / Django / FastAPI
-- REST APIs
+The system separates tasks that require language intelligence from tasks that require mathematical and rule-based reliability.
 
-### Database
-- PostgreSQL
+### AI-assisted tasks
 
-### AI & Data
-- Python
-- Machine Learning
-- Large Language Models
-- Geospatial Analysis
-- Structured Rule Engine
+AI / language intelligence is used for:
+
+- Natural-language business input
+- Voice command interpretation
+- Intent classification
+- Contextual explanations
+- Domain-specific advisory responses
+
+### Deterministic tasks
+
+Critical calculations and rule decisions are handled by dedicated engines:
+
+- Financial calculations
+- EMI
+- DSCR
+- Repayment schedules
+- Feasibility scoring
+- Scheme eligibility
+- Geographic distance calculations
+- Catchment filtering
+- Opportunity scoring
+
+This architecture reduces the risk of letting a language model invent financial or eligibility values.
 
 ---
+
+# 🏗️ System Architecture
+
+```text
+                    USER
+                      │
+                      ▼
+          Business / Voice Input
+                      │
+                      ▼
+            UserBusinessInput
+                      │
+                      ▼
+              ORCHESTRATOR
+                      │
+        ┌─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+ Business Agent   Market Agent   Evidence Agent
+        │             │             │
+        ├─────────────┼─────────────┤
+        │             │
+        ▼             ▼
+ Financial Agent   Scheme Agent
+        │             │
+        ├─────────────┼─────────────┐
+        │             │             │
+        ▼             ▼             ▼
+ Financial Engine  Scheme Rules   Risk Agent
+        │             │             │
+        └─────────────┼─────────────┘
+                      ▼
+             Feasibility Engine
+                      │
+                      ▼
+             Aggregation & Validation
+                      │
+                      ▼
+               Final Advisor
+                      │
+          ┌───────────┼───────────┐
+          ▼           ▼           ▼
+       Dashboard    Chatbot      PDF
