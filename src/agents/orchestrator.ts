@@ -159,7 +159,7 @@ export async function executeMultiAgentWorkflow(
     };
   } else if (input.customLocationText) {
     location = createCustomLocationData(input.customLocationText);
-  } else if (input.locationId && input.locationId.startsWith('lgd_loc_')) {
+  } else if (input.locationId) {
     location = getLocationById(input.locationId);
   } else {
     location = createCustomLocationData('Unspecified Rural Locality');
@@ -387,6 +387,7 @@ export async function executeMultiAgentWorkflow(
     reportId: repId,
     id: repId,
     generatedAt: new Date().toISOString(),
+    language: (input.language as any) || 'en',
     input,
     userInput: input,
     location,

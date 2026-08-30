@@ -21,7 +21,8 @@ import {
   ChevronUp,
   Cpu,
   Database,
-  ArrowRight
+  ArrowRight,
+  Info
 } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
@@ -44,7 +45,11 @@ import {
   playVoiceOutput,
   stopVoiceOutput,
   pauseVoiceOutput,
-  resumeVoiceOutput
+  resumeVoiceOutput,
+  useVoiceAvailability,
+  LISTEN_BUTTON_LABELS,
+  VOICE_UNAVAILABLE_NOTICES,
+  LANGUAGE_NAMES
 } from '../services/speechSynthesis';
 import { CompleteAnalysisReport, UserBusinessInput, LocationData } from '../types';
 
@@ -65,7 +70,9 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   onTriggerAnalysis,
   onResetAnalysis
 }) => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
+  const voiceAvailability = useVoiceAvailability(language);
+
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState<string>('');
@@ -75,6 +82,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [isSpeechPaused, setIsSpeechPaused] = useState<boolean>(false);
   const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const [dismissedNoticeLanguages, setDismissedNoticeLanguages] = useState<Set<SupportedLanguage>>(new Set());
   const [showDebugPanel, setShowDebugPanel] = useState<boolean>(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -224,6 +232,12 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
 
   // Voice Output Speech Synthesis Handler
   const handleSpeakMessage = (msg: ChatMessage) => {
+    // If voice is unavailable on this device for the selected language
+    if (!voiceAvailability.isAvailable) {
+      setVoiceNotice(VOICE_UNAVAILABLE_NOTICES[language]?.message || VOICE_UNAVAILABLE_NOTICES.en.message);
+      return;
+    }
+
     if (speakingMessageId === msg.id) {
       if (isSpeechPaused) {
         resumeVoiceOutput();
@@ -253,15 +267,17 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
       onError: (errMsg) => {
         setSpeakingMessageId(null);
         setIsSpeechPaused(false);
-        setVoiceNotice(errMsg || 'Voice response unavailable. Try again.');
-        setTimeout(() => setVoiceNotice(null), 4000);
+        if (!dismissedNoticeLanguages.has(language)) {
+          setVoiceNotice(errMsg || VOICE_UNAVAILABLE_NOTICES[language]?.message || 'Voice response unavailable.');
+        }
       }
     }).then((res) => {
-      if (!res.success && res.message) {
+      if (!res.success) {
         setSpeakingMessageId(null);
         setIsSpeechPaused(false);
-        setVoiceNotice(res.message);
-        setTimeout(() => setVoiceNotice(null), 4000);
+        if (!dismissedNoticeLanguages.has(language) && res.message) {
+          setVoiceNotice(res.message);
+        }
       }
     });
   };
@@ -308,14 +324,14 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
               <div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-black tracking-tight text-white">
-                    UDYORA AI Business Advisor
+                    {t('chat.headerTitle')}
                   </span>
                   <span className="text-[9px] font-mono uppercase bg-blue-900 text-blue-200 px-1.5 py-0.2 rounded border border-blue-700">
                     Live
                   </span>
                 </div>
                 <span className="text-[10px] text-slate-400 block font-mono">
-                  Contextual • Deterministic Engine
+                  {t('chat.headerSubtitle')}
                 </span>
               </div>
             </div>
@@ -363,18 +379,31 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                 <span className="text-emerald-400">Confidence: {(latestIntent.confidence * 100).toFixed(0)}%</span>
                 <span className="text-blue-300">Locale: {SPEECH_LANG_MAP[language]}</span>
               </div>
-              <div className="text-slate-400 truncate">
-                Service: <span className="text-slate-200">{latestIntent.serviceCalled}</span>
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="truncate max-w-[200px]">Service: {latestIntent.serviceCalled}</span>
+                <span className={voiceAvailability.isAvailable ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                  TTS: {voiceAvailability.status} {voiceAvailability.voiceName ? `(${voiceAvailability.voiceName})` : ''}
+                </span>
               </div>
             </div>
           )}
 
-          {/* Notice Feedback Banner */}
+          {/* User-Friendly Informational Voice Fallback Banner */}
           {voiceNotice && (
-            <div className="p-2 bg-blue-50 border-b border-blue-200 text-xs text-blue-900 font-medium flex items-center justify-between">
-              <span>{voiceNotice}</span>
-              <button onClick={() => setVoiceNotice(null)} className="text-blue-600 font-bold ml-2">
-                ✕
+            <div className="p-3 bg-blue-50/95 border-b border-blue-200 text-xs text-blue-950 font-medium flex flex-wrap items-center justify-between gap-2 shadow-2xs animate-fadeIn">
+              <div className="flex items-center gap-2 max-w-[75%] sm:max-w-[80%]">
+                <Info className="w-4 h-4 text-blue-700 shrink-0" />
+                <span className="leading-snug">{voiceNotice}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setVoiceNotice(null);
+                  setDismissedNoticeLanguages((prev) => new Set([...prev, language]));
+                }}
+                className="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] transition-all cursor-pointer shadow-2xs shrink-0"
+              >
+                {VOICE_UNAVAILABLE_NOTICES[language]?.action || 'Continue with Text'}
               </button>
             </div>
           )}
@@ -447,6 +476,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                       {msg.suggestedAction === 'TRIGGER_ANALYSIS' && onTriggerAnalysis && (
                         <div className="mt-2.5 pt-2 border-t border-slate-100">
                           <button
+                            type="button"
                             onClick={() => {
                               onTriggerAnalysis();
                               setIsOpen(false);
@@ -462,6 +492,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                       {msg.suggestedAction === 'RESET_ANALYSIS' && onResetAnalysis && (
                         <div className="mt-2.5 pt-2 border-t border-slate-100">
                           <button
+                            type="button"
                             onClick={() => {
                               onResetAnalysis();
                               setIsOpen(false);
@@ -489,22 +520,49 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
                           </span>
                         )}
 
-                        <button
-                          onClick={() => handleSpeakMessage(msg)}
-                          title={isSpeakingThis ? 'Pause / Resume Speech' : 'Read aloud in selected language'}
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
-                            isSpeakingThis
-                              ? 'bg-blue-100 text-blue-900 border-blue-300 font-bold animate-pulse'
-                              : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
-                          }`}
-                        >
-                          {isSpeakingThis ? (
-                            isSpeechPaused ? <Play className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5 text-blue-700" />
-                          ) : (
-                            <Volume2 className="w-2.5 h-2.5" />
-                          )}
-                          <span>{isSpeakingThis ? (isSpeechPaused ? 'Paused' : 'Speaking...') : 'Listen'}</span>
-                        </button>
+                        {voiceAvailability.isAvailable ? (
+                          <button
+                            type="button"
+                            onClick={() => handleSpeakMessage(msg)}
+                            title={
+                              isSpeakingThis
+                                ? isSpeechPaused
+                                  ? 'Resume Speech'
+                                  : 'Pause Speech'
+                                : `Listen in ${LANGUAGE_NAMES[language]?.en || language.toUpperCase()}`
+                            }
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border transition-colors cursor-pointer ${
+                              isSpeakingThis
+                                ? 'bg-blue-100 text-blue-900 border-blue-300 font-bold animate-pulse'
+                                : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                            }`}
+                          >
+                            {isSpeakingThis ? (
+                              isSpeechPaused ? <Play className="w-2.5 h-2.5" /> : <Volume2 className="w-2.5 h-2.5 text-blue-700" />
+                            ) : (
+                              <Volume2 className="w-2.5 h-2.5" />
+                            )}
+                            <span>
+                              {isSpeakingThis
+                                ? isSpeechPaused
+                                  ? LISTEN_BUTTON_LABELS[language]?.paused || 'Paused'
+                                  : LISTEN_BUTTON_LABELS[language]?.speaking || 'Speaking...'
+                                : LISTEN_BUTTON_LABELS[language]?.listen || 'Listen'}
+                            </span>
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVoiceNotice(VOICE_UNAVAILABLE_NOTICES[language]?.message || VOICE_UNAVAILABLE_NOTICES.en.message);
+                            }}
+                            title={`${LANGUAGE_NAMES[language]?.en || language.toUpperCase()} voice is not installed on this device. The text response is still available.`}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg border bg-slate-100/90 text-slate-500 border-slate-200/80 text-[10px] font-medium transition-colors cursor-pointer hover:bg-slate-200/80 hover:text-slate-700"
+                          >
+                            <VolumeX className="w-2.5 h-2.5 text-slate-400" />
+                            <span>{LISTEN_BUTTON_LABELS[language]?.unavailable || 'Voice unavailable'}</span>
+                          </button>
+                        )}
 
                         {isSpeakingThis && (
                           <button
@@ -594,7 +652,7 @@ export const AdvisorChatbot: React.FC<AdvisorChatbotProps> = ({
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              placeholder={isListening ? (interimTranscript || 'Listening...') : 'Ask about EMI, schemes, risks, or market...'}
+              placeholder={isListening ? (interimTranscript || t('form.listening')) : t('chat.inputPlaceholder')}
               className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-blue-600 focus:bg-white transition-colors"
             />
 

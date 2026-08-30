@@ -66,17 +66,20 @@ export interface OpportunityFactor {
 
 export interface OpportunitySpot {
   id: string;
+  name?: string;
   spotName: string;
   category: 'SETTLEMENT' | 'MARKET_JUNCTION' | 'HIGHWAY_CORRIDOR' | 'COOPERATIVE_CLUSTER' | 'COMMERCIAL_HUB';
   categoryLabel: string;
   latitude: number;
   longitude: number;
   distanceKm: number; // Haversine distance in km
+  distanceFromCenter?: number; // Alias for distanceKm
   opportunityScore: number; // 0 - 100
   dataConfidence: number; // 0 - 100%
   dataQuality: 'VERIFIED' | 'ESTIMATED' | 'INSUFFICIENT_DATA' | 'OBSERVED';
   rank: number; // 1, 2, 3...
   summaryReason: string;
+  evidenceIds?: string[];
   factors: {
     populationReach: OpportunityFactor;
     marketAccessibility: OpportunityFactor;

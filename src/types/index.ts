@@ -1,3 +1,5 @@
+export type SupportedLanguage = 'en' | 'hi' | 'mr' | 'te' | 'kn';
+
 export type DataQualityStatus = 'VERIFIED' | 'ESTIMATED' | 'OBSERVED' | 'INSUFFICIENT DATA' | 'INSUFFICIENT_DATA';
 
 export type GeographicLevel = string;
@@ -161,6 +163,31 @@ export interface GovernmentScheme {
 
 export type SchemeRule = GovernmentScheme;
 
+export interface SchemeEligibilityItem {
+  criterion: string;
+  requirement: string;
+  userValue: string;
+  status: 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'REQUIRES_VERIFICATION';
+  note?: string;
+}
+
+export interface SchemeApplicationStep {
+  stepNumber: number;
+  title: string;
+  whatToDo: string;
+  whatIsNeeded: string;
+  whoHandlesIt: string;
+  whatComesNext: string;
+}
+
+export interface SchemeDocumentItem {
+  name: string;
+  type: 'REQUIRED' | 'OPTIONAL' | 'CONDITIONAL';
+  conditionNote?: string;
+  status?: 'READY' | 'MISSING';
+  verificationStatus?: 'VERIFIED' | 'REQUIRES_VERIFICATION';
+}
+
 export interface SchemeMatchResult {
   scheme: GovernmentScheme;
   matchScore: number; // 0 to 100
@@ -171,8 +198,16 @@ export interface SchemeMatchResult {
   potentialSubsidyPct: number;
   potentialSubsidyAmount: number;
   minimumOwnCapitalRequired?: number;
+  indicativeFinancingCapacity?: number; // PS-based indicative financing capacity
+  recommendedProjectCost?: number; // Business-plan recommended project cost
+  indicativeFinancingRequirement?: number;
+  estimatedEmi?: number;
+  financialGuidanceNote?: string;
   missingInformation?: string[];
   requiredDocuments: { name: string; mandatory?: boolean; isMandatory?: boolean; ready?: boolean; description?: string }[];
+  documentItems?: SchemeDocumentItem[];
+  eligibilityMatrix?: SchemeEligibilityItem[];
+  applicationSteps?: SchemeApplicationStep[];
   verificationNote: string;
 }
 
@@ -297,13 +332,17 @@ export interface MarketAgentData {
 export interface FeasibilityDimension {
   id: string;
   name: string;
-  weight: number; // e.g. 0.25 (25%)
+  weight: number; // e.g. 0.20 (20%)
   score: number; // 0 - 100
+  contribution?: number; // score * weight
   confidence: number; // 0.0 to 1.0
   status: DataQualityStatus;
+  dataQuality?: DataQualityStatus;
   rating: 'STRONG' | 'ADEQUATE' | 'NEEDS_ATTENTION' | 'CRITICAL';
   summary: string;
+  explanation?: string;
   evidenceRefIds?: string[];
+  evidenceIds?: string[];
 }
 
 export interface FinalFeasibilityVerdict {
@@ -372,6 +411,7 @@ export interface CompleteAnalysisReport {
   reportId: string;
   id?: string;
   generatedAt: string;
+  language?: SupportedLanguage;
   input: UserBusinessInput;
   userInput?: UserBusinessInput;
   location: LocationData;

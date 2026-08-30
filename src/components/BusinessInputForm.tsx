@@ -47,8 +47,16 @@ import { useLanguage } from '../i18n/LanguageContext';
 import {
   startVoiceRecognition,
   stopVoiceRecognition,
-  isSpeechRecognitionAvailable
+  isSpeechRecognitionAvailable,
+  SpeechListeningState
 } from '../services/speechRecognition';
+import {
+  parseBusinessVoiceCommand,
+  ParsedBusinessCommand,
+  AmbiguityOption,
+  BusinessCategoryKey
+} from '../services/businessInputParser';
+import { VoiceCommandReviewModal } from './VoiceCommandReviewModal';
 
 interface BusinessInputFormProps {
   onSubmit: (input: UserBusinessInput) => void;
@@ -339,15 +347,23 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
   const [availableCapital, setAvailableCapital] = useState<number>(initialValues?.availableCapital || 100000);
   const [rawCapitalString, setRawCapitalString] = useState<string>(String(initialValues?.availableCapital || 100000));
 
-  // Speech Recognition State
+  // Speech Recognition & Natural Language Voice Command State
   const [isListening, setIsListening] = useState<boolean>(false);
   const [speechSupported, setSpeechSupported] = useState<boolean>(false);
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [speechListeningState, setSpeechListeningState] = useState<SpeechListeningState>('IDLE');
+  const [liveVoiceTranscript, setLiveVoiceTranscript] = useState<string>('');
+  const [parsedVoiceCommand, setParsedVoiceCommand] = useState<ParsedBusinessCommand | null>(null);
+  const [voiceErrorMessage, setVoiceErrorMessage] = useState<string | null>(null);
 
   // Form Validation Error State
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     setSpeechSupported(isSpeechRecognitionAvailable());
+    return () => {
+      stopVoiceRecognition();
+    };
   }, []);
 
   const handleVoiceInputToggle = () => {
@@ -359,31 +375,92 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
     if (isListening) {
       stopVoiceRecognition();
       setIsListening(false);
+      setSpeechListeningState('IDLE');
     } else {
-      setIsListening(true);
-      const initialText = businessIdea.trim();
-      let lastCommittedFinal = '';
+      startVoiceSession();
+    }
+  };
 
-      startVoiceRecognition({
-        language,
-        onResult: (transcript, isFinal) => {
-          if (isFinal) {
-            const cleanText = transcript.trim();
-            if (cleanText && cleanText !== lastCommittedFinal) {
-              lastCommittedFinal = cleanText;
-              setBusinessIdea(initialText ? `${initialText} ${cleanText}` : cleanText);
-            }
-          }
-        },
-        onEnd: () => {
-          setIsListening(false);
-        },
-        onError: (error) => {
-          console.warn('Speech recognition warning:', error);
+  const startVoiceSession = () => {
+    setIsListening(true);
+    setShowVoiceModal(true);
+    setSpeechListeningState('LISTENING');
+    setLiveVoiceTranscript('');
+    setParsedVoiceCommand(null);
+    setVoiceErrorMessage(null);
+
+    startVoiceRecognition({
+      language,
+      onStart: () => {
+        setSpeechListeningState('LISTENING');
+      },
+      onStateChange: (state) => {
+        setSpeechListeningState(state);
+      },
+      onResult: (transcript, isFinal) => {
+        setLiveVoiceTranscript(transcript);
+        if (isFinal) {
+          const parsed = parseBusinessVoiceCommand(transcript, language);
+          setParsedVoiceCommand(parsed);
+          setSpeechListeningState('SUCCESS');
           setIsListening(false);
         }
-      });
+      },
+      onEnd: () => {
+        setIsListening(false);
+      },
+      onError: (error) => {
+        console.warn('Speech recognition warning:', error);
+        setVoiceErrorMessage(error);
+        setSpeechListeningState('ERROR');
+        setIsListening(false);
+      }
+    });
+  };
+
+  const handleApplyVoiceCommand = (command: ParsedBusinessCommand) => {
+    if (command.category) {
+      setBusinessCategory(command.category);
     }
+    if (command.businessIdea) {
+      setBusinessIdea(command.businessIdea);
+    }
+    if (command.capital && command.capital >= 10000) {
+      setAvailableCapital(command.capital);
+      setRawCapitalString(String(command.capital));
+    }
+    setShowVoiceModal(false);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleSelectAmbiguityOption = (option: AmbiguityOption) => {
+    setBusinessCategory(option.category);
+    setBusinessIdea(option.suggestedIdea);
+    setShowVoiceModal(false);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleEditManually = () => {
+    if (parsedVoiceCommand) {
+      if (parsedVoiceCommand.category) setBusinessCategory(parsedVoiceCommand.category);
+      if (parsedVoiceCommand.businessIdea) setBusinessIdea(parsedVoiceCommand.businessIdea);
+      if (parsedVoiceCommand.capital && parsedVoiceCommand.capital >= 10000) {
+        setAvailableCapital(parsedVoiceCommand.capital);
+        setRawCapitalString(String(parsedVoiceCommand.capital));
+      }
+    }
+    setShowVoiceModal(false);
+  };
+
+  const handleTryVoiceAgain = () => {
+    stopVoiceRecognition();
+    startVoiceSession();
+  };
+
+  const handleCloseVoiceModal = () => {
+    stopVoiceRecognition();
+    setIsListening(false);
+    setShowVoiceModal(false);
   };
 
   const handlePresetCapital = (amount: number) => {
@@ -455,26 +532,26 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
   const businessCategories = [
     {
       id: 'dairy' as const,
-      title: 'Dairy Farming',
-      subtext: 'Livestock & Milk',
+      title: t('category.dairyTitle'),
+      subtext: t('category.dairySub'),
       icon: '🐄'
     },
     {
       id: 'tailoring' as const,
-      title: 'Tailoring Unit',
-      subtext: 'Apparel & Boutique',
+      title: t('category.tailoringTitle'),
+      subtext: t('category.tailoringSub'),
       icon: '🧵'
     },
     {
       id: 'retail' as const,
-      title: 'Kirana Retail',
-      subtext: 'Provisions & FMCG',
+      title: t('category.retailTitle'),
+      subtext: t('category.retailSub'),
       icon: '🛍️'
     },
     {
       id: 'poultry' as const,
-      title: 'Poultry & Agro',
-      subtext: 'Broiler / Processing',
+      title: t('category.poultryTitle'),
+      subtext: t('category.poultrySub'),
       icon: '🐔'
     }
   ];
@@ -485,13 +562,13 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
       <div className="text-center max-w-3xl mx-auto pt-2 pb-2">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-bold bg-blue-50/90 text-blue-900 border border-blue-200 mb-2.5 shadow-2xs">
           <ShieldCheck className="w-4 h-4 text-blue-700" />
-          <span>Evidence-Aware Multi-Agent Business Advisory</span>
+          <span>{t('brand.badge')}</span>
         </div>
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-950">
-          Enterprise Feasibility & Advisory Assessment
+          {t('form.heroTitle')}
         </h1>
         <p className="text-xs sm:text-sm font-medium text-slate-600 mt-1.5 max-w-xl mx-auto leading-relaxed">
-          Tell us about your location, business idea, and available capital to begin your assessment.
+          {t('form.heroSubtitle')}
         </p>
       </div>
 
@@ -515,7 +592,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   01
                 </span>
                 <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-950">
-                  Where is your business located?
+                  {t('form.whereLocated')}
                 </h2>
               </div>
               <button
@@ -544,21 +621,21 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs sm:text-sm rounded-2xl shadow-md transition-all active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Navigation className="w-4 h-4" />
-                  <span>Use My Current Location</span>
+                  <span>{t('form.useCurrentLocation')}</span>
                 </button>
                 <p className="text-[11px] font-semibold text-slate-500">
-                  Allow location access to automatically identify your area.
+                  {t('form.allowLocationAccess')}
                 </p>
                 <div className="relative py-1">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-                  <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400"><span className="bg-white px-2">or</span></div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400"><span className="bg-white px-2">{t('common.or')}</span></div>
                 </div>
                 <button
                   type="button"
                   onClick={handleChooseManualLocation}
                   className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer"
                 >
-                  Enter Location Manually
+                  {t('form.enterLocationManually')}
                 </button>
               </div>
             )}
@@ -568,8 +645,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               <div className="py-6 text-center space-y-3 bg-blue-50/40 border border-blue-100 rounded-2xl">
                 <Loader2 className="w-8 h-8 text-blue-700 animate-spin mx-auto" />
                 <div className="space-y-0.5">
-                  <h4 className="text-xs font-black text-blue-950">Detecting your location...</h4>
-                  <p className="text-[11px] text-blue-700 font-medium">Acquiring GPS coordinates & resolving LGD boundary...</p>
+                  <h4 className="text-xs font-black text-blue-950">{t('form.detectingLocation')}</h4>
+                  <p className="text-[11px] text-blue-700 font-medium">{t('form.acquiringGps')}</p>
                 </div>
               </div>
             )}
@@ -580,11 +657,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 <div className="flex items-center justify-between border-b border-emerald-200/60 pb-2">
                   <span className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    Location Detected ✓
+                    {t('form.locationDetected')}
                   </span>
                   <span className="text-[10px] font-bold font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                     {locationResolution.source === 'LIVE_GPS'
-                      ? `Accuracy: ±${gpsAccuracy || 35} m (GPS)`
+                      ? t('form.accuracyGps', { acc: gpsAccuracy || 35 })
                       : locationResolution.source === 'DEMO'
                       ? 'Demo Scenario'
                       : 'Manual Selection'}
@@ -592,10 +669,10 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-800">
-                  <p><span className="text-slate-400 font-semibold">State:</span> {locationResolution.stateName}</p>
-                  <p><span className="text-slate-400 font-semibold">District:</span> {locationResolution.districtName}</p>
-                  <p><span className="text-slate-400 font-semibold">Mandal/Block:</span> {locationResolution.subDistrictName}</p>
-                  <p><span className="text-slate-400 font-semibold">Pincode:</span> <span className="font-mono text-blue-700">{locationResolution.pincode}</span></p>
+                  <p><span className="text-slate-400 font-semibold">{t('loc.stateLabel')}:</span> {locationResolution.stateName}</p>
+                  <p><span className="text-slate-400 font-semibold">{t('loc.districtLabel')}:</span> {locationResolution.districtName}</p>
+                  <p><span className="text-slate-400 font-semibold">{dynamicSubDistrictTerm}:</span> {locationResolution.subDistrictName}</p>
+                  <p><span className="text-slate-400 font-semibold">{t('loc.pincodeLabel')}:</span> <span className="font-mono text-blue-700">{locationResolution.pincode}</span></p>
                 </div>
 
                 {gpsAccuracy && gpsAccuracy > 200 && (
@@ -607,7 +684,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
 
                 <div className="pt-1 space-y-2 border-t border-emerald-200/60">
                   <p className="text-xs font-black text-slate-900">
-                    Is this where you plan to operate your business?
+                    {t('form.isThisPlannedLocation')}
                   </p>
                   <div className="flex items-center gap-2">
                     <button
@@ -616,7 +693,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                       className="flex-1 py-2 px-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Yes, Use This Location</span>
+                      <span>{t('form.yesUseLocation')}</span>
                     </button>
                     <button
                       type="button"
@@ -624,7 +701,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                       className="py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors cursor-pointer flex items-center gap-1"
                     >
                       <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Choose Another</span>
+                      <span>{t('form.chooseAnother')}</span>
                     </button>
                   </div>
                 </div>
@@ -636,7 +713,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               <div className="space-y-3.5 pt-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                    ENTER PLANNED BUSINESS LOCATION
+                    {t('form.enterPlannedLocation')}
                   </span>
                   <button
                     type="button"
@@ -644,7 +721,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                     className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 cursor-pointer"
                   >
                     <Navigation className="w-3 h-3" />
-                    <span>Try GPS Detection</span>
+                    <span>{t('form.tryGpsDetection')}</span>
                   </button>
                 </div>
 
@@ -740,14 +817,14 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 02
               </span>
               <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-950">
-                What are you planning to build?
+                {t('form.whatPlanningToBuild')}
               </h2>
             </div>
 
             {/* BUSINESS SECTOR CATEGORY CARDS */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                BUSINESS SECTOR CATEGORY
+                {t('form.businessSectorCategory')}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {businessCategories.map((cat) => {
@@ -778,7 +855,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                  BUSINESS SCOPE & IDEA DESCRIPTION
+                  {t('form.businessScopeDescription')}
                 </span>
                 <button
                   type="button"
@@ -790,7 +867,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   }`}
                 >
                   <Mic className="w-3 h-3" />
-                  <span>{isListening ? 'Listening...' : 'Voice Input'}</span>
+                  <span>{isListening ? t('form.listening') : t('form.voiceInput')}</span>
                 </button>
               </div>
               <textarea
@@ -800,7 +877,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                   setBusinessIdea(e.target.value);
                   if (validationError) setValidationError(null);
                 }}
-                placeholder="Describe your business scope, machinery, target capacity..."
+                placeholder={t('form.businessIdeaPlaceholder')}
                 className="w-full p-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 outline-hidden resize-none"
               />
             </div>
@@ -813,7 +890,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
                 03
               </span>
               <h2 className="text-base sm:text-lg font-black tracking-tight text-slate-950">
-                Available Own Capital
+                {t('form.availableOwnCapital')}
               </h2>
             </div>
 
@@ -854,19 +931,19 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             {/* Financial Calculator Summary Strip */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100 text-xs">
               <div>
-                <span className="text-[10px] text-slate-500 font-bold block">Own Equity</span>
+                <span className="text-[10px] text-slate-500 font-bold block">{t('form.ownEquity')}</span>
                 <span className="font-mono font-bold text-slate-900">₹{availableCapital.toLocaleString('en-IN')}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-500 font-bold block">Project Cost</span>
+                <span className="text-[10px] text-slate-500 font-bold block">{t('form.projectCost')}</span>
                 <span className="font-mono font-bold text-slate-900">₹{indicativeProjectCost.toLocaleString('en-IN')}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-500 font-bold block">Bank Loan</span>
+                <span className="text-[10px] text-slate-500 font-bold block">{t('form.bankLoan')}</span>
                 <span className="font-mono font-bold text-blue-700">₹{indicativeFinancing.toLocaleString('en-IN')}</span>
               </div>
               <div>
-                <span className="text-[10px] text-slate-500 font-bold block">Est. EMI</span>
+                <span className="text-[10px] text-slate-500 font-bold block">{t('form.estEmi')}</span>
                 <span className="font-mono font-bold text-emerald-800">₹{indicativeEMI.toLocaleString('en-IN')}/mo</span>
               </div>
             </div>
@@ -881,11 +958,11 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
-                <span>Running Multi-Agent Synthesis...</span>
+                <span>{t('form.runningSynthesis')}</span>
               </span>
             ) : (
               <>
-                <span>ANALYZE ENTERPRISE FEASIBILITY & GET ADVISORY</span>
+                <span>{t('form.analyzeBtn')}</span>
                 <ChevronRight className="w-5 h-5" />
               </>
             )}
@@ -908,13 +985,13 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
           {/* LOCATION INSIGHTS METRIC STRIP */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-4 space-y-2.5 shadow-2xs">
             <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-              LOCATION INSIGHTS
+              {t('loc.insightsTitle')}
             </span>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
                 <div className="flex items-center gap-1.5 text-blue-700">
                   <MapPin className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold text-slate-500">Location Type</span>
+                  <span className="text-[10px] font-bold text-slate-500">{t('loc.locationType')}</span>
                 </div>
                 <p className="text-xs font-black text-slate-900">
                   {locationResolution?.areaType || 'Semi-Urban'}
@@ -924,7 +1001,7 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
                 <div className="flex items-center gap-1.5 text-indigo-700">
                   <Users className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold text-slate-500">Population (Est.)</span>
+                  <span className="text-[10px] font-bold text-slate-500">{t('loc.populationEst')}</span>
                 </div>
                 <p className="text-xs font-black text-slate-900 font-mono">
                   {locationConfirmed ? '42,540' : 'Census LGD'}
@@ -934,23 +1011,23 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
                 <div className="flex items-center gap-1.5 text-emerald-700">
                   <Building2 className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold text-slate-500">Connectivity</span>
+                  <span className="text-[10px] font-bold text-slate-500">{t('loc.connectivity')}</span>
                 </div>
-                <p className="text-xs font-black text-slate-900">Good (NH-48)</p>
+                <p className="text-xs font-black text-slate-900">{t('loc.connectivityValue')}</p>
               </div>
 
               <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 space-y-0.5">
                 <div className="flex items-center gap-1.5 text-amber-700">
                   <TrendingUp className="w-3.5 h-3.5" />
-                  <span className="text-[10px] font-bold text-slate-500">Market Potential</span>
+                  <span className="text-[10px] font-bold text-slate-500">{t('loc.marketPotential')}</span>
                 </div>
-                <p className="text-xs font-black text-emerald-700">High</p>
+                <p className="text-xs font-black text-emerald-700">{t('loc.marketPotentialHigh')}</p>
               </div>
             </div>
 
             <div className="pt-1 text-[11px] text-slate-600 font-semibold flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>Based on your location, here are relevant nearby resources and opportunities.</span>
+              <span>{t('loc.nearbyNote')}</span>
             </div>
           </div>
         </div>
@@ -963,8 +1040,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <Activity className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Multi-Agent Analysis</h4>
-            <p className="text-[10px] text-slate-500 font-medium">7 Specialized AI Agents</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.multiAgent')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.multiAgentSub')}</p>
           </div>
         </div>
 
@@ -973,8 +1050,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <Compass className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Evidence-Aware</h4>
-            <p className="text-[10px] text-slate-500 font-medium">Verified & Estimated Data</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.evidence')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.evidenceSub')}</p>
           </div>
         </div>
 
@@ -983,8 +1060,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Financial Intelligence</h4>
-            <p className="text-[10px] text-slate-500 font-medium">EMI, DSCR, Cash Flow</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.finance')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.financeSub')}</p>
           </div>
         </div>
 
@@ -993,8 +1070,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <Award className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Govt. Schemes</h4>
-            <p className="text-[10px] text-slate-500 font-medium">PMEGP, Mudra & More</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.schemes')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.schemesSub')}</p>
           </div>
         </div>
 
@@ -1003,8 +1080,8 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <ShieldAlert className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Risk Assessment</h4>
-            <p className="text-[10px] text-slate-500 font-medium">Market, Financial, Operational</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.risk')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.riskSub')}</p>
           </div>
         </div>
 
@@ -1013,11 +1090,26 @@ export const BusinessInputForm: React.FC<BusinessInputFormProps> = ({
             <FileText className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-slate-900">Printable Report</h4>
-            <p className="text-[10px] text-slate-500 font-medium">Download & Share PDF</p>
+            <h4 className="text-xs font-bold text-slate-900">{t('feat.report')}</h4>
+            <p className="text-[10px] text-slate-500 font-medium">{t('feat.reportSub')}</p>
           </div>
         </div>
       </div>
+
+      {/* Voice Command Transcription & Confirmation Review Modal */}
+      <VoiceCommandReviewModal
+        isOpen={showVoiceModal}
+        listeningState={speechListeningState}
+        liveTranscript={liveVoiceTranscript}
+        parsedResult={parsedVoiceCommand}
+        errorMessage={voiceErrorMessage}
+        activeLanguage={language}
+        onApply={handleApplyVoiceCommand}
+        onSelectAmbiguityOption={handleSelectAmbiguityOption}
+        onEditManually={handleEditManually}
+        onTryAgain={handleTryVoiceAgain}
+        onClose={handleCloseVoiceModal}
+      />
     </form>
   );
 };

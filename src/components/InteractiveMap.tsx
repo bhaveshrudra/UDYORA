@@ -14,7 +14,7 @@ import {
   fetchNearbyResourcesFromGoogle,
   CATEGORY_SEARCH_PARAMS
 } from '../services/nearbyPlacesService';
-import { findTopOpportunitySpots } from '../services/opportunitySpotService';
+import { findTopOpportunitySpots, findAllOpportunitySpots } from '../services/opportunitySpotService';
 
 export interface InteractiveMapProps {
   location?: LocationResolution | null;
@@ -54,6 +54,8 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
   // Places API & Opportunity Spots Data State
   const [nearbyResources, setNearbyResources] = useState<NearbyResourceItem[]>([]);
   const [opportunitySpots, setOpportunitySpots] = useState<OpportunitySpot[]>([]);
+  const [allOpportunitySpots, setAllOpportunitySpots] = useState<OpportunitySpot[]>([]);
+  const [showAllSpots, setShowAllSpots] = useState<boolean>(false);
   const [isLoadingPlaces, setIsLoadingPlaces] = useState<boolean>(false);
   const [selectedPoi, setSelectedPoi] = useState<{
     title: string;
@@ -142,12 +144,14 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
     if (mapState !== 'confirmed' || !location || !normalizedLocationCoords) {
       setNearbyResources([]);
       setOpportunitySpots([]);
+      setAllOpportunitySpots([]);
       return;
     }
 
     // A. Calculate UDYORA Analytical Opportunities
-    const opps = findTopOpportunitySpots(location, businessCategory, activeRadius, 3);
-    setOpportunitySpots(opps);
+    const allOpps = findAllOpportunitySpots(location, businessCategory, activeRadius);
+    setAllOpportunitySpots(allOpps);
+    setOpportunitySpots(allOpps.slice(0, 3));
 
     // B. Fetch Real Nearby Resources from Google Places API
     setIsLoadingPlaces(true);
@@ -525,16 +529,27 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                   <h3 className="text-xs font-black text-slate-900 tracking-tight">
-                    RECOMMENDED OPPORTUNITIES
+                    RECOMMENDED OPPORTUNITY AREAS
                   </h3>
                 </div>
-                <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-mono">
-                  {opportunitySpots.length} Ranked
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-mono">
+                    {allOpportunitySpots.length > 0 ? (showAllSpots ? `${allOpportunitySpots.length} Total` : `Top 3 of ${allOpportunitySpots.length}`) : '0 Ranked'}
+                  </span>
+                  {allOpportunitySpots.length > 3 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllSpots(!showAllSpots)}
+                      className="text-[10px] font-bold text-blue-700 hover:text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      {showAllSpots ? 'Show Top 3' : `View All (${allOpportunitySpots.length})`}
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2">
-                {opportunitySpots.map((opp) => (
+                {(showAllSpots ? allOpportunitySpots : allOpportunitySpots.slice(0, 3)).map((opp) => (
                   <div
                     key={opp.id}
                     onClick={() => setSelectedPoi({
@@ -559,7 +574,11 @@ export const InteractiveMap: React.FC<InteractiveMapProps> = ({
                     <p className="text-[11px] font-medium text-slate-600 line-clamp-1">{opp.summaryReason}</p>
                     <div className="flex items-center justify-between text-[10px] font-bold text-slate-500 pt-0.5">
                       <span>{opp.categoryLabel}</span>
-                      <span className="text-emerald-700 font-mono">Score: {opp.opportunityScore}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-amber-800 font-mono">Score: {opp.opportunityScore}/100</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="text-emerald-700 font-mono">Conf: {opp.dataConfidence}%</span>
+                      </div>
                     </div>
                   </div>
                 ))}

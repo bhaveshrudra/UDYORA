@@ -79,7 +79,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={onNavigateHome}
                   className="px-3 py-1.5 rounded-xl hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
-                  Home
+                  {t('nav.home')}
                 </button>
               )}
               <button
@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={onReset || onNavigateHome}
                 className="px-3 py-1.5 rounded-xl text-blue-700 bg-blue-50 font-black hover:bg-blue-100 transition-colors cursor-pointer"
               >
-                Assessments
+                {t('nav.assessments')}
               </button>
               <button
                 type="button"
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-xl hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                Reports
+                {t('nav.reports')}
               </button>
               <button
                 type="button"
@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
                 }}
                 className="px-3 py-1.5 rounded-xl hover:text-blue-900 hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                Guidance
+                {t('nav.guidance')}
               </button>
             </nav>
           </div>
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition-colors cursor-pointer"
             >
               <Printer className="w-4 h-4 text-slate-600" />
-              <span className="hidden sm:inline">{t('nav.printReport') || 'Print Report'}</span>
+              <span className="hidden sm:inline">{t('nav.printReport')}</span>
             </button>
 
             {/* User Account / Auth Status Button */}
@@ -148,7 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-xs transition-colors cursor-pointer"
               >
                 <User className="w-4 h-4" />
-                <span>Account / Sign In</span>
+                <span>{t('nav.accountSignIn')}</span>
               </button>
             )}
           </div>

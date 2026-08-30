@@ -19,7 +19,7 @@ import { executeMultiAgentWorkflow } from './agents/orchestrator';
 import { useLanguage } from './i18n/LanguageContext';
 
 // Admin Imports
-import { AdminUser, getAdminSession, logoutAdmin } from './services/adminAuthService';
+import { AdminUser, getAdminSession, logoutAdmin, checkRouteAuthorization } from './services/adminAuthService';
 import { AdminLayout, AdminSubRoute } from './components/admin/AdminLayout';
 import { AdminLoginView } from './components/admin/AdminLoginView';
 import { AdminDashboardView } from './components/admin/AdminDashboardView';
@@ -338,7 +338,8 @@ export function App() {
 
   // ROUTE: SECURE ADMIN CONTROL PLANE (/admin/*)
   if (currentRoute === 'admin') {
-    if (!currentAdminUser && !getAdminSession()) {
+    const session = currentAdminUser || getAdminSession();
+    if (!session || session.role === 'ENTREPRENEUR') {
       return (
         <AdminLoginView
           onLoginSuccess={handleAdminLoginSuccess}
@@ -347,7 +348,8 @@ export function App() {
       );
     }
 
-    const activeAdmin = currentAdminUser || getAdminSession()!;
+    const activeAdmin = session;
+    const authCheck = checkRouteAuthorization(activeAdmin, adminSubRoute);
 
     return (
       <AdminLayout
@@ -357,20 +359,48 @@ export function App() {
         onLogout={handleAdminLogout}
         onNavigateToPublic={handleNavigateHome}
       >
-        {adminSubRoute === 'dashboard' && (
-          <AdminDashboardView currentAdmin={activeAdmin} onNavigate={handleAdminSubNavigate} />
+        {!authCheck.authorized ? (
+          <div className="bg-white border border-rose-200 rounded-3xl p-8 max-w-xl mx-auto my-12 text-center space-y-4 shadow-xs">
+            <div className="w-12 h-12 bg-rose-50 text-rose-700 rounded-2xl flex items-center justify-center mx-auto border border-rose-200 font-bold">
+              403
+            </div>
+            <h2 className="text-lg font-black text-slate-950">Access Restricted</h2>
+            <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              {authCheck.reason || "Your administrative role does not have permission to access this module."}
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <button
+                onClick={() => handleAdminSubNavigate('dashboard')}
+                className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Return to Dashboard
+              </button>
+              <button
+                onClick={handleNavigateHome}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                Back to Public Application
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {adminSubRoute === 'dashboard' && (
+              <AdminDashboardView currentAdmin={activeAdmin} onNavigate={handleAdminSubNavigate} />
+            )}
+            {adminSubRoute === 'locations' && <AdminLocationsView />}
+            {adminSubRoute === 'businesses' && <AdminBusinessesView />}
+            {adminSubRoute === 'schemes' && <AdminSchemesView currentAdmin={activeAdmin} />}
+            {adminSubRoute === 'evidence' && <AdminEvidenceView />}
+            {adminSubRoute === 'translations' && <AdminTranslationsView />}
+            {adminSubRoute === 'guidance' && <AdminGuidanceView />}
+            {adminSubRoute === 'assessments' && <AdminAssessmentsView />}
+            {adminSubRoute === 'participants' && <AdminParticipantsView currentAdmin={activeAdmin} />}
+            {adminSubRoute === 'users' && <AdminUserManagementView currentAdmin={activeAdmin} />}
+            {adminSubRoute === 'audit-logs' && <AdminAuditLogsView />}
+            {adminSubRoute === 'settings' && <AdminSettingsView />}
+          </>
         )}
-        {adminSubRoute === 'locations' && <AdminLocationsView />}
-        {adminSubRoute === 'businesses' && <AdminBusinessesView />}
-        {adminSubRoute === 'schemes' && <AdminSchemesView currentAdmin={activeAdmin} />}
-        {adminSubRoute === 'evidence' && <AdminEvidenceView />}
-        {adminSubRoute === 'translations' && <AdminTranslationsView />}
-        {adminSubRoute === 'guidance' && <AdminGuidanceView />}
-        {adminSubRoute === 'assessments' && <AdminAssessmentsView />}
-        {adminSubRoute === 'participants' && <AdminParticipantsView currentAdmin={activeAdmin} />}
-        {adminSubRoute === 'users' && <AdminUserManagementView currentAdmin={activeAdmin} />}
-        {adminSubRoute === 'audit-logs' && <AdminAuditLogsView />}
-        {adminSubRoute === 'settings' && <AdminSettingsView />}
       </AdminLayout>
     );
   }

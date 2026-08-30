@@ -30,6 +30,7 @@ import { EvidenceAuditModal } from './modals/EvidenceAuditModal';
 import { RiskDetailsModal } from './modals/RiskDetailsModal';
 import { FinancialBreakdownModal } from './modals/FinancialBreakdownModal';
 import { OpportunityFactorsModal } from './modals/OpportunityFactorsModal';
+import { SchemeAndFinancialGuidance } from './SchemeAndFinancialGuidance';
 import { OpportunitySpot } from '../types/map';
 
 interface ResultDashboardProps {
@@ -355,10 +356,10 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
           </div>
           <div className="flex items-baseline gap-1.5">
             <span className="text-2xl sm:text-3xl font-black text-slate-950 font-mono">
-              96%
+              {feasibilityVerdict.dataConfidenceScore ?? 92}%
             </span>
           </div>
-          <p className="text-[10px] text-slate-500 truncate">Census & LGD Verified</p>
+          <p className="text-[10px] text-slate-500 truncate">Census & LGD Evidence Provenance</p>
         </div>
 
         {/* Metric 3: Market Viability */}
@@ -633,88 +634,12 @@ export const ResultDashboard: React.FC<ResultDashboardProps> = ({
           6. SCHEME & EVIDENCE GUIDANCE (WITH PROGRESSIVE DISCLOSURE MODAL)
           ========================================================================= */}
       <section id="guidance" className="scroll-mt-32 sm:scroll-mt-36">
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h2 className="text-xs font-black tracking-wider uppercase text-slate-950 flex items-center gap-2">
-              <Award className="w-4 h-4 text-emerald-700" />
-              <span>{t('dash.scheme.title') || 'SCHEME & EVIDENCE'}</span>
-            </h2>
-            <button
-              onClick={() => setShowEvidenceModal(true)}
-              className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 hover:text-blue-900 hover:underline cursor-pointer"
-            >
-              <span>{t('dash.scheme.viewEvidence') || 'View Ground-Truth Evidence Audit Log'}</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* Left Column: Top Recommended Scheme */}
-            <div className="md:col-span-8 bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
-              <div className="flex items-start justify-between gap-2 border-b border-slate-200 pb-2">
-                <div>
-                  <span className="text-[10px] font-bold uppercase text-slate-500 block">Recommended Support Scheme</span>
-                  <h3 className="text-sm font-black text-slate-950 mt-0.5">{activeScheme.name}</h3>
-                  <span className="text-[10px] text-slate-500 font-mono">Nodal Agency: {activeScheme.nodalAgency}</span>
-                </div>
-                <span className="font-mono font-bold text-xs text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-md shrink-0">
-                  {activeMatch.matchScore || 88}% {activeMatch.status || 'ELIGIBLE'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 text-xs font-mono">
-                <div className="bg-white p-2 rounded border border-slate-200">
-                  <span className="text-[10px] text-slate-500 block font-sans">Capital Subsidy</span>
-                  <span className="font-bold text-emerald-900">{activeScheme.subsidyPercentage ? `${activeScheme.subsidyPercentage}% (Rural)` : '35%'}</span>
-                </div>
-                <div className="bg-white p-2 rounded border border-slate-200">
-                  <span className="text-[10px] text-slate-500 block font-sans">Min Own Margin</span>
-                  <span className="font-bold text-slate-900">{activeScheme.minOwnContributionPercentage || 5}%</span>
-                </div>
-                <div className="bg-white p-2 rounded border border-slate-200">
-                  <span className="text-[10px] text-slate-500 block font-sans">Max Ceiling</span>
-                  <span className="font-bold text-slate-900">₹{((activeScheme.maxProjectCostCeiling || 2500000) / 100000).toFixed(0)} Lakhs</span>
-                </div>
-              </div>
-
-              <p className="text-xs text-slate-700 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200 leading-relaxed">
-                <strong className="font-bold text-blue-950">{t('dash.scheme.whyMatches') || 'WHY THIS MATCH?'} </strong>
-                {activeMatch.qualificationReason || 'Project cost is within official ceiling and own capital exceeds minimum margin requirements.'}
-              </p>
-            </div>
-
-            {/* Right Column: Compact Evidence Audit Summary Card */}
-            <div className="md:col-span-4 bg-slate-900 text-white p-4 rounded-xl flex flex-col justify-between space-y-3">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">GROUND-TRUTH AUDIT</span>
-                <span className="text-2xl font-black text-white font-mono">{evidenceRecords.length || 26} Records</span>
-                <p className="text-xs text-slate-300">Verified against LGD 2026.02 & Census administrative databases.</p>
-              </div>
-
-              <div className="space-y-1.5 text-xs font-mono">
-                <div className="flex items-center justify-between text-emerald-400">
-                  <span>Verified:</span>
-                  <span className="font-bold">{verifiedCount || 22}</span>
-                </div>
-                <div className="flex items-center justify-between text-amber-300">
-                  <span>Estimated:</span>
-                  <span className="font-bold">{estimatedCount || 3}</span>
-                </div>
-                <div className="flex items-center justify-between text-rose-400">
-                  <span>Insufficient:</span>
-                  <span className="font-bold">{insufficientCount || 1}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowEvidenceModal(true)}
-                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
-              >
-                View Complete Audit Table
-              </button>
-            </div>
-          </div>
-        </div>
+        <SchemeAndFinancialGuidance
+          schemes={schemeMatches}
+          evidenceRecords={evidenceRecords}
+          financialPlan={financialPlan}
+          input={input}
+        />
       </section>
 
       {/* =========================================================================

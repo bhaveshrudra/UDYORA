@@ -346,33 +346,37 @@ export function scoreOpportunitySpot(
     }
   };
 
+  const evidenceIds = candidate.sources.map((s) => `ev_${candidate.id}_${s.name.replace(/\s+/g, '_').toLowerCase()}`);
+
   return {
     id: candidate.id,
+    name: candidate.name,
     spotName: candidate.name,
     category: candidate.category,
     categoryLabel: candidate.categoryLabel,
     latitude: spotLat,
     longitude: spotLng,
     distanceKm,
+    distanceFromCenter: distanceKm,
     opportunityScore: finalScore,
     dataConfidence: dataConfScore,
     dataQuality: candidate.dataQuality,
     rank: 1, // Will be re-indexed after ranking
     summaryReason,
+    evidenceIds,
     factors,
     sources: candidate.sources
   };
 }
 
 /**
- * Top Candidate Opportunity Spot Finder
- * Filters spots by catchment radius (5km / 10km) and returns top ranked candidates
+ * All Opportunity Spot Finder
+ * Filters spots by catchment radius (5km / 10km) and returns all scored candidates
  */
-export function findTopOpportunitySpots(
+export function findAllOpportunitySpots(
   location: LocationResolution,
   businessCategory: string = 'dairy',
-  radiusKm: number = 5,
-  maxResults: number = 4
+  radiusKm: number = 5
 ): OpportunitySpot[] {
   const centerLat = location.latitude || 18.3475;
   const centerLng = location.longitude || 73.8567;
@@ -391,10 +395,22 @@ export function findTopOpportunitySpots(
   const sorted = inRadiusSpots.sort((a, b) => b.opportunityScore - a.opportunityScore);
 
   // Re-assign ranks 1, 2, 3...
-  const ranked = sorted.slice(0, maxResults).map((spot, idx) => ({
+  return sorted.map((spot, idx) => ({
     ...spot,
     rank: idx + 1
   }));
+}
 
-  return ranked;
+/**
+ * Top Candidate Opportunity Spot Finder
+ * Defaults to TOP 3 recommended opportunity areas
+ */
+export function findTopOpportunitySpots(
+  location: LocationResolution,
+  businessCategory: string = 'dairy',
+  radiusKm: number = 5,
+  maxResults: number = 3
+): OpportunitySpot[] {
+  const all = findAllOpportunitySpots(location, businessCategory, radiusKm);
+  return all.slice(0, maxResults);
 }
