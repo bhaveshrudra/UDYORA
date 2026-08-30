@@ -1,0 +1,11 @@
+entrepreneur_id,name,gender,age,state,district,business_idea,business_category,available_own_capital,years_of_experience,location_type,preferred_language
+ENT-201,Rajesh Gaikwad,Male,32,Maharashtra,Pune,Modern dairy farming with 10 crossbred cows,Dairy,1 lakh,5,rural,mr
+ENT-202,Kavita Devi,Female,28,Maharashtra,Satara,Boutique and women tailoring garment unit,Tailoring,50k,4,rural,mr
+ENT-203,Srinivas Goud,Male,39,Telangana,Rangareddy,Kirana general provisions & FMCG retail store,Kirana Retail,"₹75,000",7,semi-urban,te
+ENT-204,Manjula Reddy,Female,35,Telangana,Hyderabad,Commercial layer poultry farming unit,Poultry,2.5 lakh,3,rural,te
+ENT-205,Santosh Deshmukh,Male,44,Maharashtra,Pune,Organic flour mill & cold pressed oil processing,Food Processing,1.5 lakh,8,rural,mr
+ENT-206,Praveen Kumar,Male,26,Karnataka,Bengaluru Urban,Mobile repair and accessories sales shop,Electronics Services,80000,2,urban,kn
+ENT-207,Sneha Kulkarni,Female,30,Maharashtra,Satara,Handloom embroidery and designer blouse tailoring,Tailoring,60000,6,rural,en
+ENT-208,Vijay Patil,Male,52,Maharashtra,Kolhapur,Goat rearing and livestock breeding farm,Animal Husbandry,1.2 lakh,10,rural,hi
+ENT-209,Meera Sen,Female,29,West Bengal,Kolkata,Eco-friendly jute bag manufacturing unit,Manufacturing,1 lakh,4,urban,bengali
+ENT-210,Rajesh Gaikwad,Male,32,Maharashtra,Pune,Modern dairy farming with 10 crossbred cows,Dairy,1 lakh,5,rural,mr

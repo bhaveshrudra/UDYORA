@@ -22,7 +22,8 @@ import {
   BookOpen,
   UserCheck,
   Building2,
-  FileCode
+  FileCode,
+  FileSpreadsheet
 } from 'lucide-react';
 import { AdminUser, isRouteAllowedForRole } from '../../services/adminAuthService';
 
@@ -32,6 +33,7 @@ export type AdminSubRoute =
   | 'businesses'
   | 'schemes'
   | 'evidence'
+  | 'datasets'
   | 'translations'
   | 'guidance'
   | 'assessments'
@@ -75,7 +77,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         { id: 'locations' as AdminSubRoute, label: 'Locations', icon: <MapPin className="w-4 h-4" /> },
         { id: 'businesses' as AdminSubRoute, label: 'Business Templates', icon: <Briefcase className="w-4 h-4" /> },
         { id: 'schemes' as AdminSubRoute, label: 'Government Schemes', icon: <Award className="w-4 h-4" /> },
-        { id: 'evidence' as AdminSubRoute, label: 'Evidence Sources', icon: <Database className="w-4 h-4" /> }
+        { id: 'evidence' as AdminSubRoute, label: 'Evidence Sources', icon: <Database className="w-4 h-4" /> },
+        { id: 'datasets' as AdminSubRoute, label: 'Datasets & Ingestion', icon: <FileSpreadsheet className="w-4 h-4" /> }
       ]
     },
     {

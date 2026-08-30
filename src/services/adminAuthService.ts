@@ -105,6 +105,7 @@ export const ROUTE_PERMISSION_MAP: Record<string, AdminPermission> = {
   dashboard: 'VIEW_DASHBOARD',
   schemes: 'MANAGE_SCHEMES',
   evidence: 'MANAGE_EVIDENCE',
+  datasets: 'MANAGE_EVIDENCE',
   locations: 'MANAGE_LOCATIONS',
   businesses: 'MANAGE_BUSINESSES',
   translations: 'MANAGE_TRANSLATIONS',

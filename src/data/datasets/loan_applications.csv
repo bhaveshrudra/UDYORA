@@ -1,0 +1,11 @@
+application_id,applicant_name,annual_income,project_type,estimated_project_cost,requested_loan_amount,education_status,bank_account_status,preferred_language,state,district
+LOAN-301,Ramesh Kadam,1.8 lakh,Dairy Enterprise,10 lakh,9 lakh,10th Pass,Active,mr,Maharashtra,Pune
+LOAN-302,Sunita Bai Rathod,95000,Garment Tailoring,5 lakh,4.5 lakh,8th Pass,Active,mr,Maharashtra,Satara
+LOAN-303,Venkatesh Rao,2.4 lakh,FMCG Retail Shop,15 lakh,13.5 lakh,Graduate,Active,te,Telangana,Rangareddy
+LOAN-304,Lakshmi Devi,1.2 lakh,Poultry Farm,3.5 lakh,3.15 lakh,12th Pass,Active,te,Telangana,Hyderabad
+LOAN-305,Anand Shinde,1.5 lakh,Retail Grocery,8 lakh,7.2 lakh,10th Pass,Inactive,hi,Maharashtra,Pune
+LOAN-306,Pooja Hegde,3 lakh,Food Processing,12 lakh,10.8 lakh,Post Graduate,Active,kn,Karnataka,Bengaluru Urban
+LOAN-307,Kavita Mohite,2.1 lakh,Tailoring Unit,7.5 lakh,6.75 lakh,Graduate,Active,mr,Maharashtra,Kolhapur
+LOAN-308,Suresh Reddy,2.8 lakh,Agri Equipment Services,20 lakh,18 lakh,Diploma,Active,te,Andhra Pradesh,Chittoor
+LOAN-309,Venkatesh Rao,2.4 lakh,FMCG Retail Shop,12 lakh,10.8 lakh,Graduate,Active,te,Telangana,Rangareddy
+LOAN-310,Ramesh Kadam,1.8 lakh,Dairy Enterprise,10 lakh,9 lakh,10th Pass,Active,mr,Maharashtra,Pune

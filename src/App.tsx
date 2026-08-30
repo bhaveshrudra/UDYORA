@@ -36,6 +36,7 @@ import {
   AdminAuditLogsView,
   AdminSettingsView
 } from './components/admin/AdminManagementViews';
+import { AdminDatasetsView } from './components/admin/AdminDatasetsView';
 import { recordAssessment } from './services/adminDataService';
 
 type AppRoute = 'landing' | 'app' | 'admin_login' | 'admin';
@@ -392,6 +393,7 @@ export function App() {
             {adminSubRoute === 'businesses' && <AdminBusinessesView />}
             {adminSubRoute === 'schemes' && <AdminSchemesView currentAdmin={activeAdmin} />}
             {adminSubRoute === 'evidence' && <AdminEvidenceView />}
+            {adminSubRoute === 'datasets' && <AdminDatasetsView currentAdmin={activeAdmin} />}
             {adminSubRoute === 'translations' && <AdminTranslationsView />}
             {adminSubRoute === 'guidance' && <AdminGuidanceView />}
             {adminSubRoute === 'assessments' && <AdminAssessmentsView />}

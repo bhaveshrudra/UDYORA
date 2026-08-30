@@ -1,0 +1,11 @@
+applicant_id,full_name,gender,age,state,district,annual_family_income,estimated_project_cost,education_level,social_category,special_category,prior_experience_years,eligibility_status
+APP-101,Ramesh Kadam,Male,34,Maharashtra,Pune,"₹1,80,000",10 lakh,10th Pass,OBC,Rural General,4,ELIGIBLE_PMEGP
+APP-102,Sunita Bai Rathod,Female,29,Maharashtra,Satara,"₹95,000",5 lakh,8th Pass,SC,Women Rural,6,ELIGIBLE_STANDUP
+APP-103,Venkatesh Rao,Male,42,Telangana,Rangareddy,"₹2,40,000",15 lakh,Graduate,General,Urban,8,ELIGIBLE_MUDRA_TARUN
+APP-104,Lakshmi Devi,Female,31,Telangana,Hyderabad,"₹1,20,000",3.5 lakh,12th Pass,OBC,Women Urban,3,ELIGIBLE_MUDRA_KISHORE
+APP-105,Anand Shinde,Male,16,Maharashtra,Pune,"₹1,50,000",8 lakh,10th Pass,General,Rural,1,INVALID_AGE_UNDERAGE
+APP-106,Pooja Hegde,Female,27,Karnataka,Bengaluru Urban,"₹3,00,000",12 lakh,Post Graduate,General,Women,2,ELIGIBLE_PMEGP
+APP-107,Basavaraj Patil,Male,38,Karnataka,Belagavi,"₹1,60,000",-50000,10th Pass,General,Rural,5,INVALID_NEGATIVE_COST
+APP-108,Ramesh Kadam,Male,34,Maharashtra,Pune,"₹1,80,000",10 lakh,10th Pass,OBC,Rural General,4,DUPLICATE_APP_101
+APP-109,Kavita Mohite,Female,36,Maharashtra,Kolhapur,"₹2,10,000",7.5 lakh,Graduate,OBC,Women Rural,7,ELIGIBLE_PMEGP
+APP-110,Suresh Reddy,Male,45,Andhra Pradesh,Chittoor,"₹2,80,000",20 lakh,Diploma,General,Rural,12,ELIGIBLE_STANDUP
