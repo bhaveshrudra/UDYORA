@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Sparkles,
   ShieldCheck,
@@ -6,33 +6,25 @@ import {
   TrendingUp,
   ShieldAlert,
   Info,
-  ExternalLink,
   CheckCircle2,
   HelpCircle,
   Database,
-  X,
-  Layers,
-  FileCheck,
-  Building,
-  MapPin,
-  Calculator,
-  Shield
+  Layers
 } from 'lucide-react';
 import { SwotAnalysis, SwotItem } from '../types/swotTypes';
 import { EvidenceRecord } from '../types';
 import { useLanguage } from '../i18n/LanguageContext';
 import { SupportedLanguage } from '../i18n/types';
-import { GLOBAL_EVIDENCE_STORE } from '../data/evidenceStore';
 
 interface SwotAnalysisSectionProps {
   swotAnalysis?: SwotAnalysis;
   evidenceAuditLog?: EvidenceRecord[];
 }
 
-// Comprehensive Natural Language Localization Dictionary for SWOT Elements
+// Natural Language Localization Dictionary for SWOT Elements
 const SWOT_LOCALIZED_FACTORS: Record<
   SupportedLanguage,
-  Record<string, { title: string; explanationPrefix?: string; badgeLabel?: string }>
+  Record<string, { title: string; badgeLabel?: string }>
 > = {
   en: {
     swot_s_dscr: { title: 'Robust Debt-Service Coverage & Repayment Capacity', badgeLabel: 'Financial Viability' },
@@ -148,163 +140,60 @@ const SWOT_LOCALIZED_FACTORS: Record<
 
 const SOURCE_TYPE_LABELS: Record<SupportedLanguage, Record<string, string>> = {
   en: {
-    FINANCE: 'Financial Engine (RBI DSCR Norms)',
-    LOCATION: 'Location Intelligence (LGD & GIS Survey)',
+    FINANCE: 'Financial Engine',
+    LOCATION: 'Location Intelligence',
     BUSINESS: 'Business Operations Model',
-    SCHEME: 'Government Policy Guidelines',
-    MARKET: 'Market Demographics & Survey',
+    SCHEME: 'Government Scheme Rules',
+    MARKET: 'Market Intelligence Agent',
     RISK: 'Multi-Agent Risk Engine',
     EVIDENCE: 'Primary Data Verification'
   },
   hi: {
-    FINANCE: 'वित्तीय इंजन (RBI DSCR मानक)',
-    LOCATION: 'स्थान इंटेलिजेंस (LGD व GIS सर्वे)',
-    BUSINESS: 'व्यावसायिक संचालन मॉडल',
-    SCHEME: 'सरकारी नीति दिशानिर्देश',
-    MARKET: 'बाज़ार जनसांख्यिकी एवं सर्वे',
-    RISK: 'जोखिम विश्लेषण इंजन',
-    EVIDENCE: 'प्राथमिक डेटा सत्यापन'
+    FINANCE: 'Financial Engine (वित्तीय इंजन)',
+    LOCATION: 'Location Intelligence (स्थान इंटेलिजेंस)',
+    BUSINESS: 'Business Model (व्यावसायिक मॉडल)',
+    SCHEME: 'Government Scheme Rules (सरकारी योजना नियम)',
+    MARKET: 'Market Intelligence Agent (बाज़ार इंटेलिजेंस)',
+    RISK: 'Multi-Agent Risk Engine (जोखिम इंजन)',
+    EVIDENCE: 'Primary Data Verification (प्राथमिक डेटा सत्यापन)'
   },
   mr: {
-    FINANCE: 'आर्थिक इंजिन (RBI DSCR निकष)',
-    LOCATION: 'स्थान विश्लेषण (LGD व GIS सर्व्हे)',
-    BUSINESS: 'व्यवसाय कार्यप्रणाली मॉडेल',
-    SCHEME: 'सरकारी योजना मार्गदर्शक तत्त्वे',
-    MARKET: 'बाजारपेठ लोकसंख्या व पाहणी',
-    RISK: 'जोखीम मूल्यांकन इंजिन',
-    EVIDENCE: 'प्राथमिक माहिती पडताळणी'
+    FINANCE: 'Financial Engine (आर्थिक इंजिन)',
+    LOCATION: 'Location Intelligence (स्थान विश्लेषण)',
+    BUSINESS: 'Business Model (व्यवसाय मॉडेल)',
+    SCHEME: 'Government Scheme Rules (शासकीय योजना नियम)',
+    MARKET: 'Market Intelligence Agent (बाजार विश्लेषण)',
+    RISK: 'Multi-Agent Risk Engine (जोखीम इंजिन)',
+    EVIDENCE: 'Primary Data Verification (प्राथमिक माहिती)'
   },
   te: {
-    FINANCE: 'ఆర్థిక ఇంజిన్ (RBI DSCR ప్రమాణాలు)',
-    LOCATION: 'స్థాన సమాచారం (LGD & GIS సర్వే)',
-    BUSINESS: 'వ్యాపార నిర్వహణ మోడల్',
-    SCHEME: 'ప్రభుత్వ విధాన మార్గదర్శకాలు',
-    MARKET: 'మార్కెట్ జనాభా & సర్వే',
-    RISK: 'రిస్క్ విశ్లేషణ ఇంజిన్',
-    EVIDENCE: 'ప్రాథమిక డేటా ధృవీకరణ'
+    FINANCE: 'Financial Engine (ఆర్థిక ఇంజిన్)',
+    LOCATION: 'Location Intelligence (స్థాన సమాచారం)',
+    BUSINESS: 'Business Operations (వ్యాపార నిర్వహణ)',
+    SCHEME: 'Government Scheme Rules (ప్రభుత్వ పథకాల నియమాలు)',
+    MARKET: 'Market Intelligence Agent (మార్కెట్ సమాచారం)',
+    RISK: 'Multi-Agent Risk Engine (రిస్క్ ఇంజిన్)',
+    EVIDENCE: 'Primary Data Verification (డేటా ధృవీకరణ)'
   },
   kn: {
-    FINANCE: 'ಹಣಕಾಸು ಎಂಜಿನ್ (RBI DSCR ಮಾನದಂಡಗಳು)',
-    LOCATION: 'ಸ್ಥಳ ಮಾಹಿತಿ (LGD ಮತ್ತು GIS ಸಮೀಕ್ಷೆ)',
-    BUSINESS: 'ವ್ಯವಹಾರ ಕಾರ್ಯಾಚರಣೆ ಮಾದರಿ',
-    SCHEME: 'ಸರ್ಕಾರಿ ನೀತಿ ಮಾರ್ಗಸೂಚಿಗಳು',
-    MARKET: 'ಮಾರುಕಟ್ಟೆ ಜನಸಂಖ್ಯಾಶಾಸ್ತ್ರ ಮತ್ತು ಸಮೀಕ್ಷೆ',
-    RISK: 'ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ ಎಂಜಿನ್',
-    EVIDENCE: 'ಪ್ರಾಥಮಿಕ ಮಾಹಿತಿ ಪರಿಶೀಲನೆ'
+    FINANCE: 'Financial Engine (ಹಣಕಾಸು ಎಂಜಿನ್)',
+    LOCATION: 'Location Intelligence (ಸ್ಥಳ ಮಾಹಿತಿ)',
+    BUSINESS: 'Business Operations (ವ್ಯವಹಾರ ಕಾರ್ಯಾಚರಣೆ)',
+    SCHEME: 'Government Scheme Rules (ಸರ್ಕಾರಿ ಯೋಜನೆ ನಿಯಮಗಳು)',
+    MARKET: 'Market Intelligence Agent (ಮಾರುಕಟ್ಟೆ ಮಾಹಿತಿ)',
+    RISK: 'Multi-Agent Risk Engine (ಅಪಾಯ ವಿಶ್ಲೇಷಣೆ)',
+    EVIDENCE: 'Primary Data Verification (ಮಾಹಿತಿ ಪರಿಶೀಲನೆ)'
   }
 };
 
 export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
-  swotAnalysis,
-  evidenceAuditLog = []
+  swotAnalysis
 }) => {
   const { language } = useLanguage();
-  const [selectedItemForEvidence, setSelectedItemForEvidence] = useState<SwotItem | null>(null);
-
-  // Close modal on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSelectedItemForEvidence(null);
-      }
-    };
-    if (selectedItemForEvidence) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedItemForEvidence]);
 
   if (!swotAnalysis) return null;
 
   const { strengths, weaknesses, opportunities, threats, dataQuality } = swotAnalysis;
-
-  // Resolve matching evidence records from evidenceAuditLog, GLOBAL_EVIDENCE_STORE, and domain fallbacks
-  const getMatchedEvidence = (item: SwotItem | null): EvidenceRecord[] => {
-    if (!item) return [];
-
-    const found: EvidenceRecord[] = [];
-    const seenIds = new Set<string>();
-
-    // 1. Check passed evidenceAuditLog
-    if (Array.isArray(evidenceAuditLog)) {
-      evidenceAuditLog.forEach((ev) => {
-        if (
-          item.evidenceIds.includes(ev.id) ||
-          item.evidenceIds.some((id) => ev.id.includes(id) || id.includes(ev.id)) ||
-          (ev.metricName && ev.metricName.toLowerCase().includes(item.sourceType.toLowerCase()))
-        ) {
-          if (!seenIds.has(ev.id)) {
-            seenIds.add(ev.id);
-            found.push(ev);
-          }
-        }
-      });
-    }
-
-    // 2. Check GLOBAL_EVIDENCE_STORE
-    item.evidenceIds.forEach((id) => {
-      if (GLOBAL_EVIDENCE_STORE[id] && !seenIds.has(id)) {
-        seenIds.add(id);
-        found.push(GLOBAL_EVIDENCE_STORE[id]);
-      }
-    });
-
-    // 3. If empty, synthesize verified domain authority record for full transparency
-    if (found.length === 0) {
-      if (item.sourceType === 'FINANCE') {
-        found.push({
-          id: `ev_fin_bench_${item.id}`,
-          metricName: item.metricReference || 'Debt Service Coverage & Promoter Margin Compliance',
-          value: item.metricReference ? item.metricReference.split(':')[1]?.trim() || item.metricReference : 'Verified under standard reducing balance formula',
-          source: 'Reserve Bank of India (RBI) Prudential Norms on MSME Credit Facilities',
-          sourceUrl: 'https://www.rbi.org.in',
-          geographicLevel: 'National',
-          timestamp: '2026-01-15T00:00:00Z',
-          status: 'VERIFIED',
-          confidence: item.confidence || 0.95
-        });
-      } else if (item.id.includes('scheme') || (item.sourceType as string) === 'SCHEME') {
-        found.push({
-          id: `ev_scheme_guidelines_${item.id}`,
-          metricName: item.badgeLabel || 'Government Margin Money & Capital Subsidy Rate',
-          value: '25% - 35% Capital Grant via Matched Nodal Scheme',
-          source: 'Ministry of MSME / KVIC Official Operational Guidelines',
-          sourceUrl: 'https://www.kviconline.gov.in/pmegpeportal/pmegphome/index.jsp',
-          geographicLevel: 'National',
-          timestamp: '2026-01-01T00:00:00Z',
-          status: 'VERIFIED',
-          confidence: 1.0
-        });
-      } else if (item.sourceType === 'LOCATION') {
-        found.push({
-          id: `ev_loc_lgd_${item.id}`,
-          metricName: item.metricReference || 'Micro-Location Spatial & Connectivity Radius',
-          value: item.metricReference ? item.metricReference.split(':')[1]?.trim() || item.metricReference : 'Verified via LGD 2026.02 and GIS Survey',
-          source: 'Local Government Directory (LGD 2026.02) & Survey of India Spatial Data',
-          sourceUrl: 'https://lgdirectory.gov.in',
-          geographicLevel: 'District',
-          timestamp: '2026-02-01T00:00:00Z',
-          status: 'VERIFIED',
-          confidence: item.confidence || 0.92
-        });
-      } else {
-        found.push({
-          id: `ev_agent_audit_${item.id}`,
-          metricName: item.title,
-          value: item.metricReference || item.badgeLabel || 'Verified Multi-Agent Parameter',
-          source: `UDYORA ${item.sourceType} Assessment Agent & Statistical Engine`,
-          geographicLevel: 'Block',
-          timestamp: '2026-08-31T00:00:00Z',
-          status: item.dataQuality || 'VERIFIED',
-          confidence: item.confidence || 0.90
-        });
-      }
-    }
-
-    return found;
-  };
-
-  const matchedEvidenceRecords = getMatchedEvidence(selectedItemForEvidence);
 
   const labels = {
     en: {
@@ -314,18 +203,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
       weaknesses: 'Weaknesses',
       opportunities: 'Opportunities',
       threats: 'Threats',
-      viewEvidence: 'View Evidence',
-      closeModal: 'Close',
-      evidenceModalTitle: 'Source Evidence & Provenance Audit',
-      noEvidenceFound: 'No explicit primary registry metric ID attached. Derived from validated operational formula.',
       sourceLabel: 'Source:',
       factorsCount: 'Factors',
       deterministicBadge: 'Deterministic Evidence',
-      dataQualityLabel: 'Data Quality:',
-      metricDetail: 'Factor Details & Explanation',
-      evidenceSectionTitle: 'Primary Verified Registry Records',
-      authorityTitle: 'Authority & Methodology',
-      openRegistry: 'Official Portal'
+      dataQualityLabel: 'Data Quality:'
     },
     hi: {
       sectionTitle: 'प्रमाण-आधारित स्वाट (SWOT) विश्लेषण',
@@ -334,18 +215,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
       weaknesses: 'कमजोरियाँ (Weaknesses)',
       opportunities: 'अवसर (Opportunities)',
       threats: 'चुनौतियां / खतरे (Threats)',
-      viewEvidence: 'प्रमाण देखें',
-      closeModal: 'बंद करें',
-      evidenceModalTitle: 'मूल साक्ष्य एवं स्रोत ऑडिट विवरण',
-      noEvidenceFound: 'कोई प्रत्यक्ष रजिस्ट्री मीट्रिक नहीं। मानक फॉर्मूले के आधार पर प्राप्त।',
       sourceLabel: 'स्रोत:',
       factorsCount: 'कारक',
       deterministicBadge: 'सत्यापित साक्ष्य',
-      dataQualityLabel: 'डेटा गुणवत्ता:',
-      metricDetail: 'कारक विवरण एवं व्याख्या',
-      evidenceSectionTitle: 'प्राथमिक सत्यापित रजिस्ट्री रिकॉर्ड',
-      authorityTitle: 'प्राधिकरण एवं कार्यप्रणाली',
-      openRegistry: 'आधिकारिक पोर्टल'
+      dataQualityLabel: 'डेटा गुणवत्ता:'
     },
     mr: {
       sectionTitle: 'पुरावा-आधारित स्वाट (SWOT) विश्लेषण',
@@ -354,18 +227,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
       weaknesses: 'उणिवा (Weaknesses)',
       opportunities: 'संधी (Opportunities)',
       threats: 'धोके / आव्हाने (Threats)',
-      viewEvidence: 'पुरावा पहा',
-      closeModal: 'बंद करा',
-      evidenceModalTitle: 'मूळ पुरावा आणि स्रोत तपासणी तपशील',
-      noEvidenceFound: 'प्रत्यक्ष नोंदणी मेट्रिक उपलब्ध नाही. प्रमाणित सूत्रावरून काढलेले.',
       sourceLabel: 'स्रोत:',
       factorsCount: 'घटक',
       deterministicBadge: 'प्रमाणित पुरावा',
-      dataQualityLabel: 'माहिती दर्जा:',
-      metricDetail: 'घटक तपशील आणि स्पष्टीकरण',
-      evidenceSectionTitle: 'प्राथमिक सत्यापित नोंदणी माहिती',
-      authorityTitle: 'प्राधिकरण आणि पद्धत',
-      openRegistry: 'अधिकृत पोर्टल'
+      dataQualityLabel: 'माहिती दर्जा:'
     },
     te: {
       sectionTitle: 'సాక్ష్యాధారిత SWOT విశ్లేషణ',
@@ -374,18 +239,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
       weaknesses: 'బలహీనతలు (Weaknesses)',
       opportunities: 'అవకాశాలు (Opportunities)',
       threats: 'ముప్పులు / సవాళ్లు (Threats)',
-      viewEvidence: 'సాక్ష్యం చూడండి',
-      closeModal: 'మూసివేయి',
-      evidenceModalTitle: 'మూల సాక్ష్యం & ఆధారాల సమగ్ర పరిశీలన',
-      noEvidenceFound: 'ప్రత్యక్ష రిజిస్ట్రీ మెట్రిక్ లేదు. ప్రామాణిక సూత్రం నుండి లెక్కించబడింది.',
       sourceLabel: 'మూలం:',
       factorsCount: 'కారకాలు',
       deterministicBadge: 'ధృవీకరించిన సాక్ష్యం',
-      dataQualityLabel: 'డేటా నాణ్యత:',
-      metricDetail: 'అంశం సమగ్ర వివరణ',
-      evidenceSectionTitle: 'ధృవీకరించబడిన ప్రాథమిక రికార్డులు',
-      authorityTitle: 'అధికారిక సంస్థ & గణన పద్ధతి',
-      openRegistry: 'అధికారిక పోర్టల్'
+      dataQualityLabel: 'డేటా నాణ్యత:'
     },
     kn: {
       sectionTitle: 'ಸಾಕ್ಷ್ಯಾಧಾರಿತ SWOT ವಿಶ್ಲೇಷಣೆ',
@@ -394,18 +251,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
       weaknesses: 'ದೌರ್ಬಲ್ಯಗಳು (Weaknesses)',
       opportunities: 'ಅವಕಾಶಗಳು (Opportunities)',
       threats: 'ಬೆದರಿಕೆಗಳು (Threats)',
-      viewEvidence: 'ಸಾಕ್ಷ್ಯ ವೀಕ್ಷಿಸಿ',
-      closeModal: 'ಮುಚ್ಚಿ',
-      evidenceModalTitle: 'ಮೂಲ ಸಾಕ್ಷ್ಯ ಮತ್ತು ಪರಿಶೀಲನಾ ವರದಿ',
-      noEvidenceFound: 'ಯಾವುದೇ ನೇರ ರಿಜಿಸ್ಟ್ರಿ ಮೆಟ್ರಿಕ್ ಇಲ್ಲ. ಅಧಿಕೃತ ಸೂತ್ರದಿಂದ ಪಡೆಯಲಾಗಿದೆ.',
       sourceLabel: 'ಮೂಲ:',
       factorsCount: 'ಅಂಶಗಳು',
       deterministicBadge: 'ಪರಿಶೀಲಿಸಿದ ಪುರಾವೆ',
-      dataQualityLabel: 'ಮಾಹಿತಿ ಗುಣಮಟ್ಟ:',
-      metricDetail: 'ಅಂಶದ ವಿವರಣೆ ಮತ್ತು ಮಾಹಿತಿ',
-      evidenceSectionTitle: 'ಪರಿಶೀಲಿಸಿದ ಪ್ರಾಥಮಿಕ ದಾಖಲೆಗಳು',
-      authorityTitle: 'ಅಧಿಕೃತ ಸಂಸ್ಥೆ ಮತ್ತು ವಿಧಾನ',
-      openRegistry: 'ಅಧಿಕೃತ ಪೋರ್ಟಲ್'
+      dataQualityLabel: 'ಮಾಹಿತಿ ಗುಣಮಟ್ಟ:'
     }
   }[language] || {
     sectionTitle: 'Evidence-Based SWOT Analysis',
@@ -414,18 +263,10 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
     weaknesses: 'Weaknesses',
     opportunities: 'Opportunities',
     threats: 'Threats',
-    viewEvidence: 'View Evidence',
-    closeModal: 'Close',
-    evidenceModalTitle: 'Source Evidence & Provenance Audit',
-    noEvidenceFound: 'No explicit primary registry metric ID attached. Derived from validated operational formula.',
     sourceLabel: 'Source:',
     factorsCount: 'Factors',
     deterministicBadge: 'Deterministic Evidence',
-    dataQualityLabel: 'Data Quality:',
-    metricDetail: 'Factor Details & Explanation',
-    evidenceSectionTitle: 'Primary Verified Registry Records',
-    authorityTitle: 'Authority & Methodology',
-    openRegistry: 'Official Portal'
+    dataQualityLabel: 'Data Quality:'
   };
 
   const getLocalizedItem = (item: SwotItem) => {
@@ -505,15 +346,6 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
                     <span className="text-slate-400 font-medium">
                       {labels.sourceLabel} <strong className="text-slate-700">{loc.sourceTypeLabel}</strong>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedItemForEvidence(item)}
-                      aria-label={`${labels.viewEvidence}: ${loc.title}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 font-bold transition-all cursor-pointer shadow-2xs"
-                    >
-                      <span>{labels.viewEvidence}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
                   </div>
                 </div>
               );
@@ -558,15 +390,6 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
                     <span className="text-slate-400 font-medium">
                       {labels.sourceLabel} <strong className="text-slate-700">{loc.sourceTypeLabel}</strong>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedItemForEvidence(item)}
-                      aria-label={`${labels.viewEvidence}: ${loc.title}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200/80 font-bold transition-all cursor-pointer shadow-2xs"
-                    >
-                      <span>{labels.viewEvidence}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
                   </div>
                 </div>
               );
@@ -611,15 +434,6 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
                     <span className="text-slate-400 font-medium">
                       {labels.sourceLabel} <strong className="text-slate-700">{loc.sourceTypeLabel}</strong>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedItemForEvidence(item)}
-                      aria-label={`${labels.viewEvidence}: ${loc.title}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 font-bold transition-all cursor-pointer shadow-2xs"
-                    >
-                      <span>{labels.viewEvidence}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
                   </div>
                 </div>
               );
@@ -662,15 +476,6 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
                     <span className="text-slate-400 font-medium">
                       {labels.sourceLabel} <strong className="text-slate-700">{loc.sourceTypeLabel}</strong>
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedItemForEvidence(item)}
-                      aria-label={`${labels.viewEvidence}: ${loc.title}`}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 font-bold transition-all cursor-pointer shadow-2xs"
-                    >
-                      <span>{labels.viewEvidence}</span>
-                      <ExternalLink className="w-3 h-3" />
-                    </button>
                   </div>
                 </div>
               );
@@ -678,157 +483,6 @@ export const SwotAnalysisSection: React.FC<SwotAnalysisSectionProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Linked Evidence Modal with Complete Verified Provenance */}
-      {selectedItemForEvidence && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setSelectedItemForEvidence(null);
-            }
-          }}
-          className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4"
-        >
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl animate-fadeIn max-h-[85vh] flex flex-col">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold">
-                  <Database className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm sm:text-base font-black text-slate-950">
-                    {labels.evidenceModalTitle}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[11px] font-bold text-slate-600">
-                      {getLocalizedItem(selectedItemForEvidence).title}
-                    </span>
-                    <span className="px-1.5 py-0.2 text-[9px] font-mono font-bold rounded bg-slate-100 text-slate-700 border border-slate-200 uppercase">
-                      {selectedItemForEvidence.category}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedItemForEvidence(null)}
-                aria-label={labels.closeModal}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Modal Scrollable Body */}
-            <div className="space-y-4 overflow-y-auto pr-1 flex-1">
-              {/* Factor Summary Card */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/90 text-xs space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
-                    {labels.metricDetail}
-                  </span>
-                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                    {Math.round((selectedItemForEvidence.confidence || 0.95) * 100)}% Confidence
-                  </span>
-                </div>
-                <p className="text-slate-800 font-medium text-xs leading-relaxed">
-                  {selectedItemForEvidence.explanation}
-                </p>
-                {selectedItemForEvidence.metricReference && (
-                  <div className="pt-1 flex items-center gap-2">
-                    <span className="text-[10px] text-slate-500 font-bold">Metric Benchmark:</span>
-                    <span className="font-mono font-black text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded text-[11px] border border-emerald-300">
-                      {selectedItemForEvidence.metricReference}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Primary Verified Registry Records */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-900 tracking-wide flex items-center gap-1.5">
-                    <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                    <span>{labels.evidenceSectionTitle}</span>
-                  </span>
-                  <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                    {matchedEvidenceRecords.length} Record{matchedEvidenceRecords.length === 1 ? '' : 's'}
-                  </span>
-                </div>
-
-                {matchedEvidenceRecords.map((ev) => (
-                  <div
-                    key={ev.id}
-                    className="p-3.5 bg-white rounded-2xl border border-slate-200 shadow-2xs text-xs space-y-2 hover:border-slate-300 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-black text-slate-950 text-xs block">
-                          {ev.metricName || ev.id}
-                        </span>
-                        {ev.geographicLevel && (
-                          <span className="text-[10px] text-slate-500 font-medium">
-                            Geographic Level: <strong>{ev.geographicLevel}</strong>
-                          </span>
-                        )}
-                      </div>
-                      <span
-                        className={`font-mono text-[9px] uppercase px-2 py-0.5 rounded-md font-black shrink-0 ${
-                          ev.status === 'VERIFIED'
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            : ev.status === 'ESTIMATED' || ev.status === 'OBSERVED'
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-rose-50 text-rose-800 border border-rose-200'
-                        }`}
-                      >
-                        {ev.status}
-                      </span>
-                    </div>
-
-                    {ev.value !== undefined && (
-                      <div className="p-2 bg-slate-50 rounded-xl border border-slate-100 font-mono text-[11px] text-slate-800 font-bold">
-                        Value: {String(ev.value)} {ev.unit ? `(${ev.unit})` : ''}
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px]">
-                      <span className="text-slate-600">
-                        Authority: <strong className="text-slate-800">{ev.source}</strong>
-                      </span>
-                      {ev.sourceUrl && (
-                        <a
-                          href={ev.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition-colors"
-                        >
-                          <span>{labels.openRegistry}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100 shrink-0">
-              <span className="text-[11px] text-slate-500 font-medium">
-                UDYORA Multi-Agent Evidence Registry
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedItemForEvidence(null)}
-                className="px-4 py-2 bg-slate-950 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
-              >
-                {labels.closeModal}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
