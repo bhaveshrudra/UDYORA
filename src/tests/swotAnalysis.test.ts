@@ -54,6 +54,7 @@ console.log('1. DAIRY BUSINESS SWOT GENERATION & EVIDENCE LINKAGE:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -72,7 +73,7 @@ console.log('1. DAIRY BUSINESS SWOT GENERATION & EVIDENCE LINKAGE:');
       }
     ]
   };
-  const schemeMatches: SchemeMatchResult[] = [
+  const schemeMatches: any[] = [
     {
       scheme: {
         id: 'scheme_pmegp',
@@ -99,7 +100,10 @@ console.log('1. DAIRY BUSINESS SWOT GENERATION & EVIDENCE LINKAGE:');
     schemeMatches,
     riskProfile,
     opportunitySpots: [
-      {
+      ({
+        category: 'COMMERCIAL_HUB',
+        categoryLabel: 'Hub',
+        summaryReason: 'Good spot',
         id: 'spot_1',
         name: 'Khed Shivapur Dairy Hub',
         spotName: 'Khed Shivapur Dairy Hub',
@@ -110,9 +114,9 @@ console.log('1. DAIRY BUSINESS SWOT GENERATION & EVIDENCE LINKAGE:');
         dataConfidence: 90,
         dataQuality: 'VERIFIED',
         rank: 1,
-        factors: [],
+        factors: {} as any,
         sources: []
-      }
+      } as any)
     ]
   });
 
@@ -135,6 +139,7 @@ console.log('\n2. RETAIL STORE SWOT (FOOTFALL & INVENTORY):');
     availableCapital: 75000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -162,6 +167,7 @@ console.log('\n3. TAILORING ENTERPRISE SWOT (WOMEN SUBSIDY & LABOR):');
     availableCapital: 50000,
     beneficiaryCategory: 'Women',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -189,6 +195,7 @@ console.log('\n4. POULTRY FARMING SWOT (BIOSECURITY & DIRECT SALES):');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_sirsi_karnataka');
@@ -215,6 +222,7 @@ console.log('\n5. LOCATION SENSITIVITY TEST:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const locKhed = getLocationById('loc_khed_shivapur_pune');
@@ -242,6 +250,7 @@ console.log('\n6. CAPITAL SENSITIVITY TEST:');
     availableCapital: 50000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const inputHigh: UserBusinessInput = {
@@ -250,6 +259,7 @@ console.log('\n6. CAPITAL SENSITIVITY TEST:');
     availableCapital: 200000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -275,14 +285,14 @@ console.log('\n7. MISSING EVIDENCE & INSUFFICIENT DATA TEST:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const locationMissingPop: LocationData = {
     ...getLocationById('loc_khed_shivapur_pune'),
     population: {
       id: 'ev_pop_missing',
-      metric: 'CENSUS_POPULATION',
-      metricName: 'Census Population',
+      metricName: 'Village Total Population',
       value: 'INSUFFICIENT_DATA' as any,
       source: 'Census Registry',
       status: 'INSUFFICIENT_DATA',
@@ -311,6 +321,7 @@ console.log('\n8. RISK AGENT -> THREAT CONSISTENCY TEST:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -349,14 +360,15 @@ console.log('\n9. FEASIBILITY SCORE INDEPENDENCE TEST:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
   const finPlan = generateDeterministicFinancialPlan(input);
 
-  const feasibilityBefore = calculateDeterministicFeasibility(input, location, finPlan);
+  const feasibilityBefore = calculateDeterministicFeasibility({ input, location, dscr: finPlan.debtServiceCoverageRatio });
   const swot = generateDeterministicSwot({ input, location, financialPlan: finPlan });
-  const feasibilityAfter = calculateDeterministicFeasibility(input, location, finPlan);
+  const feasibilityAfter = calculateDeterministicFeasibility({ input, location, dscr: finPlan.debtServiceCoverageRatio });
 
   assert(feasibilityBefore.score === feasibilityAfter.score, 'Composite feasibility score is exactly invariant under SWOT generation');
   assert(feasibilityBefore.dataConfidenceScore === feasibilityAfter.dataConfidenceScore, 'Data confidence score is invariant under SWOT generation');
@@ -385,6 +397,7 @@ console.log('\n10. CHATBOT INTENT ROUTING & SWOT RETRIEVAL TEST:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');
@@ -436,7 +449,7 @@ console.log('\n11. DEMO DATASET INTEGRATION TEST:');
 
   const swot = generateDeterministicSwot({ input: demoInput, location, financialPlan: plan });
 
-  assert(swot.dataQuality === 'DEMO', 'Demo dataset SWOT preserves DEMO / TEST DATA provenance');
+  assert((swot.dataQuality as any) === 'DEMO', 'Demo dataset SWOT preserves DEMO / TEST DATA provenance');
 }
 
 // -----------------------------------------------------------------------------
@@ -450,6 +463,7 @@ console.log('\n12. ZERO HALLUCINATION & EVIDENCE INTEGRITY:');
     availableCapital: 100000,
     beneficiaryCategory: 'General',
     locationAreaType: 'Rural',
+    locationId: 'loc_khed_shivapur_pune',
     language: 'en'
   };
   const location = getLocationById('loc_khed_shivapur_pune');

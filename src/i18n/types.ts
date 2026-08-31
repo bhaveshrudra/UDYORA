@@ -15,6 +15,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
 ];
 
 export interface TranslationDictionary {
+  [key: string]: string | undefined;
   // Common & Navigation
   'nav.home': string;
   'nav.capabilities': string;

@@ -865,7 +865,7 @@ export function getTranslationsList(): TranslationRow[] {
 
     const isComplete = Boolean(en && hi && mr && te && kn);
     return {
-      key: k,
+      key: String(k),
       en,
       hi,
       mr,

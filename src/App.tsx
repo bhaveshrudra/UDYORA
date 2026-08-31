@@ -422,7 +422,7 @@ export function App() {
       {currentRoute === 'app' && (
         <div
           ref={appContainerRef}
-          className="relative min-h-screen bg-slate-100/90 text-slate-900 font-sans antialiased flex flex-col selection:bg-blue-100 selection:text-blue-950 overflow-x-hidden"
+          className="relative min-h-screen bg-slate-100/90 text-slate-900 font-sans antialiased flex flex-col selection:bg-blue-100 selection:text-blue-950 overflow-x-clip transition-colors duration-200"
         >
           {/* Background Animated Analytics Environment */}
           <AnimatedBusinessBackground containerRef={appContainerRef} />
