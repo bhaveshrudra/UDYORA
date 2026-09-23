@@ -14,6 +14,7 @@ import {
  FileText,
  MapPin,
  ChevronRight,
+ ChevronDown,
  ExternalLink,
  Globe,
  Sparkles,
@@ -342,7 +343,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
  {/* =========================================================================
  TWO-COLUMN MODERN BUSINESS-ANALYTICS HERO SECTION (CHOREOGRAPHED BUILD)
  ========================================================================= */}
- <section className="relative pt-8 pb-14 sm:pt-16 sm:pb-24 px-4 sm:px-6 lg:px-8 flex items-center min-h-[560px] overflow-hidden">
+ <section className="relative pt-6 pb-6 sm:pt-10 sm:pb-8 px-4 sm:px-6 lg:px-8 flex flex-col justify-between items-center min-h-[520px] overflow-hidden">
  {/* SIGNATURE UDYORA LETTER-BY-LETTER WATERMARK ANIMATION */}
  <UdyoraWatermark />
 
@@ -416,6 +417,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
  <HeroAnalyticsComposition onClick={() => onNavigateToApp()} />
  </div>
  </div>
+
+ {/* Step 7: SCROLL FOR MORE / SWIPE UP INDICATOR (Centered at bottom of Hero) */}
+ <motion.div
+ initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 12 }}
+ animate={{ opacity: 1, y: 0 }}
+ transition={{ duration: 0.65, delay: 0.48, ease: [0.22, 1, 0.36, 1] }}
+ className="relative z-10 w-full flex justify-center pt-4 sm:pt-6 pb-2"
+ >
+ <button
+ type="button"
+ onClick={() => scrollToSection('capabilities')}
+ aria-label={t('hero.scrollForMore') || 'Scroll for more'}
+ className="group inline-flex flex-col items-center gap-1.5 cursor-pointer select-none focus:outline-hidden focus:ring-2 focus:ring-blue-600 rounded-full py-1 px-4 transition-transform hover:-translate-y-0.5 active:translate-y-0"
+ >
+ <span className="text-[11px] sm:text-xs font-bold tracking-wider text-slate-500 group-hover:text-blue-700 transition-colors uppercase">
+ {t('hero.scrollForMore') || 'Scroll for more'}
+ </span>
+ <div className="flex flex-col items-center -space-y-0.5">
+ <div className="w-5 h-7 rounded-full border-2 border-slate-300 group-hover:border-blue-600 flex items-start justify-center p-0.5 transition-colors bg-white/90 shadow-2xs">
+ <motion.div
+ animate={shouldReduceMotion ? {} : { y: [0, 6, 0], opacity: [1, 0.2, 1] }}
+ transition={{ repeat: Infinity, duration: 1.6, ease:'easeInOut' }}
+ className="w-1 h-1.5 rounded-full bg-slate-500 group-hover:bg-blue-600 transition-colors"
+ />
+ </div>
+ <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-blue-600 transition-all animate-bounce" />
+ </div>
+ </button>
+ </motion.div>
  </section>
 
  {/* =========================================================================

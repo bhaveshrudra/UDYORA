@@ -280,10 +280,8 @@ export function App() {
   //   Skip hero entry — go straight to admin.
   // =========================================================================
 
-  // Only show hero entry if explicitly in hero-entry state
-  const shouldShowHeroEntry =
-    startupState === 'hero-entry' &&
-    currentRoute === 'landing';
+  // Show hero entry animation whenever startupState is 'hero-entry'
+  const shouldShowHeroEntry = startupState === 'hero-entry';
 
   // Show language selection gate whenever startupState is 'select-language'
   const shouldShowLanguageGate = startupState === 'select-language';

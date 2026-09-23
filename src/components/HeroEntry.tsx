@@ -19,13 +19,13 @@ interface HeroEntryProps {
 const LETTERS = ['U','D','Y','O','R','A'] as const;
 
 // Timing constants (ms)
-const LETTER_INITIAL_DELAY = 400;
-const LETTER_STAGGER = 350;
-const HOLD_AFTER_WORD = 1500;
-const TAGLINE_FADE_IN = 600;
-const SUBTITLE_DELAY = 500;
-const HOLD_AFTER_TAGLINE = 1200;
-const EXIT_DURATION = 650;
+const LETTER_INITIAL_DELAY = 300;
+const LETTER_STAGGER = 280;
+const HOLD_AFTER_WORD = 1200;
+const TAGLINE_FADE_IN = 500;
+const SUBTITLE_DELAY = 400;
+const HOLD_AFTER_TAGLINE = 1100;
+const EXIT_DURATION = 500;
 
 type Phase =
  |'letters' // Animating letters one by one
@@ -42,13 +42,6 @@ export const HeroEntry: React.FC<HeroEntryProps> = ({ onComplete }) => {
  const mountedRef = useRef(true);
  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
- // Check prefers-reduced-motion
- const prefersReduced = useRef(
- typeof window !=='undefined'
- ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
- : false
- );
-
  const schedule = useCallback((fn: () => void, ms: number) => {
  const id = setTimeout(() => {
  if (mountedRef.current) fn();
@@ -56,28 +49,22 @@ export const HeroEntry: React.FC<HeroEntryProps> = ({ onComplete }) => {
  timersRef.current.push(id);
  }, []);
 
+ const handleSkip = useCallback(() => {
+ mountedRef.current = false;
+ timersRef.current.forEach(clearTimeout);
+ setPhase('done');
+ onComplete();
+ }, [onComplete]);
+
  useEffect(() => {
  mountedRef.current = true;
 
- // Reduced motion: show everything immediately, then exit after a brief pause
- if (prefersReduced.current) {
- setVisibleCount(LETTERS.length);
- setPhase('tagline');
- schedule(() => {
- setPhase('subtitle');
- }, 400);
- schedule(() => {
- setPhase('exiting');
- }, 1500);
- schedule(() => {
- setPhase('done');
- onComplete();
- }, 2200);
- return () => {
- mountedRef.current = false;
- timersRef.current.forEach(clearTimeout);
- };
+ const handleKeyDown = (e: KeyboardEvent) => {
+ if (e.key === 'Escape') {
+ handleSkip();
  }
+ };
+ window.addEventListener('keydown', handleKeyDown);
 
  let t = 0;
 
@@ -110,10 +97,10 @@ export const HeroEntry: React.FC<HeroEntryProps> = ({ onComplete }) => {
 
  return () => {
  mountedRef.current = false;
+ window.removeEventListener('keydown', handleKeyDown);
  timersRef.current.forEach(clearTimeout);
  };
- // eslint-disable-next-line react-hooks/exhaustive-deps
- }, []);
+ }, [handleSkip, onComplete, schedule]);
 
  // Don't render anything after done
  if (phase ==='done') return null;
@@ -139,6 +126,29 @@ export const HeroEntry: React.FC<HeroEntryProps> = ({ onComplete }) => {
  transition:`opacity ${EXIT_DURATION}ms ease-in-out, transform ${EXIT_DURATION}ms ease-in-out`,
  }}
  >
+ <button
+ type="button"
+ onClick={handleSkip}
+ style={{
+ position:'absolute',
+ top: 20,
+ right: 24,
+ padding:'6px 14px',
+ borderRadius: 9999,
+ border:'1px solid #e2e8f0',
+ backgroundColor:'#ffffff',
+ color:'#64748b',
+ fontSize: 12,
+ fontWeight: 600,
+ cursor:'pointer',
+ zIndex: 10,
+ boxShadow:'0 1px 2px rgba(0,0,0,0.05)',
+ transition:'all 150ms ease',
+ }}
+ aria-label="Skip intro animation"
+ >
+ Skip →
+ </button>
  {/* Subtle background grid pattern */}
  <div
  style={{

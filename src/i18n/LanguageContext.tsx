@@ -59,8 +59,9 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   });
 
   // Startup flow:
-  //   1. 'select-language' → When opening the website, ask language preferences
-  //   2. 'ready' → Show the app in the confirmed language
+  //   1. 'hero-entry' → Show the signature letter-by-letter entry animation FIRST on website open
+  //   2. 'select-language' → When intro completes, ask language preferences
+  //   3. 'ready' → Show the app in the confirmed language
   const [startupState, setStartupState] = useState<StartupState>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
@@ -68,7 +69,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
         return 'ready';
       }
     }
-    return 'select-language';
+    return 'hero-entry';
   });
 
   // Boot log
@@ -76,7 +77,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const saved = localStorage.getItem(STORAGE_KEY);
     const normalized = normalizeLanguageCode(saved);
     console.log('[UDYORA BOOT]', {
-      startupState: 'select-language',
+      startupState: 'hero-entry',
       hasStoredLanguage: !!normalized,
       storedLanguage: saved || 'none',
     });
@@ -84,8 +85,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Called when HeroEntry animation completes
   const completeHeroEntry = () => {
-    setStartupState('ready');
-    console.log('[UDYORA BOOT] Hero entry complete → Ready');
+    setStartupState('select-language');
+    console.log('[UDYORA BOOT] Hero entry complete → select-language');
   };
 
   // Update language at any time
@@ -112,8 +113,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     }
-    setStartupState('select-language');
-    console.log('[UDYORA BOOT] Language preference reset → select-language');
+    setStartupState('hero-entry');
+    console.log('[UDYORA BOOT] Language preference reset → hero-entry');
   };
 
   // Translation lookup with fallback and parameter interpolation

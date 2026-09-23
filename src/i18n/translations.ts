@@ -91,6 +91,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'hero.subtitle': 'Hyper-Local Business Intelligence for Rural Entrepreneurs',
     'hero.supporting': 'Understand your local business environment, evaluate opportunities, plan your finances, and make better-informed decisions.',
     'hero.empowering': 'Empowering Rural Entrepreneurs',
+    'hero.scrollForMore': 'Scroll for more',
 
     // Capabilities
     'cap.sectionBadge': 'Core Capabilities',
@@ -595,6 +596,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'hero.subtitle': 'ग्रामीण उद्यमियों के लिए अति-स्थानीय व्यावसायिक समझ',
     'hero.supporting': 'अपने स्थानीय व्यावसायिक परिवेश को समझें, अवसरों का मूल्यांकन करें, अपने वित्त की योजना बनाएं और बेहतर निर्णय लें।',
     'hero.empowering': 'ग्रामीण उद्यमियों का सशक्तिकरण',
+    'hero.scrollForMore': 'और जानने के लिए नीचे स्क्रॉल करें',
 
     // Capabilities
     'cap.sectionBadge': 'मुख्य क्षमताएं',
@@ -1098,6 +1100,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'hero.subtitle': 'ग्रामीण उद्योजकांसाठी अति-स्थानिक व्यावसायिक बुद्धिमत्ता',
     'hero.supporting': 'तुमचे स्थानिक व्यावसायिक वातावरण समजून घ्या, संधींचे मूल्यमापन करा, आर्थिक नियोजन करा आणि योग्य निर्णय घ्या.',
     'hero.empowering': 'ग्रामीण उद्योजकांचे सक्षमीकरण',
+    'hero.scrollForMore': 'अधिक पाहण्यासाठी खाली स्क्रोल करा',
 
     // Capabilities
     'cap.sectionBadge': 'प्रमुख क्षमता',
@@ -1600,6 +1603,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'hero.subtitle': 'గ్రామీణ వ్యాపారవేత్తల కోసం స్థానిక వ్యాపార ఇంటెలిజెన్స్',
     'hero.supporting': 'మీ స్థానిక వ్యాపార వాతావరణాన్ని అర్థం చేసుకోండి, అవకాశాలను అంచనా వేయండి, మీ ఆర్థిక ప్రణాళికను రూపొందించండి మరియు సరైన నిర్ణయాలు తీసుకోండి.',
     'hero.empowering': 'గ్రామీణ వ్యాపారవేత్తల సాధికారత',
+    'hero.scrollForMore': 'మరిన్ని వివరాలకు క్రిందికి స్క్రోల్ చేయండి',
 
     // Capabilities
     'cap.sectionBadge': 'ప్రధాన సామర్థ్యాలు',
@@ -2104,6 +2108,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, TranslationDictionary> = {
     'hero.subtitle': 'ಗ್ರಾಮೀಣ ಉದ್ಯಮಿಗಳಿಗಾಗಿ ಸ್ಥಳೀಯ ವ್ಯಾಪಾರ ಬುದ್ಧಿಮತ್ತೆ',
     'hero.supporting': 'ನಿಮ್ಮ ಸ್ಥಳೀಯ ವ್ಯಾಪಾರ ವಾತಾವರಣವನ್ನು ಅರ್ಥಮಾಡಿಕೊಳ್ಳಿ, ಅವಕಾಶಗಳನ್ನು ಮೌಲ್ಯಮಾಪನ ಮಾಡಿ, ಹಣಕಾಸು ಯೋಜಿಸಿ ಮತ್ತು ಉತ್ತಮ ನಿರ್ಧಾರಗಳನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ.',
     'hero.empowering': 'ಗ್ರಾಮೀಣ ಉದ್ಯಮಿಗಳ ಸಬಲೀಕರಣ',
+    'hero.scrollForMore': 'ಇನ್ನಷ್ಟು ನೋಡಲು ಕೆಳಗೆ ಸ್ಕ್ರಾಲ್ ಮಾಡಿ',
 
     // Capabilities
     'cap.sectionBadge': 'ಪ್ರಮುಖ ಸಾಮರ್ಥ್ಯಗಳು',

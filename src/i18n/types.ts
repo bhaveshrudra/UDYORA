@@ -40,6 +40,7 @@ export interface TranslationDictionary {
   'hero.subtitle': string;
   'hero.supporting': string;
   'hero.empowering': string;
+  'hero.scrollForMore': string;
 
   // Capabilities
   'cap.sectionBadge': string;
