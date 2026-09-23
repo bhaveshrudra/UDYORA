@@ -58,20 +58,17 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return false;
   });
 
-  // New startup flow:
-  //   1. 'hero-entry' → Show the HeroEntry animation FIRST (always on fresh page load for / route)
-  //   2. 'select-language' → Show language selection (only if no stored language)
-  //   3. 'ready' → Show the app
-  //
-  // For /app route, App.tsx skips hero entry and goes straight to the app.
+  // Startup flow:
+  //   1. 'select-language' → When opening the website, ask language preferences
+  //   2. 'ready' → Show the app in the confirmed language
   const [startupState, setStartupState] = useState<StartupState>(() => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname;
-      if (path === '/app' || path.startsWith('/app/') || path.startsWith('/admin')) {
+      if (path.startsWith('/admin')) {
         return 'ready';
       }
     }
-    return 'hero-entry';
+    return 'select-language';
   });
 
   // Boot log
@@ -79,7 +76,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const saved = localStorage.getItem(STORAGE_KEY);
     const normalized = normalizeLanguageCode(saved);
     console.log('[UDYORA BOOT]', {
-      startupState: 'hero-entry',
+      startupState: 'select-language',
       hasStoredLanguage: !!normalized,
       storedLanguage: saved || 'none',
     });
@@ -87,15 +84,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Called when HeroEntry animation completes
   const completeHeroEntry = () => {
-    if (hasStoredLanguage) {
-      // Returning user → go directly to Home
-      setStartupState('ready');
-      console.log('[UDYORA BOOT] Hero entry complete → Ready (returning user)');
-    } else {
-      // First-time user → show language selection
-      setStartupState('select-language');
-      console.log('[UDYORA BOOT] Hero entry complete → Language selection (first visit)');
-    }
+    setStartupState('ready');
+    console.log('[UDYORA BOOT] Hero entry complete → Ready');
   };
 
   // Update language at any time
@@ -110,20 +100,20 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   };
 
-  // Called when first-time user selects language and clicks Continue
+  // Called when user selects language and clicks Continue
   const selectLanguageAndProceed = (lang: SupportedLanguage) => {
     setLanguage(lang);
     setStartupState('ready');
     console.log('[UDYORA BOOT] Language confirmed:', lang, '→ Ready');
   };
 
-  // Helper to clear language preference and replay first-visit experience
+  // Helper to clear language preference and re-trigger language selection
   const resetLanguagePreference = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEY);
     }
-    setStartupState('hero-entry');
-    console.log('[UDYORA BOOT] Language preference reset → Replaying Hero Entry');
+    setStartupState('select-language');
+    console.log('[UDYORA BOOT] Language preference reset → select-language');
   };
 
   // Translation lookup with fallback and parameter interpolation

@@ -14,13 +14,23 @@ export const StartupLanguageGate: React.FC<StartupLanguageGateProps> = ({
  onConfirmLanguage
 }) => {
  const shouldReduceMotion = useReducedMotion();
- const [selectedLang, setSelectedLang] = useState<SupportedLanguage | null>(null);
+ const [selectedLang, setSelectedLang] = useState<SupportedLanguage>(initialLanguage || 'en');
 
  const handleContinue = () => {
  if (selectedLang) {
  onConfirmLanguage(selectedLang);
  }
  };
+
+ React.useEffect(() => {
+ const handleKeyDown = (e: KeyboardEvent) => {
+ if (e.key === 'Enter' && selectedLang) {
+ onConfirmLanguage(selectedLang);
+ }
+ };
+ window.addEventListener('keydown', handleKeyDown);
+ return () => window.removeEventListener('keydown', handleKeyDown);
+ }, [selectedLang, onConfirmLanguage]);
 
  return (
  <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-white text-slate-900 p-6 sm:p-8 overflow-y-auto select-none">

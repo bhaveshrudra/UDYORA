@@ -280,18 +280,16 @@ export function App() {
   //   Skip hero entry — go straight to admin.
   // =========================================================================
 
-  // Only show hero entry for the landing route
+  // Only show hero entry if explicitly in hero-entry state
   const shouldShowHeroEntry =
     startupState === 'hero-entry' &&
     currentRoute === 'landing';
 
-  // Show language selection gate for first-time users on the landing route only
-  const shouldShowLanguageGate =
-    startupState === 'select-language' &&
-    currentRoute === 'landing';
+  // Show language selection gate whenever startupState is 'select-language'
+  const shouldShowLanguageGate = startupState === 'select-language';
 
   // =========================================================================
-  // 1. HERO ENTRY ANIMATION (landing route only)
+  // 1. HERO ENTRY ANIMATION (if explicitly in hero-entry state)
   // =========================================================================
   if (shouldShowHeroEntry) {
     return (
@@ -304,7 +302,7 @@ export function App() {
   }
 
   // =========================================================================
-  // 2. FIRST-TIME LANGUAGE SELECTION GATE
+  // 2. LANGUAGE PREFERENCES GATE (shown when opening website)
   // =========================================================================
   if (shouldShowLanguageGate) {
     return (
@@ -320,12 +318,6 @@ export function App() {
   // =========================================================================
   // 3. READY → ROUTE TO DESTINATION
   // =========================================================================
-
-  // For non-landing routes opened directly while startupState was hero-entry or select-language,
-  // we auto-advance directly to ready
-  if (startupState !== 'ready' && currentRoute !== 'landing') {
-    completeHeroEntry();
-  }
 
   // ROUTE: ADMIN LOGIN (/admin/login)
   if (currentRoute === 'admin_login') {
